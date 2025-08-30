@@ -492,13 +492,13 @@ body {
 
 .vinyl-wrapper {
   position: relative;
-  width: 120px;
-  height: 120px;
+  width: 200px;
+  height: 200px;
 }
 
 .vinyl-record {
-  width: 120px;
-  height: 120px;
+  width: 200px;
+  height: 200px;
   border-radius: 50%;
   background: 
     radial-gradient(circle at center, #1a1a1a 20%, #333 21%, #1a1a1a 22%, #333 23%, #1a1a1a 24%, #333 25%),
@@ -527,8 +527,8 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 24px;
-  height: 24px;
+  width: 40px;
+  height: 40px;
   background: linear-gradient(145deg, #ff6b6b, #ff4757);
   border-radius: 50%;
   box-shadow: 
@@ -541,8 +541,8 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 8px;
-  height: 8px;
+  width: 14px;
+  height: 14px;
   background: #000;
   border-radius: 50%;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8);

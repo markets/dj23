@@ -4,6 +4,9 @@ class DeckController {
     this.isScratching = false;
     this.vinylElement = null;
     this.setupEventListeners();
+    
+    // Initialize effects controller for this deck
+    this.effectsController = new EffectsController(deckId);
   }
 
   setupEventListeners() {
@@ -173,25 +176,6 @@ class DeckController {
       const deck = window.audioEngine.getDeck(this.deckId);
       if (deck) {
         deck.toggleLoop();
-      }
-    });
-
-    // Effect controls: Phaser and Flanger
-    const phaserSlider = document.getElementById(`phaser${this.deckId}`);
-    phaserSlider.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.setPhaser(value);
-      }
-    });
-
-    const flangerSlider = document.getElementById(`flanger${this.deckId}`);
-    flangerSlider.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.setFlanger(value);
       }
     });
   }

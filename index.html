@@ -35,6 +35,11 @@
           <div class="track-time">00:00 / 00:00</div>
         </div>
 
+        <div class="waveform-container">
+          <canvas id="waveformA" class="waveform"></canvas>
+          <div class="playhead" id="playheadA"></div>
+        </div>
+
         <div class="vinyl-container">
           <div class="vinyl-wrapper">
             <div class="vinyl-record" id="vinylA">
@@ -53,16 +58,6 @@
               <button id="pitchBendMinusA" class="pitch-bend-btn">-</button>
             </div>
           </div>
-        </div>
-
-        <div class="waveform-container">
-          <canvas id="waveformA" class="waveform"></canvas>
-          <div class="playhead" id="playheadA"></div>
-        </div>
-
-        <div class="waveform-container">
-          <canvas id="waveformA" class="waveform"></canvas>
-          <div class="playhead" id="playheadA"></div>
         </div>
 
         <div class="transport-controls">
@@ -189,6 +184,11 @@
           <div class="track-time">00:00 / 00:00</div>
         </div>
 
+        <div class="waveform-container">
+          <canvas id="waveformB" class="waveform"></canvas>
+          <div class="playhead" id="playheadB"></div>
+        </div>
+
         <div class="vinyl-container">
           <div class="vinyl-wrapper">
             <div class="vinyl-record" id="vinylB">
@@ -207,16 +207,6 @@
               <button id="pitchBendMinusB" class="pitch-bend-btn">-</button>
             </div>
           </div>
-        </div>
-
-        <div class="waveform-container">
-          <canvas id="waveformB" class="waveform"></canvas>
-          <div class="playhead" id="playheadB"></div>
-        </div>
-
-        <div class="waveform-container">
-          <canvas id="waveformB" class="waveform"></canvas>
-          <div class="playhead" id="playheadB"></div>
         </div>
 
         <div class="transport-controls">
@@ -290,6 +280,7 @@
   </div>
 
   <script src="js/audio-engine.js"></script>
+  <script src="js/effects.js"></script>
   <script src="js/deck.js"></script>
   <script src="js/waveform.js"></script>
   <script src="js/mixer.js"></script>

@@ -108,94 +108,10 @@ class Deck {
     this.effectNodes.reverbGain = this.audioContext.createGain();
     this.effectNodes.reverbGain.gain.value = 0;
 
-    this.effectNodes.delay = this.audioContext.createDelay(1);
-    this.effectNodes.delay.delayTime.value = 0.3;
-    this.effectNodes.delayGain = this.audioContext.createGain();
-    this.effectNodes.delayGain.gain.value = 0;
-    this.effectNodes.delayFeedback = this.audioContext.createGain();
-    this.effectNodes.delayFeedback.gain.value = 0.3;
-
-    // Phaser effect (using multiple allpass filters)
-    this.effectNodes.phaser = [];
-    this.effectNodes.phaserLFO = this.audioContext.createOscillator();
-    this.effectNodes.phaserLFO.type = 'sine';
-    this.effectNodes.phaserLFO.frequency.value = 0.5;
-    this.effectNodes.phaserGain = this.audioContext.createGain();
-    this.effectNodes.phaserGain.gain.value = 0;
-    this.effectNodes.phaserDry = this.audioContext.createGain();
-    this.effectNodes.phaserDry.gain.value = 1;
-    
-    // Create 6 allpass filters for phaser
-    for (let i = 0; i < 6; i++) {
-      this.effectNodes.phaser[i] = this.audioContext.createBiquadFilter();
-      this.effectNodes.phaser[i].type = 'allpass';
-      this.effectNodes.phaser[i].frequency.value = 1000 + (i * 300);
-      this.effectNodes.phaser[i].Q.value = 10;
-    }
-    
-    // Flanger effect (short delay with feedback)
-    this.effectNodes.flanger = this.audioContext.createDelay(0.02);
-    this.effectNodes.flanger.delayTime.value = 0.005;
-    this.effectNodes.flangerLFO = this.audioContext.createOscillator();
-    this.effectNodes.flangerLFO.type = 'sine';
-    this.effectNodes.flangerLFO.frequency.value = 0.25;
-    this.effectNodes.flangerGain = this.audioContext.createGain();
-    this.effectNodes.flangerGain.gain.value = 0;
-    this.effectNodes.flangerFeedback = this.audioContext.createGain();
-    this.effectNodes.flangerFeedback.gain.value = 0.7;
-    this.effectNodes.flangerDry = this.audioContext.createGain();
-    this.effectNodes.flangerDry.gain.value = 1;
-
-    // Connect effect chain
-    this.connectEffectChain();
-    this.createReverbImpulse();
-    this.startEffectOscillators();
-  }
-
-  connectEffectChain() {
-    // Connect delay feedback loop
-    this.effectNodes.delay.connect(this.effectNodes.delayFeedback);
-    this.effectNodes.delayFeedback.connect(this.effectNodes.delay);
-    this.effectNodes.delay.connect(this.effectNodes.delayGain);
-
-    // Connect phaser chain
-    for (let i = 0; i < this.effectNodes.phaser.length; i++) {
-      if (i === 0) {
-        // First filter connects from source (will be connected in play method)
-      } else {
-        this.effectNodes.phaser[i - 1].connect(this.effectNodes.phaser[i]);
-      }
-    }
-    
-    // Connect flanger feedback loop
-    this.effectNodes.flanger.connect(this.effectNodes.flangerFeedback);
-    this.effectNodes.flangerFeedback.connect(this.effectNodes.flanger);
-
-    // Main effect chain will be connected when source is created
-  }
-
-  startEffectOscillators() {
-    try {
-      this.effectNodes.phaserLFO.start();
-      this.effectNodes.flangerLFO.start();
-    } catch (e) {
-      // Oscillators may already be started
-      console.log('Effect oscillators already started or failed to start');
-    }
-  }
-
-  createReverbImpulse() {
-    const length = this.audioContext.sampleRate * 2;
-    const impulse = this.audioContext.createBuffer(2, length, this.audioContext.sampleRate);
-        
-    for (let channel = 0; channel < 2; channel++) {
-      const channelData = impulse.getChannelData(channel);
-      for (let i = 0; i < length; i++) {
-        channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2);
-      }
-    }
-        
-    this.effectNodes.reverb.buffer = impulse;
+    // Initialize effects engine
+    this.effectsEngine = new EffectsEngine(this.audioContext);
+    // Merge effects engine nodes with our effect nodes
+    Object.assign(this.effectNodes, this.effectsEngine.getEffectNodes());
   }
 
   async loadFile(file) {
@@ -290,28 +206,26 @@ class Deck {
   }
 
   setReverb(value) {
-    if (this.effectNodes.reverbGain) {
-      this.effectNodes.reverbGain.gain.value = value / 100;
+    if (this.effectsEngine) {
+      this.effectsEngine.setReverb(value);
     }
   }
 
   setDelay(value) {
-    if (this.effectNodes.delayGain) {
-      this.effectNodes.delayGain.gain.value = value / 100;
+    if (this.effectsEngine) {
+      this.effectsEngine.setDelay(value);
     }
   }
 
   setPhaser(value) {
-    if (this.effectNodes.phaserGain) {
-      this.effectNodes.phaserGain.gain.value = value / 100;
-      this.effectNodes.phaserDry.gain.value = 1 - (value / 100);
+    if (this.effectsEngine) {
+      this.effectsEngine.setPhaser(value);
     }
   }
 
   setFlanger(value) {
-    if (this.effectNodes.flangerGain) {
-      this.effectNodes.flangerGain.gain.value = value / 100;
-      this.effectNodes.flangerDry.gain.value = 1 - (value / 100);
+    if (this.effectsEngine) {
+      this.effectsEngine.setFlanger(value);
     }
   }
 
