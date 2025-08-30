@@ -1,6 +1,6 @@
-// Initialize the DJ Mixer application
+// Initialize the DJ23 application
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('🎧 DJ Mixer Pro - Initializing...');
+  console.log('🎧 DJ23 - Initializing...');
     
   // Initialize audio engine
   await window.audioEngine.initialize();
@@ -9,18 +9,31 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.waveformRenderers.A = new WaveformRenderer('waveformA', 'A');
   window.waveformRenderers.B = new WaveformRenderer('waveformB', 'B');
     
+  // Initialize beat matching waveform renderers
+  window.beatWaveformRenderers.A1 = new ZoomedWaveformRenderer('beatWaveformA1', 'A', 1);
+  window.beatWaveformRenderers.A2 = new ZoomedWaveformRenderer('beatWaveformA2', 'A', 2);
+  window.beatWaveformRenderers.B1 = new ZoomedWaveformRenderer('beatWaveformB1', 'B', 1);
+  window.beatWaveformRenderers.B2 = new ZoomedWaveformRenderer('beatWaveformB2', 'B', 2);
+    
   // Start waveform animations
   window.waveformRenderers.A.startAnimation();
   window.waveformRenderers.B.startAnimation();
+  
+  // Start beat waveform animations
+  window.beatWaveformRenderers.A1.startAnimation();
+  window.beatWaveformRenderers.A2.startAnimation();
+  window.beatWaveformRenderers.B1.startAnimation();
+  window.beatWaveformRenderers.B2.startAnimation();
     
-  console.log('✅ DJ Mixer Pro - Ready to mix!');
+  console.log('✅ DJ23 - Ready to mix!');
     
   // Add some helpful tips to console
   console.log('💡 Tips:');
   console.log('- Load audio files using the "Load Track" buttons');
   console.log('- Use the crossfader to blend between decks');
   console.log('- Adjust pitch to match BPMs for seamless mixing');
-  console.log('- Click on waveforms to seek (coming soon)');
+  console.log('- Click on waveforms to seek to position');
+  console.log('- Use beat matching waveforms for precise mixing');
   console.log('- Use EQ and effects to shape your sound');
 });
 
