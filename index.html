@@ -3,448 +3,226 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web DJ Mixer</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>Web DJ Mixer Pro</title>
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <div class="app-container">
-        <!-- Sidebar with Library -->
-        <div class="sidebar">
-            <div class="library-section">
-                <h2>Track Library</h2>
-                <div class="library-actions">
-                    <div class="search-box">
-                        <input type="text" id="search-tracks" placeholder="Search tracks...">
-                        <i class="fas fa-search"></i>
-                    </div>
-                    <label for="import-tracks" class="import-btn">
-                        <i class="fas fa-plus"></i> Import
-                    </label>
-                    <input type="file" id="import-tracks" accept="audio/*" multiple hidden>
+    <div class="mixer-container">
+        <!-- Header -->
+        <header class="mixer-header">
+            <h1>DJ Mixer Pro</h1>
+            <div class="master-controls">
+                <div class="master-volume">
+                    <label>Master</label>
+                    <input type="range" id="masterVolume" min="0" max="100" value="75" class="volume-slider">
+                    <span class="volume-display">75%</span>
                 </div>
-                
-                <div class="library-content">
-                    <div class="playlists-section">
-                        <div class="section-header">
-                            <h3>Playlists</h3>
-                            <button id="create-playlist-btn"><i class="fas fa-plus"></i></button>
-                        </div>
-                        <div id="playlists" class="playlists-list"></div>
+            </div>
+        </header>
+
+        <!-- Main Mixer Interface -->
+        <div class="mixer-interface">
+            <!-- Deck A -->
+            <div class="deck" id="deckA">
+                <div class="deck-header">
+                    <h2>Deck A</h2>
+                    <input type="file" id="fileInputA" accept="audio/*" class="file-input">
+                    <label for="fileInputA" class="load-button">Load Track</label>
+                </div>
+
+                <div class="track-info" id="trackInfoA">
+                    <div class="track-name">No track loaded</div>
+                    <div class="track-time">00:00 / 00:00</div>
+                </div>
+
+                <div class="waveform-container">
+                    <canvas id="waveformA" class="waveform"></canvas>
+                    <div class="playhead" id="playheadA"></div>
+                </div>
+
+                <div class="transport-controls">
+                    <button id="playA" class="play-btn">▶</button>
+                    <button id="pauseA" class="pause-btn">⏸</button>
+                    <button id="stopA" class="stop-btn">⏹</button>
+                    <button id="cueA" class="cue-btn">CUE</button>
+                </div>
+
+                <div class="pitch-control">
+                    <label>Pitch</label>
+                    <input type="range" id="pitchA" min="-50" max="50" value="0" class="pitch-slider">
+                    <span id="pitchDisplayA">0%</span>
+                </div>
+
+                <div class="eq-section">
+                    <div class="eq-band">
+                        <label>High</label>
+                        <input type="range" id="highA" min="-20" max="20" value="0" class="eq-slider" orient="vertical">
+                        <span class="eq-value">0</span>
                     </div>
-                    
-                    <div id="track-list" class="tracks-list"></div>
+                    <div class="eq-band">
+                        <label>Mid</label>
+                        <input type="range" id="midA" min="-20" max="20" value="0" class="eq-slider" orient="vertical">
+                        <span class="eq-value">0</span>
+                    </div>
+                    <div class="eq-band">
+                        <label>Low</label>
+                        <input type="range" id="lowA" min="-20" max="20" value="0" class="eq-slider" orient="vertical">
+                        <span class="eq-value">0</span>
+                    </div>
+                </div>
+
+                <div class="effects-section">
+                    <div class="effect">
+                        <label>Filter</label>
+                        <input type="range" id="filterA" min="0" max="100" value="50" class="effect-slider">
+                    </div>
+                    <div class="effect">
+                        <label>Reverb</label>
+                        <input type="range" id="reverbA" min="0" max="100" value="0" class="effect-slider">
+                    </div>
+                    <div class="effect">
+                        <label>Delay</label>
+                        <input type="range" id="delayA" min="0" max="100" value="0" class="effect-slider">
+                    </div>
+                </div>
+
+                <div class="volume-control">
+                    <label>Volume</label>
+                    <input type="range" id="volumeA" min="0" max="100" value="75" class="volume-slider">
+                    <span class="volume-display">75%</span>
+                </div>
+            </div>
+
+            <!-- Center Mixer Section -->
+            <div class="center-mixer">
+                <div class="crossfader-section">
+                    <label>Crossfader</label>
+                    <input type="range" id="crossfader" min="0" max="100" value="50" class="crossfader">
+                    <div class="crossfader-labels">
+                        <span>A</span>
+                        <span>B</span>
+                    </div>
+                </div>
+
+                <div class="bpm-section">
+                    <div class="bpm-display">
+                        <div class="bpm-deck">
+                            <label>BPM A</label>
+                            <span id="bpmA">--</span>
+                        </div>
+                        <div class="bpm-deck">
+                            <label>BPM B</label>
+                            <span id="bpmB">--</span>
+                        </div>
+                    </div>
+                    <button id="syncAB" class="sync-btn">SYNC A→B</button>
+                    <button id="syncBA" class="sync-btn">SYNC B→A</button>
+                </div>
+
+                <div class="cue-controls">
+                    <div class="cue-volume">
+                        <label>Cue Volume</label>
+                        <input type="range" id="cueVolume" min="0" max="100" value="75" class="volume-slider">
+                    </div>
+                    <div class="cue-mix">
+                        <label>Cue Mix</label>
+                        <input type="range" id="cueMix" min="0" max="100" value="0" class="volume-slider">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deck B -->
+            <div class="deck" id="deckB">
+                <div class="deck-header">
+                    <h2>Deck B</h2>
+                    <input type="file" id="fileInputB" accept="audio/*" class="file-input">
+                    <label for="fileInputB" class="load-button">Load Track</label>
+                </div>
+
+                <div class="track-info" id="trackInfoB">
+                    <div class="track-name">No track loaded</div>
+                    <div class="track-time">00:00 / 00:00</div>
+                </div>
+
+                <div class="waveform-container">
+                    <canvas id="waveformB" class="waveform"></canvas>
+                    <div class="playhead" id="playheadB"></div>
+                </div>
+
+                <div class="transport-controls">
+                    <button id="playB" class="play-btn">▶</button>
+                    <button id="pauseB" class="pause-btn">⏸</button>
+                    <button id="stopB" class="stop-btn">⏹</button>
+                    <button id="cueB" class="cue-btn">CUE</button>
+                </div>
+
+                <div class="pitch-control">
+                    <label>Pitch</label>
+                    <input type="range" id="pitchB" min="-50" max="50" value="0" class="pitch-slider">
+                    <span id="pitchDisplayB">0%</span>
+                </div>
+
+                <div class="eq-section">
+                    <div class="eq-band">
+                        <label>High</label>
+                        <input type="range" id="highB" min="-20" max="20" value="0" class="eq-slider" orient="vertical">
+                        <span class="eq-value">0</span>
+                    </div>
+                    <div class="eq-band">
+                        <label>Mid</label>
+                        <input type="range" id="midB" min="-20" max="20" value="0" class="eq-slider" orient="vertical">
+                        <span class="eq-value">0</span>
+                    </div>
+                    <div class="eq-band">
+                        <label>Low</label>
+                        <input type="range" id="lowB" min="-20" max="20" value="0" class="eq-slider" orient="vertical">
+                        <span class="eq-value">0</span>
+                    </div>
+                </div>
+
+                <div class="effects-section">
+                    <div class="effect">
+                        <label>Filter</label>
+                        <input type="range" id="filterB" min="0" max="100" value="50" class="effect-slider">
+                    </div>
+                    <div class="effect">
+                        <label>Reverb</label>
+                        <input type="range" id="reverbB" min="0" max="100" value="0" class="effect-slider">
+                    </div>
+                    <div class="effect">
+                        <label>Delay</label>
+                        <input type="range" id="delayB" min="0" max="100" value="0" class="effect-slider">
+                    </div>
+                </div>
+
+                <div class="volume-control">
+                    <label>Volume</label>
+                    <input type="range" id="volumeB" min="0" max="100" value="75" class="volume-slider">
+                    <span class="volume-display">75%</span>
                 </div>
             </div>
         </div>
-        
-        <!-- Main DJ Mixer UI -->
-        <div class="mixer-container">
-            <header>
-                <h1>Web DJ Mixer</h1>
-                <div class="global-controls">
-                    <div class="master-volume">
-                        <label>Master</label>
-                        <input type="range" id="master-volume" min="0" max="100" value="100">
-                    </div>
-                    <div class="tempo-section">
-                        <label>Master Tempo: <span id="master-bpm">120.0</span> BPM</label>
-                        <div class="tempo-controls">
-                            <button id="tap-tempo"><i class="fas fa-hand-pointer"></i> Tap</button>
-                            <button id="tempo-decrease"><i class="fas fa-minus"></i></button>
-                            <input type="number" id="tempo-value" min="60" max="200" value="120" step="0.1">
-                            <button id="tempo-increase"><i class="fas fa-plus"></i></button>
-                        </div>
-                    </div>
-                </div>
-            </header>
-            
-            <div class="decks-container">
-                <!-- Deck 1 -->
-                <div class="deck" id="deck1">
-                    <div class="deck-header">
-                        <h2>Deck 1</h2>
-                        <div class="track-info-display">
-                            <div class="track-title" id="track-title-1">No track loaded</div>
-                            <div class="track-artist" id="track-artist-1"></div>
-                        </div>
-                        <button class="load-track-btn" id="load-track-btn-1">
-                            <i class="fas fa-music"></i> Load Track
-                        </button>
-                        <input type="file" id="track-input-1" accept="audio/*" hidden>
-                    </div>
-                    
-                    <div class="waveform-container">
-                        <div class="waveform" id="waveform1"></div>
-                        <div class="playhead" id="playhead1"></div>
-                        
-                        <div class="beat-grid" id="beat-grid-1"></div>
-                        
-                        <div class="hot-cues">
-                            <button class="hot-cue" data-cue="1" data-deck="1">1</button>
-                            <button class="hot-cue" data-cue="2" data-deck="1">2</button>
-                            <button class="hot-cue" data-cue="3" data-deck="1">3</button>
-                            <button class="hot-cue" data-cue="4" data-deck="1">4</button>
-                        </div>
-                    </div>
-                    
-                    <div class="deck-section">
-                        <div class="platter-section">
-                            <div class="platter">
-                                <div class="vinyl" id="vinyl1">
-                                    <div class="vinyl-label">1</div>
-                                </div>
-                                <div class="vinyl-details">
-                                    <div class="bpm-display">
-                                        <span id="bpm-value-1">--.-</span> BPM
-                                    </div>
-                                    <div class="pitch-display">
-                                        <span id="pitch-display-1">0.0%</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="loop-controls">
-                                <button class="loop-btn" id="loop-in-1">IN</button>
-                                <button class="loop-btn" id="loop-out-1">OUT</button>
-                                <button class="loop-btn" id="loop-active-1">LOOP</button>
-                                <div class="loop-size">
-                                    <button class="loop-size-btn" id="loop-half-1">½</button>
-                                    <button class="loop-size-btn" id="loop-double-1">×2</button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="deck-controls">
-                            <div class="transport-controls">
-                                <button class="play-btn" id="play1">
-                                    <i class="fas fa-play"></i>
-                                </button>
-                                <button class="cue-btn" id="cue1">CUE</button>
-                                <button class="sync-btn" id="sync1">SYNC</button>
-                            </div>
-                            
-                            <div class="pitch-control">
-                                <div class="pitch-bend">
-                                    <button id="pitch-bend-minus-1">-</button>
-                                    <button id="pitch-bend-plus-1">+</button>
-                                </div>
-                                <input type="range" id="pitch1" min="-8" max="8" value="0" step="0.1" class="pitch-slider" orient="vertical">
-                                <button class="pitch-reset" id="pitch-reset-1">0%</button>
-                            </div>
-                        </div>
-                        
-                        <div class="eq-section">
-                            <div class="eq-control">
-                                <label>HIGH</label>
-                                <input type="range" id="high1" min="-12" max="12" value="0" class="eq-knob" orient="vertical">
-                                <div class="eq-value">0 dB</div>
-                            </div>
-                            <div class="eq-control">
-                                <label>MID</label>
-                                <input type="range" id="mid1" min="-12" max="12" value="0" class="eq-knob" orient="vertical">
-                                <div class="eq-value">0 dB</div>
-                            </div>
-                            <div class="eq-control">
-                                <label>LOW</label>
-                                <input type="range" id="low1" min="-12" max="12" value="0" class="eq-knob" orient="vertical">
-                                <div class="eq-value">0 dB</div>
-                            </div>
-                        </div>
-                        
-                        <div class="volume-control">
-                            <label>Volume</label>
-                            <div class="level-meter" id="level-meter-1">
-                                <div class="level-indicator"></div>
-                            </div>
-                            <input type="range" id="volume1" min="0" max="100" value="80" class="volume-slider" orient="vertical">
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Mixer Section -->
-                <div class="mixer-section">
-                    <div class="mixer-header">
-                        <h2>Mixer</h2>
-                    </div>
-                    
-                    <div class="crossfader-container">
-                        <div class="deck-label">DECK 1</div>
-                        <input type="range" id="crossfader" min="0" max="100" value="50" class="crossfader">
-                        <div class="deck-label">DECK 2</div>
-                    </div>
-                    
-                    <div class="fx-units">
-                        <div class="fx-unit">
-                            <h3>FX Unit 1</h3>
-                            <div class="fx-assign">
-                                <button class="fx-assign-btn active" data-deck="1">1</button>
-                                <button class="fx-assign-btn" data-deck="2">2</button>
-                                <button class="fx-assign-btn" data-deck="master">M</button>
-                            </div>
-                            <div class="fx-controls">
-                                <div class="fx-control">
-                                    <label>Filter</label>
-                                    <input type="range" id="filter1" min="0" max="100" value="50" class="fx-knob">
-                                </div>
-                                <div class="fx-control">
-                                    <label>Delay</label>
-                                    <input type="range" id="delay1" min="0" max="100" value="0" class="fx-knob">
-                                </div>
-                                <div class="fx-control">
-                                    <label>Reverb</label>
-                                    <input type="range" id="reverb1" min="0" max="100" value="0" class="fx-knob">
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="fx-unit">
-                            <h3>FX Unit 2</h3>
-                            <div class="fx-assign">
-                                <button class="fx-assign-btn" data-deck="1">1</button>
-                                <button class="fx-assign-btn active" data-deck="2">2</button>
-                                <button class="fx-assign-btn" data-deck="master">M</button>
-                            </div>
-                            <div class="fx-controls">
-                                <div class="fx-control">
-                                    <label>Flanger</label>
-                                    <input type="range" id="flanger2" min="0" max="100" value="0" class="fx-knob">
-                                </div>
-                                <div class="fx-control">
-                                    <label>Phaser</label>
-                                    <input type="range" id="phaser2" min="0" max="100" value="0" class="fx-knob">
-                                </div>
-                                <div class="fx-control">
-                                    <label>Bitcrush</label>
-                                    <input type="range" id="bitcrush2" min="0" max="100" value="0" class="fx-knob">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Deck 2 -->
-                <div class="deck" id="deck2">
-                    <div class="deck-header">
-                        <h2>Deck 2</h2>
-                        <div class="track-info-display">
-                            <div class="track-title" id="track-title-2">No track loaded</div>
-                            <div class="track-artist" id="track-artist-2"></div>
-                        </div>
-                        <button class="load-track-btn" id="load-track-btn-2">
-                            <i class="fas fa-music"></i> Load Track
-                        </button>
-                        <input type="file" id="track-input-2" accept="audio/*" hidden>
-                    </div>
-                    
-                    <div class="waveform-container">
-                        <div class="waveform" id="waveform2"></div>
-                        <div class="playhead" id="playhead2"></div>
-                        
-                        <div class="beat-grid" id="beat-grid-2"></div>
-                        
-                        <div class="hot-cues">
-                            <button class="hot-cue" data-cue="1" data-deck="2">1</button>
-                            <button class="hot-cue" data-cue="2" data-deck="2">2</button>
-                            <button class="hot-cue" data-cue="3" data-deck="2">3</button>
-                            <button class="hot-cue" data-cue="4" data-deck="2">4</button>
-                        </div>
-                    </div>
-                    
-                    <div class="deck-section">
-                        <div class="platter-section">
-                            <div class="platter">
-                                <div class="vinyl" id="vinyl2">
-                                    <div class="vinyl-label">2</div>
-                                </div>
-                                <div class="vinyl-details">
-                                    <div class="bpm-display">
-                                        <span id="bpm-value-2">--.-</span> BPM
-                                    </div>
-                                    <div class="pitch-display">
-                                        <span id="pitch-display-2">0.0%</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="loop-controls">
-                                <button class="loop-btn" id="loop-in-2">IN</button>
-                                <button class="loop-btn" id="loop-out-2">OUT</button>
-                                <button class="loop-btn" id="loop-active-2">LOOP</button>
-                                <div class="loop-size">
-                                    <button class="loop-size-btn" id="loop-half-2">½</button>
-                                    <button class="loop-size-btn" id="loop-double-2">×2</button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="deck-controls">
-                            <div class="transport-controls">
-                                <button class="play-btn" id="play2">
-                                    <i class="fas fa-play"></i>
-                                </button>
-                                <button class="cue-btn" id="cue2">CUE</button>
-                                <button class="sync-btn" id="sync2">SYNC</button>
-                            </div>
-                            
-                            <div class="pitch-control">
-                                <div class="pitch-bend">
-                                    <button id="pitch-bend-minus-2">-</button>
-                                    <button id="pitch-bend-plus-2">+</button>
-                                </div>
-                                <input type="range" id="pitch2" min="-8" max="8" value="0" step="0.1" class="pitch-slider" orient="vertical">
-                                <button class="pitch-reset" id="pitch-reset-2">0%</button>
-                            </div>
-                        </div>
-                        
-                        <div class="eq-section">
-                            <div class="eq-control">
-                                <label>HIGH</label>
-                                <input type="range" id="high2" min="-12" max="12" value="0" class="eq-knob" orient="vertical">
-                                <div class="eq-value">0 dB</div>
-                            </div>
-                            <div class="eq-control">
-                                <label>MID</label>
-                                <input type="range" id="mid2" min="-12" max="12" value="0" class="eq-knob" orient="vertical">
-                                <div class="eq-value">0 dB</div>
-                            </div>
-                            <div class="eq-control">
-                                <label>LOW</label>
-                                <input type="range" id="low2" min="-12" max="12" value="0" class="eq-knob" orient="vertical">
-                                <div class="eq-value">0 dB</div>
-                            </div>
-                        </div>
-                        
-                        <div class="volume-control">
-                            <label>Volume</label>
-                            <div class="level-meter" id="level-meter-2">
-                                <div class="level-indicator"></div>
-                            </div>
-                            <input type="range" id="volume2" min="0" max="100" value="80" class="volume-slider" orient="vertical">
-                        </div>
-                    </div>
-                </div>
+
+        <!-- VU Meters -->
+        <div class="vu-meters">
+            <div class="vu-meter">
+                <label>Deck A</label>
+                <div class="vu-bars" id="vuA"></div>
             </div>
-            
-            <div class="keyboard-shortcuts-info">
-                <button id="show-keyboard-shortcuts">
-                    <i class="fas fa-keyboard"></i> Keyboard Shortcuts
-                </button>
+            <div class="vu-meter">
+                <label>Master</label>
+                <div class="vu-bars" id="vuMaster"></div>
             </div>
-        </div>
-    </div>
-    
-    <!-- Keyboard Shortcuts Modal -->
-    <div id="shortcuts-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Keyboard Shortcuts</h2>
-                <button id="close-shortcuts-modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="shortcuts-section">
-                    <h3>Deck 1</h3>
-                    <table>
-                        <tr>
-                            <td><kbd>Q</kbd></td>
-                            <td>Play/Pause</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>W</kbd></td>
-                            <td>Cue</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></td>
-                            <td>Hot Cues</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>F</kbd></td>
-                            <td>Toggle Loop</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>D</kbd></td>
-                            <td>Loop In</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>G</kbd></td>
-                            <td>Loop Out</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>Z</kbd></td>
-                            <td>Pitch Bend -</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>X</kbd></td>
-                            <td>Pitch Bend +</td>
-                        </tr>
-                    </table>
-                </div>
-                
-                <div class="shortcuts-section">
-                    <h3>Deck 2</h3>
-                    <table>
-                        <tr>
-                            <td><kbd>P</kbd></td>
-                            <td>Play/Pause</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>O</kbd></td>
-                            <td>Cue</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>7</kbd> <kbd>8</kbd> <kbd>9</kbd> <kbd>0</kbd></td>
-                            <td>Hot Cues</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>J</kbd></td>
-                            <td>Toggle Loop</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>H</kbd></td>
-                            <td>Loop In</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>K</kbd></td>
-                            <td>Loop Out</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>N</kbd></td>
-                            <td>Pitch Bend -</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>M</kbd></td>
-                            <td>Pitch Bend +</td>
-                        </tr>
-                    </table>
-                </div>
-                
-                <div class="shortcuts-section">
-                    <h3>Mixer</h3>
-                    <table>
-                        <tr>
-                            <td><kbd>←</kbd> <kbd>→</kbd></td>
-                            <td>Crossfader</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>Space</kbd></td>
-                            <td>Center Crossfader</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>T</kbd></td>
-                            <td>Tap Tempo</td>
-                        </tr>
-                    </table>
-                </div>
+            <div class="vu-meter">
+                <label>Deck B</label>
+                <div class="vu-bars" id="vuB"></div>
             </div>
         </div>
     </div>
 
-    <script src="js/audio-analyzer.js"></script>
-    <script src="js/library.js"></script>
-    <script src="js/deck.js"></script>
+    <script src="js/audio-engine.js"></script>
+    <script src="js/waveform.js"></script>
     <script src="js/mixer.js"></script>
-    <script src="js/effects.js"></script>
-    <script src="js/keyboard-shortcuts.js"></script>
-    <script src="js/app.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>
