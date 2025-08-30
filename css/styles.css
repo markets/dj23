@@ -616,3 +616,134 @@ input[type="range"]::-webkit-slider-thumb:hover {
 ::-webkit-scrollbar-thumb:hover {
   background: #444;
 }
+
+/* New Control Styles */
+
+/* Pitch bend buttons */
+.pitch-bend-buttons {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.pitch-bend-btn {
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  border: none;
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+.pitch-bend-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 3px 12px rgba(102, 126, 234, 0.4);
+}
+
+.pitch-bend-btn:active {
+  transform: scale(0.95);
+}
+
+/* CUE Points */
+.cue-points {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 15px 0;
+}
+
+.cue-point-btn, .set-cue-btn {
+  background: linear-gradient(45deg, #ff9ff3, #f368e0);
+  border: none;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.set-cue-btn {
+  background: linear-gradient(45deg, #74b9ff, #0984e3);
+}
+
+.cue-point-btn:hover, .set-cue-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 3px 12px rgba(255, 159, 243, 0.4);
+}
+
+.cue-point-btn.active {
+  background: linear-gradient(45deg, #fd79a8, #e84393);
+  box-shadow: 0 0 15px rgba(255, 159, 243, 0.6);
+}
+
+/* Loop Controls */
+.loop-controls {
+  display: flex;
+  gap: 8px;
+  margin: 15px 0;
+}
+
+.loop-btn {
+  background: linear-gradient(45deg, #00b894, #00a085);
+  border: none;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.loop-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 3px 12px rgba(0, 184, 148, 0.4);
+}
+
+.loop-btn.active {
+  background: linear-gradient(45deg, #fd79a8, #e84393);
+  box-shadow: 0 0 15px rgba(0, 184, 148, 0.6);
+}
+
+/* EQ Slider improvements for vertical orientation */
+.eq-slider::-webkit-slider-track {
+  background: linear-gradient(180deg, #1a4a1a, #2c6b2c);
+  border-radius: 15px;
+}
+
+.eq-slider::-webkit-slider-thumb {
+  background: linear-gradient(45deg, #00b894, #00a085);
+  width: 25px;
+  height: 15px;
+  border-radius: 8px;
+}
+
+/* Clickable waveform */
+.waveform-container {
+  position: relative;
+  cursor: pointer;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  transition: border-color 0.2s ease;
+}
+
+.waveform-container:hover {
+  border-color: #4ecdc4;
+}
+
+/* VU Meters repositioned at top */
+.vu-meters {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin: 20px 0;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+}
