@@ -20,6 +20,40 @@
       </div>
     </header>
 
+    <!-- Beat Matching Waveforms Section -->
+    <div class="global-beat-waveforms">
+      <div class="global-beat-waveform-container">
+        <label>Beat Zoom 1 - Current Position</label>
+        <div class="beat-waveforms-row">
+          <div class="beat-waveform-wrapper">
+            <span class="deck-label">Deck A</span>
+            <canvas id="beatWaveformA1" class="beat-waveform-global"></canvas>
+            <div class="beat-playhead" id="beatPlayheadA1"></div>
+          </div>
+          <div class="beat-waveform-wrapper">
+            <span class="deck-label">Deck B</span>
+            <canvas id="beatWaveformB1" class="beat-waveform-global"></canvas>
+            <div class="beat-playhead" id="beatPlayheadB1"></div>
+          </div>
+        </div>
+      </div>
+      <div class="global-beat-waveform-container">
+        <label>Beat Zoom 2 - Upcoming Section</label>
+        <div class="beat-waveforms-row">
+          <div class="beat-waveform-wrapper">
+            <span class="deck-label">Deck A</span>
+            <canvas id="beatWaveformA2" class="beat-waveform-global"></canvas>
+            <div class="beat-playhead" id="beatPlayheadA2"></div>
+          </div>
+          <div class="beat-waveform-wrapper">
+            <span class="deck-label">Deck B</span>
+            <canvas id="beatWaveformB2" class="beat-waveform-global"></canvas>
+            <div class="beat-playhead" id="beatPlayheadB2"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Main Mixer Interface -->
     <div class="mixer-interface">
       <!-- Deck A -->
@@ -38,19 +72,6 @@
         <div class="waveform-container">
           <canvas id="waveformA" class="waveform"></canvas>
           <div class="playhead" id="playheadA"></div>
-        </div>
-
-        <div class="beat-matching-waveforms">
-          <div class="beat-waveform-container">
-            <label>Beat Zoom 1</label>
-            <canvas id="beatWaveformA1" class="beat-waveform"></canvas>
-            <div class="beat-playhead" id="beatPlayheadA1"></div>
-          </div>
-          <div class="beat-waveform-container">
-            <label>Beat Zoom 2</label>
-            <canvas id="beatWaveformA2" class="beat-waveform"></canvas>
-            <div class="beat-playhead" id="beatPlayheadA2"></div>
-          </div>
         </div>
 
         <div class="vinyl-container">
@@ -133,12 +154,6 @@
             <input type="range" id="flangerA" min="0" max="100" value="0" class="effect-slider">
           </div>
         </div>
-
-        <div class="volume-control">
-          <label>Volume</label>
-          <input type="range" id="volumeA" min="0" max="100" value="75" class="volume-slider">
-          <span class="volume-display">75%</span>
-        </div>
       </div>
 
       <!-- Center Mixer Section -->
@@ -156,6 +171,20 @@
           <div class="vu-meter-vertical">
             <label>Deck B</label>
             <div class="vu-bars-vertical" id="vuB"></div>
+          </div>
+        </div>
+
+        <!-- Volume Controls -->
+        <div class="volume-controls-vertical">
+          <div class="volume-control-vertical">
+            <label>Volume A</label>
+            <input type="range" id="volumeA" min="0" max="100" value="75" class="volume-slider-vertical" orient="vertical">
+            <span class="volume-display">75%</span>
+          </div>
+          <div class="volume-control-vertical">
+            <label>Volume B</label>
+            <input type="range" id="volumeB" min="0" max="100" value="75" class="volume-slider-vertical" orient="vertical">
+            <span class="volume-display">75%</span>
           </div>
         </div>
 
@@ -200,19 +229,6 @@
         <div class="waveform-container">
           <canvas id="waveformB" class="waveform"></canvas>
           <div class="playhead" id="playheadB"></div>
-        </div>
-
-        <div class="beat-matching-waveforms">
-          <div class="beat-waveform-container">
-            <label>Beat Zoom 1</label>
-            <canvas id="beatWaveformB1" class="beat-waveform"></canvas>
-            <div class="beat-playhead" id="beatPlayheadB1"></div>
-          </div>
-          <div class="beat-waveform-container">
-            <label>Beat Zoom 2</label>
-            <canvas id="beatWaveformB2" class="beat-waveform"></canvas>
-            <div class="beat-playhead" id="beatPlayheadB2"></div>
-          </div>
         </div>
 
         <div class="vinyl-container">
@@ -294,12 +310,6 @@
             <label>Flanger</label>
             <input type="range" id="flangerB" min="0" max="100" value="0" class="effect-slider">
           </div>
-        </div>
-
-        <div class="volume-control">
-          <label>Volume</label>
-          <input type="range" id="volumeB" min="0" max="100" value="75" class="volume-slider">
-          <span class="volume-display">75%</span>
         </div>
       </div>
     </div>
