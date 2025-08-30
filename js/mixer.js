@@ -6,6 +6,7 @@ class MixerController {
       B: null,
       master: null
     };
+    this.deckControllers = {};
     this.setupEventListeners();
     this.initializeVUMeters();
     this.startVUAnimation();
@@ -27,9 +28,9 @@ class MixerController {
       this.updateCrossfader();
     });
 
-    // Setup deck controls
-    this.setupDeckControls('A');
-    this.setupDeckControls('B');
+    // Initialize deck controllers
+    this.deckControllers.A = new DeckController('A');
+    this.deckControllers.B = new DeckController('B');
 
     // Sync buttons
     document.getElementById('syncAB').addEventListener('click', () => {
@@ -39,279 +40,6 @@ class MixerController {
     document.getElementById('syncBA').addEventListener('click', () => {
       this.syncDecks('B', 'A');
     });
-  }
-
-  setupDeckControls(deckId) {
-    // File input
-    const fileInput = document.getElementById(`fileInput${deckId}`);
-    fileInput.addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        await this.loadTrack(deckId, file);
-      }
-    });
-
-    // Transport controls
-    document.getElementById(`play${deckId}`).addEventListener('click', () => {
-      this.playDeck(deckId);
-    });
-
-    document.getElementById(`pause${deckId}`).addEventListener('click', () => {
-      this.pauseDeck(deckId);
-    });
-
-    document.getElementById(`stop${deckId}`).addEventListener('click', () => {
-      this.stopDeck(deckId);
-    });
-
-    document.getElementById(`cue${deckId}`).addEventListener('click', () => {
-      this.cueDeck(deckId);
-    });
-
-    // Pitch control
-    const pitchSlider = document.getElementById(`pitch${deckId}`);
-    pitchSlider.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      const deck = window.audioEngine.getDeck(deckId);
-      if (deck) {
-        deck.setPitch(value);
-      }
-      document.getElementById(`pitchDisplay${deckId}`).textContent = `${value}%`;
-    });
-
-    // EQ controls
-    ['high', 'mid', 'low'].forEach(band => {
-      const eqSlider = document.getElementById(`${band}${deckId}`);
-      eqSlider.addEventListener('input', (e) => {
-        const value = parseInt(e.target.value);
-        const deck = window.audioEngine.getDeck(deckId);
-        if (deck) {
-          deck.setEQ(band, value);
-        }
-        e.target.nextElementSibling.textContent = value;
-      });
-    });
-
-    // Effect controls
-    const filterSlider = document.getElementById(`filter${deckId}`);
-    filterSlider.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      const deck = window.audioEngine.getDeck(deckId);
-      if (deck) {
-        deck.setFilter(value);
-      }
-    });
-
-    const reverbSlider = document.getElementById(`reverb${deckId}`);
-    reverbSlider.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      const deck = window.audioEngine.getDeck(deckId);
-      if (deck) {
-        deck.setReverb(value);
-      }
-    });
-
-    const delaySlider = document.getElementById(`delay${deckId}`);
-    delaySlider.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      const deck = window.audioEngine.getDeck(deckId);
-      if (deck) {
-        deck.setDelay(value);
-      }
-    });
-
-    // Volume control
-    const volumeSlider = document.getElementById(`volume${deckId}`);
-    volumeSlider.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      const deck = window.audioEngine.getDeck(deckId);
-      if (deck) {
-        deck.setVolume(value);
-      }
-      e.target.nextElementSibling.textContent = `${value}%`;
-    });
-
-    // New controls added per user feedback
-    
-    // Pitch bend buttons
-    document.getElementById(`pitchBendPlus${deckId}`).addEventListener('mousedown', () => {
-      const deck = window.audioEngine.getDeck(deckId);
-      if (deck) {
-        deck.pitchBend(1);
-      }
-    });
-
-    document.getElementById(`pitchBendMinus${deckId}`).addEventListener('mousedown', () => {
-      const deck = window.audioEngine.getDeck(deckId);
-      if (deck) {
-        deck.pitchBend(-1);
-      }
-    });
-
-    // CUE point controls
-    document.getElementById(`cue1${deckId}`).addEventListener('click', () => {
-      const deck = window.audioEngine.getDeck(deckId);
-      if (deck) {
-        deck.jumpToCue(1);
-      }
-    });
-
-    document.getElementById(`cue2${deckId}`).addEventListener('click', () => {
-      const deck = window.audioEngine.getDeck(deckId);
-      if (deck) {
-        deck.jumpToCue(2);
-      }
-    });
-
-    document.getElementById(`setCue1${deckId}`).addEventListener('click', () => {
-      const deck = window.audioEngine.getDeck(deckId);
-      if (deck) {
-        deck.setCuePoint(1);
-      }
-    });
-
-    document.getElementById(`setCue2${deckId}`).addEventListener('click', () => {
-      const deck = window.audioEngine.getDeck(deckId);
-      if (deck) {
-        deck.setCuePoint(2);
-      }
-    });
-
-    // Loop controls
-    document.getElementById(`loopIn${deckId}`).addEventListener('click', () => {
-      const deck = window.audioEngine.getDeck(deckId);
-      if (deck) {
-        deck.setLoopIn();
-      }
-    });
-
-    document.getElementById(`loopOut${deckId}`).addEventListener('click', () => {
-      const deck = window.audioEngine.getDeck(deckId);
-      if (deck) {
-        deck.setLoopOut();
-      }
-    });
-
-    document.getElementById(`loopToggle${deckId}`).addEventListener('click', () => {
-      const deck = window.audioEngine.getDeck(deckId);
-      if (deck) {
-        deck.toggleLoop();
-      }
-    });
-
-    // New effects: Phaser and Flanger
-    const phaserSlider = document.getElementById(`phaser${deckId}`);
-    phaserSlider.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      const deck = window.audioEngine.getDeck(deckId);
-      if (deck) {
-        deck.setPhaser(value);
-      }
-    });
-
-    const flangerSlider = document.getElementById(`flanger${deckId}`);
-    flangerSlider.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      const deck = window.audioEngine.getDeck(deckId);
-      if (deck) {
-        deck.setFlanger(value);
-      }
-    });
-  }
-
-  async loadTrack(deckId, file) {
-    await window.audioEngine.initialize();
-        
-    const deck = window.audioEngine.getDeck(deckId);
-    const trackInfo = document.getElementById(`trackInfo${deckId}`);
-        
-    // Show loading state
-    trackInfo.classList.add('loading');
-    trackInfo.querySelector('.track-name').textContent = 'Loading...';
-        
-    const success = await deck.loadFile(file);
-        
-    if (success) {
-      // Update track info
-      trackInfo.querySelector('.track-name').textContent = file.name;
-      this.updateTrackTime(deckId);
-            
-      // Generate waveform
-      const waveformRenderer = window.waveformRenderers[deckId];
-      if (waveformRenderer) {
-        await waveformRenderer.generateWaveform(deck.audioBuffer);
-      }
-            
-      // Update BPM display
-      document.getElementById(`bpm${deckId}`).textContent = deck.getBPM();
-    } else {
-      trackInfo.querySelector('.track-name').textContent = 'Failed to load';
-    }
-        
-    trackInfo.classList.remove('loading');
-  }
-
-  async playDeck(deckId) {
-    await window.audioEngine.resumeContext();
-        
-    const deck = window.audioEngine.getDeck(deckId);
-    if (deck) {
-      deck.play();
-      this.updateTransportButtons(deckId);
-      this.updateDeckVisuals(deckId, true);
-    }
-  }
-
-  pauseDeck(deckId) {
-    const deck = window.audioEngine.getDeck(deckId);
-    if (deck) {
-      deck.pause();
-      this.updateTransportButtons(deckId);
-      this.updateDeckVisuals(deckId, false);
-    }
-  }
-
-  stopDeck(deckId) {
-    const deck = window.audioEngine.getDeck(deckId);
-    if (deck) {
-      deck.stop();
-      this.updateTransportButtons(deckId);
-      this.updateDeckVisuals(deckId, false);
-    }
-  }
-
-  cueDeck(deckId) {
-    const deck = window.audioEngine.getDeck(deckId);
-    if (deck) {
-      deck.stop();
-      deck.pauseTime = 0;
-      this.updateTransportButtons(deckId);
-      this.updateDeckVisuals(deckId, false);
-    }
-  }
-
-  updateTransportButtons(deckId) {
-    const deck = window.audioEngine.getDeck(deckId);
-    const playBtn = document.getElementById(`play${deckId}`);
-    const pauseBtn = document.getElementById(`pause${deckId}`);
-        
-    // Remove active class from all buttons
-    document.querySelectorAll(`#deck${deckId} .transport-controls button`).forEach(btn => {
-      btn.classList.remove('active');
-    });
-        
-    if (deck.isPlaying) {
-      playBtn.classList.add('active');
-    }
-  }
-
-  updateDeckVisuals(deckId, isPlaying) {
-    const deckElement = document.getElementById(`deck${deckId}`);
-    if (isPlaying) {
-      deckElement.classList.add('playing');
-    } else {
-      deckElement.classList.remove('playing');
-    }
   }
 
   updateCrossfader() {
@@ -349,25 +77,6 @@ class MixerController {
     }
   }
 
-  updateTrackTime(deckId) {
-    const deck = window.audioEngine.getDeck(deckId);
-    const trackInfo = document.getElementById(`trackInfo${deckId}`);
-    const timeDisplay = trackInfo.querySelector('.track-time');
-        
-    if (deck && deck.audioBuffer) {
-      const currentTime = deck.getCurrentTime();
-      const duration = deck.getDuration();
-            
-      const formatTime = (seconds) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-      };
-            
-      timeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
-    }
-  }
-
   initializeVUMeters() {
     ['A', 'B', 'master'].forEach(id => {
       const container = document.getElementById(`vu${id === 'master' ? 'Master' : id}`);
@@ -376,7 +85,6 @@ class MixerController {
       for (let i = 0; i < 20; i++) {
         const bar = document.createElement('div');
         bar.className = 'vu-bar';
-        bar.style.height = '3px';
         container.appendChild(bar);
         bars.push(bar);
       }
@@ -437,9 +145,9 @@ class MixerController {
             
       this.updateVUMeter('master', masterLevel / 2);
             
-      // Update track times
-      this.updateTrackTime('A');
-      this.updateTrackTime('B');
+      // Update track times for both decks
+      if (this.deckControllers.A) this.deckControllers.A.updateTrackTime();
+      if (this.deckControllers.B) this.deckControllers.B.updateTrackTime();
             
       requestAnimationFrame(updateVU);
     };

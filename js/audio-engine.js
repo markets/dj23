@@ -63,6 +63,11 @@ class Deck {
     this.playbackRate = 1;
     this.volume = 0.75;
     
+    // Scratching properties
+    this.isScratching = false;
+    this.originalPlaybackRate = 1;
+    this.wasPlayingBeforeScratch = false;
+    
     // CUE points
     this.cuePoints = { 1: null, 2: null };
     
@@ -395,6 +400,35 @@ class Deck {
       clearInterval(this.loopCheckInterval);
       this.loopCheckInterval = null;
     }
+  }
+
+  // Scratching functionality
+  startScratch() {
+    this.isScratching = true;
+    this.originalPlaybackRate = this.playbackRate;
+    if (this.isPlaying) {
+      this.wasPlayingBeforeScratch = true;
+    }
+  }
+
+  scratch(speed) {
+    if (!this.isScratching || !this.source) return;
+    
+    // Convert scratch speed to playback rate
+    // Speed is typically between -10 and 10, map to playback rate
+    const scratchRate = Math.max(-4, Math.min(4, speed));
+    
+    if (this.source.playbackRate) {
+      this.source.playbackRate.value = this.originalPlaybackRate + scratchRate;
+    }
+  }
+
+  stopScratch() {
+    this.isScratching = false;
+    if (this.source && this.source.playbackRate) {
+      this.source.playbackRate.value = this.originalPlaybackRate || this.playbackRate;
+    }
+    this.wasPlayingBeforeScratch = false;
   }
 
   // Pitch bend methods

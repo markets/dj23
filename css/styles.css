@@ -425,11 +425,48 @@ body {
   align-items: flex-end;
 }
 
+/* Vertical VU Meters */
+.vu-meters-vertical {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  margin: 20px 0;
+  height: 200px;
+}
+
+.vu-meter-vertical {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.vu-meter-vertical label {
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: #ccc;
+  writing-mode: horizontal-tb;
+}
+
+.vu-bars-vertical {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+  width: 20px;
+  height: 150px;
+  align-items: center;
+}
+
 .vu-bar {
   width: 4px;
   background: #333;
   border-radius: 2px;
   transition: all 0.1s ease;
+}
+
+.vu-bars-vertical .vu-bar {
+  width: 16px;
+  height: 4px;
 }
 
 .vu-bar.active-low {
@@ -442,6 +479,151 @@ body {
 
 .vu-bar.active-high {
   background: #ff6b6b;
+}
+
+/* Vinyl Record */
+.vinyl-container {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 20px;
+  justify-content: center;
+}
+
+.vinyl-wrapper {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+
+.vinyl-record {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: 
+    radial-gradient(circle at center, #1a1a1a 20%, #333 21%, #1a1a1a 22%, #333 23%, #1a1a1a 24%, #333 25%),
+    conic-gradient(from 0deg, #1a1a1a, #333, #1a1a1a, #333, #1a1a1a),
+    linear-gradient(45deg, #2a2a2a, #1a1a1a);
+  position: relative;
+  cursor: grab;
+  transition: transform 0.1s ease;
+  border: 2px solid #444;
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.7),
+    inset 0 2px 4px rgba(255, 255, 255, 0.1),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.vinyl-record:active {
+  cursor: grabbing;
+}
+
+.vinyl-record.spinning {
+  animation: spin 1.8s linear infinite;
+}
+
+.vinyl-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(145deg, #ff6b6b, #ff4757);
+  border-radius: 50%;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.5),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.vinyl-hole {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  background: #000;
+  border-radius: 50%;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.vinyl-grooves {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: 
+    radial-gradient(circle at center, transparent 30%, rgba(255, 255, 255, 0.02) 31%, transparent 32%),
+    radial-gradient(circle at center, transparent 35%, rgba(255, 255, 255, 0.02) 36%, transparent 37%),
+    radial-gradient(circle at center, transparent 40%, rgba(255, 255, 255, 0.02) 41%, transparent 42%),
+    radial-gradient(circle at center, transparent 45%, rgba(255, 255, 255, 0.02) 46%, transparent 47%);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Vertical Pitch Control */
+.pitch-control-vertical {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.pitch-control-vertical label {
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: #ccc;
+}
+
+.pitch-slider-vertical {
+  writing-mode: bt-lr; /* IE */
+  writing-mode: vertical-lr; /* Standard */
+  -webkit-appearance: slider-vertical;
+  width: 20px;
+  height: 100px;
+  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+  outline: none;
+  margin-bottom: 10px;
+}
+
+.pitch-slider-vertical::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 12px;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.pitch-slider-vertical::-moz-range-thumb {
+  width: 24px;
+  height: 12px;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.pitch-bend-buttons-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pitch-bend-buttons-vertical .pitch-bend-btn {
+  width: 30px;
+  height: 20px;
+  font-size: 12px;
 }
 
 /* Slider Styling */

@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Web DJ Mixer Pro</title>
+  <title>DJ23</title>
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
   <div class="mixer-container">
     <!-- Header -->
     <header class="mixer-header">
-      <h1>DJ Mixer Pro</h1>
+      <h1>DJ23</h1>
       <div class="master-controls">
         <div class="master-volume">
           <label>Master</label>
@@ -19,22 +19,6 @@
         </div>
       </div>
     </header>
-
-    <!-- VU Meters -->
-    <div class="vu-meters">
-      <div class="vu-meter">
-        <label>Deck A</label>
-        <div class="vu-bars" id="vuA"></div>
-      </div>
-      <div class="vu-meter">
-        <label>Master</label>
-        <div class="vu-bars" id="vuMaster"></div>
-      </div>
-      <div class="vu-meter">
-        <label>Deck B</label>
-        <div class="vu-bars" id="vuB"></div>
-      </div>
-    </div>
 
     <!-- Main Mixer Interface -->
     <div class="mixer-interface">
@@ -49,6 +33,26 @@
         <div class="track-info" id="trackInfoA">
           <div class="track-name">No track loaded</div>
           <div class="track-time">00:00 / 00:00</div>
+        </div>
+
+        <div class="vinyl-container">
+          <div class="vinyl-wrapper">
+            <div class="vinyl-record" id="vinylA">
+              <div class="vinyl-center">
+                <div class="vinyl-hole"></div>
+              </div>
+              <div class="vinyl-grooves"></div>
+            </div>
+          </div>
+          <div class="pitch-control-vertical">
+            <label>Pitch</label>
+            <input type="range" id="pitchA" min="-50" max="50" value="0" class="pitch-slider-vertical" orient="vertical">
+            <span id="pitchDisplayA">0%</span>
+            <div class="pitch-bend-buttons-vertical">
+              <button id="pitchBendPlusA" class="pitch-bend-btn">+</button>
+              <button id="pitchBendMinusA" class="pitch-bend-btn">-</button>
+            </div>
+          </div>
         </div>
 
         <div class="waveform-container">
@@ -74,16 +78,6 @@
           <button id="loopInA" class="loop-btn">LOOP IN</button>
           <button id="loopOutA" class="loop-btn">LOOP OUT</button>
           <button id="loopToggleA" class="loop-btn">LOOP</button>
-        </div>
-
-        <div class="pitch-control">
-          <label>Pitch</label>
-          <div class="pitch-bend-buttons">
-            <button id="pitchBendMinusA" class="pitch-bend-btn">-</button>
-            <button id="pitchBendPlusA" class="pitch-bend-btn">+</button>
-          </div>
-          <input type="range" id="pitchA" min="-50" max="50" value="0" class="pitch-slider">
-          <span id="pitchDisplayA">0%</span>
         </div>
 
         <div class="eq-section">
@@ -136,6 +130,22 @@
 
       <!-- Center Mixer Section -->
       <div class="center-mixer">
+        <!-- VU Meters -->
+        <div class="vu-meters-vertical">
+          <div class="vu-meter-vertical">
+            <label>Deck A</label>
+            <div class="vu-bars-vertical" id="vuA"></div>
+          </div>
+          <div class="vu-meter-vertical">
+            <label>Master</label>
+            <div class="vu-bars-vertical" id="vuMaster"></div>
+          </div>
+          <div class="vu-meter-vertical">
+            <label>Deck B</label>
+            <div class="vu-bars-vertical" id="vuB"></div>
+          </div>
+        </div>
+
         <div class="crossfader-section">
           <label>Crossfader</label>
           <input type="range" id="crossfader" min="0" max="100" value="50" class="crossfader">
@@ -159,17 +169,6 @@
           <button id="syncAB" class="sync-btn">SYNC A→B</button>
           <button id="syncBA" class="sync-btn">SYNC B→A</button>
         </div>
-
-        <div class="cue-controls">
-          <div class="cue-volume">
-            <label>Cue Volume</label>
-            <input type="range" id="cueVolume" min="0" max="100" value="75" class="volume-slider">
-          </div>
-          <div class="cue-mix">
-            <label>Cue Mix</label>
-            <input type="range" id="cueMix" min="0" max="100" value="0" class="volume-slider">
-          </div>
-        </div>
       </div>
 
       <!-- Deck B -->
@@ -183,6 +182,26 @@
         <div class="track-info" id="trackInfoB">
           <div class="track-name">No track loaded</div>
           <div class="track-time">00:00 / 00:00</div>
+        </div>
+
+        <div class="vinyl-container">
+          <div class="vinyl-wrapper">
+            <div class="vinyl-record" id="vinylB">
+              <div class="vinyl-center">
+                <div class="vinyl-hole"></div>
+              </div>
+              <div class="vinyl-grooves"></div>
+            </div>
+          </div>
+          <div class="pitch-control-vertical">
+            <label>Pitch</label>
+            <input type="range" id="pitchB" min="-50" max="50" value="0" class="pitch-slider-vertical" orient="vertical">
+            <span id="pitchDisplayB">0%</span>
+            <div class="pitch-bend-buttons-vertical">
+              <button id="pitchBendPlusB" class="pitch-bend-btn">+</button>
+              <button id="pitchBendMinusB" class="pitch-bend-btn">-</button>
+            </div>
+          </div>
         </div>
 
         <div class="waveform-container">
@@ -208,16 +227,6 @@
           <button id="loopInB" class="loop-btn">LOOP IN</button>
           <button id="loopOutB" class="loop-btn">LOOP OUT</button>
           <button id="loopToggleB" class="loop-btn">LOOP</button>
-        </div>
-
-        <div class="pitch-control">
-          <label>Pitch</label>
-          <div class="pitch-bend-buttons">
-            <button id="pitchBendMinusB" class="pitch-bend-btn">-</button>
-            <button id="pitchBendPlusB" class="pitch-bend-btn">+</button>
-          </div>
-          <input type="range" id="pitchB" min="-50" max="50" value="0" class="pitch-slider">
-          <span id="pitchDisplayB">0%</span>
         </div>
 
         <div class="eq-section">
@@ -271,6 +280,7 @@
   </div>
 
   <script src="js/audio-engine.js"></script>
+  <script src="js/deck.js"></script>
   <script src="js/waveform.js"></script>
   <script src="js/mixer.js"></script>
   <script src="js/main.js"></script>
