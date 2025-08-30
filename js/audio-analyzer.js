@@ -1,12 +1,12 @@
 class AudioAnalyzer {
-    constructor() {
-        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    constructor(audioContext) {
+        this.audioContext = audioContext;
         this.offlineContext = null;
     }
     
     async analyzeTrack(file) {
         const arrayBuffer = await this.readFileAsArrayBuffer(file);
-        const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer.slice(0));
+        const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
         
         // Create offline context for analysis
         this.offlineContext = new OfflineAudioContext(

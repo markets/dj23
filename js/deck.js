@@ -1,7 +1,7 @@
 class Deck {
-    constructor(deckId) {
+    constructor(deckId, audioContext) {
         this.deckId = deckId;
-        this.audioContext = null;
+        this.audioContext = audioContext;
         this.audioSource = null;
         this.audioBuffer = null;
         this.gainNode = null;
@@ -66,7 +66,7 @@ class Deck {
         this.hotCueButtons = document.querySelectorAll(`.hot-cue[data-deck="${deckId}"]`);
 
         // Initialize track analyzer
-        this.trackAnalyzer = new AudioAnalyzer();
+        this.trackAnalyzer = new AudioAnalyzer(this.audioContext);
 
         this.init();
     }
@@ -74,7 +74,6 @@ class Deck {
     init() {
         // Initialize Web Audio API
         try {
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
             // Create audio nodes
             this.gainNode = this.audioContext.createGain();

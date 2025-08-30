@@ -4,8 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const audioContext = new AudioContext();
     
     // Create decks
-    const deck1 = new Deck(1);
-    const deck2 = new Deck(2);
+    const deck1 = new Deck(1, audioContext);
+    const deck2 = new Deck(2, audioContext);
     
     // Create mixer
     const mixer = new Mixer(deck1, deck2);
