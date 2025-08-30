@@ -400,7 +400,7 @@ class ZoomedWaveformRenderer {
 
   updatePlayhead() {
     const deck = window.audioEngine.getDeck(this.deckId);
-    const playhead = document.getElementById(`beatPlayhead${this.deckId}${this.zoomIndex}`);
+    const playhead = document.getElementById(`beatPlayhead${this.deckId}`);
         
     if (deck && deck.isPlaying && deck.getDuration() > 0) {
       const currentTime = deck.getCurrentTime();
@@ -444,8 +444,6 @@ window.waveformRenderers = {
 
 // Global beat waveform renderers
 window.beatWaveformRenderers = {
-  A1: null,
-  A2: null,
-  B1: null,
-  B2: null
+  A: null,
+  B: null
 };

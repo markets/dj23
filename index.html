@@ -23,33 +23,17 @@
     <!-- Beat Matching Waveforms Section -->
     <div class="global-beat-waveforms">
       <div class="global-beat-waveform-container">
-        <label>Beat Zoom 1 - Current Position</label>
-        <div class="beat-waveforms-row">
-          <div class="beat-waveform-wrapper">
-            <span class="deck-label">Deck A</span>
-            <canvas id="beatWaveformA1" class="beat-waveform-global"></canvas>
-            <div class="beat-playhead" id="beatPlayheadA1"></div>
-          </div>
-          <div class="beat-waveform-wrapper">
-            <span class="deck-label">Deck B</span>
-            <canvas id="beatWaveformB1" class="beat-waveform-global"></canvas>
-            <div class="beat-playhead" id="beatPlayheadB1"></div>
-          </div>
+        <label>Deck A - Beat View</label>
+        <div class="beat-waveform-wrapper-fullwidth">
+          <canvas id="beatWaveformA" class="beat-waveform-global-fullwidth"></canvas>
+          <div class="beat-playhead" id="beatPlayheadA"></div>
         </div>
       </div>
       <div class="global-beat-waveform-container">
-        <label>Beat Zoom 2 - Upcoming Section</label>
-        <div class="beat-waveforms-row">
-          <div class="beat-waveform-wrapper">
-            <span class="deck-label">Deck A</span>
-            <canvas id="beatWaveformA2" class="beat-waveform-global"></canvas>
-            <div class="beat-playhead" id="beatPlayheadA2"></div>
-          </div>
-          <div class="beat-waveform-wrapper">
-            <span class="deck-label">Deck B</span>
-            <canvas id="beatWaveformB2" class="beat-waveform-global"></canvas>
-            <div class="beat-playhead" id="beatPlayheadB2"></div>
-          </div>
+        <label>Deck B - Beat View</label>
+        <div class="beat-waveform-wrapper-fullwidth">
+          <canvas id="beatWaveformB" class="beat-waveform-global-fullwidth"></canvas>
+          <div class="beat-playhead" id="beatPlayheadB"></div>
         </div>
       </div>
     </div>
@@ -85,12 +69,12 @@
           </div>
           <div class="pitch-control-vertical">
             <label>Pitch</label>
-            <input type="range" id="pitchA" min="-50" max="50" value="0" class="pitch-slider-vertical" orient="vertical">
-            <span id="pitchDisplayA">0%</span>
             <div class="pitch-bend-buttons-vertical">
               <button id="pitchBendPlusA" class="pitch-bend-btn">+</button>
               <button id="pitchBendMinusA" class="pitch-bend-btn">-</button>
             </div>
+            <input type="range" id="pitchA" min="-50" max="50" value="0" class="pitch-slider-vertical" orient="vertical">
+            <span id="pitchDisplayA">0%</span>
           </div>
         </div>
 
@@ -174,20 +158,6 @@
           </div>
         </div>
 
-        <!-- Volume Controls -->
-        <div class="volume-controls-vertical">
-          <div class="volume-control-vertical">
-            <label>Volume A</label>
-            <input type="range" id="volumeA" min="0" max="100" value="75" class="volume-slider-vertical" orient="vertical">
-            <span class="volume-display">75%</span>
-          </div>
-          <div class="volume-control-vertical">
-            <label>Volume B</label>
-            <input type="range" id="volumeB" min="0" max="100" value="75" class="volume-slider-vertical" orient="vertical">
-            <span class="volume-display">75%</span>
-          </div>
-        </div>
-
         <div class="crossfader-section">
           <label>Crossfader</label>
           <input type="range" id="crossfader" min="0" max="100" value="50" class="crossfader">
@@ -210,6 +180,20 @@
           </div>
           <button id="syncAB" class="sync-btn">SYNC A→B</button>
           <button id="syncBA" class="sync-btn">SYNC B→A</button>
+        </div>
+
+        <!-- Volume Controls -->
+        <div class="volume-controls-vertical">
+          <div class="volume-control-vertical">
+            <label>Volume A</label>
+            <input type="range" id="volumeA" min="0" max="100" value="75" class="volume-slider-vertical" orient="vertical">
+            <span class="volume-display">75%</span>
+          </div>
+          <div class="volume-control-vertical">
+            <label>Volume B</label>
+            <input type="range" id="volumeB" min="0" max="100" value="75" class="volume-slider-vertical" orient="vertical">
+            <span class="volume-display">75%</span>
+          </div>
         </div>
       </div>
 
@@ -242,12 +226,12 @@
           </div>
           <div class="pitch-control-vertical">
             <label>Pitch</label>
-            <input type="range" id="pitchB" min="-50" max="50" value="0" class="pitch-slider-vertical" orient="vertical">
-            <span id="pitchDisplayB">0%</span>
             <div class="pitch-bend-buttons-vertical">
               <button id="pitchBendPlusB" class="pitch-bend-btn">+</button>
               <button id="pitchBendMinusB" class="pitch-bend-btn">-</button>
             </div>
+            <input type="range" id="pitchB" min="-50" max="50" value="0" class="pitch-slider-vertical" orient="vertical">
+            <span id="pitchDisplayB">0%</span>
           </div>
         </div>
 

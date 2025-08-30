@@ -10,20 +10,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.waveformRenderers.B = new WaveformRenderer('waveformB', 'B');
     
   // Initialize beat matching waveform renderers
-  window.beatWaveformRenderers.A1 = new ZoomedWaveformRenderer('beatWaveformA1', 'A', 1);
-  window.beatWaveformRenderers.A2 = new ZoomedWaveformRenderer('beatWaveformA2', 'A', 2);
-  window.beatWaveformRenderers.B1 = new ZoomedWaveformRenderer('beatWaveformB1', 'B', 1);
-  window.beatWaveformRenderers.B2 = new ZoomedWaveformRenderer('beatWaveformB2', 'B', 2);
+  window.beatWaveformRenderers.A = new ZoomedWaveformRenderer('beatWaveformA', 'A', 1);
+  window.beatWaveformRenderers.B = new ZoomedWaveformRenderer('beatWaveformB', 'B', 1);
     
   // Start waveform animations
   window.waveformRenderers.A.startAnimation();
   window.waveformRenderers.B.startAnimation();
   
   // Start beat waveform animations
-  window.beatWaveformRenderers.A1.startAnimation();
-  window.beatWaveformRenderers.A2.startAnimation();
-  window.beatWaveformRenderers.B1.startAnimation();
-  window.beatWaveformRenderers.B2.startAnimation();
+  window.beatWaveformRenderers.A.startAnimation();
+  window.beatWaveformRenderers.B.startAnimation();
     
   console.log('✅ DJ23 - Ready to mix!');
     

@@ -652,34 +652,34 @@ body {
   writing-mode: bt-lr; /* IE */
   writing-mode: vertical-lr; /* Standard */
   -webkit-appearance: slider-vertical;
-  width: 20px;
-  height: 100px;
+  width: 25px;
+  height: 150px;
   background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
-  border-radius: 10px;
+  border-radius: 12px;
   outline: none;
-  margin-bottom: 10px;
+  margin: 10px 0;
   border: 1px solid #8899ff;
 }
 
 .pitch-slider-vertical::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 24px;
-  height: 12px;
-  border-radius: 6px;
+  width: 30px;
+  height: 15px;
+  border-radius: 8px;
   background: #fff;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .pitch-slider-vertical::-moz-range-thumb {
-  width: 24px;
-  height: 12px;
-  border-radius: 6px;
+  width: 30px;
+  height: 15px;
+  border-radius: 8px;
   background: #fff;
   cursor: pointer;
   border: none;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .pitch-bend-buttons-vertical {
@@ -759,6 +759,22 @@ input[type="range"]::-webkit-slider-thumb:hover {
   border: 1px solid #aaaa44;
 }
 
+/* Master volume slider track */
+#masterVolume::-webkit-slider-track {
+  background: linear-gradient(90deg, #2c6b2c, #3a8b3a);
+  height: 8px;
+  border-radius: 4px;
+  border: 1px solid #44aa44;
+}
+
+/* Crossfader track */
+.crossfader::-webkit-slider-track {
+  background: linear-gradient(90deg, #6b2c6b, #8b3a8b);
+  height: 10px;
+  border-radius: 5px;
+  border: 1px solid #aa44aa;
+}
+
 .eq-slider {
   writing-mode: bt-lr;
   -webkit-appearance: slider-vertical;
@@ -768,13 +784,6 @@ input[type="range"]::-webkit-slider-thumb:hover {
   outline: none;
   border-radius: 15px;
   border: 1px solid #44aa44;
-}
-
-.crossfader::-webkit-slider-track {
-  background: linear-gradient(90deg, #6b2c6b, #8b3a8b);
-  height: 10px;
-  border-radius: 5px;
-  border: 1px solid #aa44aa;
 }
 
 /* Responsive Design */
@@ -1115,7 +1124,44 @@ input[type="range"]::-webkit-slider-thumb:hover {
   display: block;
 }
 
+/* Full-width beat waveforms */
+.beat-waveform-wrapper-fullwidth {
+  position: relative;
+  width: 100%;
+  height: 120px;
+  background: #0a0a0a;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 15px;
+}
+
+.beat-waveform-wrapper-fullwidth:hover {
+  border-color: #4ecdc4;
+  box-shadow: 0 4px 15px rgba(78, 205, 196, 0.2);
+}
+
+.beat-waveform-global-fullwidth {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 .beat-waveform-wrapper .beat-playhead {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 3px;
+  height: 100%;
+  background: #ff6b6b;
+  z-index: 10;
+  transform: translateX(-50%);
+  box-shadow: 0 0 8px rgba(255, 107, 107, 0.5);
+}
+
+.beat-waveform-wrapper-fullwidth .beat-playhead {
   position: absolute;
   top: 0;
   left: 50%;
