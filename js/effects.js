@@ -1,6 +1,7 @@
 class Effects {
-  constructor(audioContext) {
+  constructor(audioContext, unitNumber = 1) {
       this.audioContext = audioContext;
+      this.unitNumber = unitNumber;
       
       // Effect nodes
       this.filterNode = this.audioContext.createBiquadFilter();
@@ -14,10 +15,17 @@ class Effects {
       this.dryNode = this.audioContext.createGain();
       this.wetNode = this.audioContext.createGain();
       
-      // DOM elements
-      this.filterKnob = document.getElementById('filter');
-      this.delayKnob = document.getElementById('delay');
-      this.reverbKnob = document.getElementById('reverb');
+      // DOM elements based on unit number
+      if (unitNumber === 1) {
+        this.filterKnob = document.getElementById('filter1');
+        this.delayKnob = document.getElementById('delay1');
+        this.reverbKnob = document.getElementById('reverb1');
+      } else {
+        // Unit 2 has different effect types
+        this.filterKnob = document.getElementById('flanger2');
+        this.delayKnob = document.getElementById('phaser2');
+        this.reverbKnob = document.getElementById('bitcrush2');
+      }
       
       this.init();
   }
