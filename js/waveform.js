@@ -36,6 +36,8 @@ class WaveformRenderer {
         const seekTime = percentage * deck.getDuration();
         console.log(`Deck ${this.deckId}: Waveform clicked - seeking to ${seekTime.toFixed(2)}s (${(percentage * 100).toFixed(1)}%)`);
         deck.seek(seekTime);
+        // Immediately update playhead position after seeking
+        this.updatePlayhead();
       } else {
         console.log(`Deck ${this.deckId}: No audio buffer available for seeking`);
       }
@@ -141,12 +143,15 @@ class WaveformRenderer {
     const deck = window.audioEngine.getDeck(this.deckId);
     const playhead = document.getElementById(`playhead${this.deckId}`);
         
-    if (deck && deck.isPlaying && deck.getDuration() > 0) {
+    if (deck && deck.getDuration() > 0) {
       const progress = deck.getCurrentTime() / deck.getDuration();
       const position = Math.min(progress * 100, 100);
       playhead.style.left = `${position}%`;
+      // Set opacity based on play state for visual feedback
+      playhead.style.opacity = deck.isPlaying ? '1' : '0.7';
     } else {
       playhead.style.left = '0%';
+      playhead.style.opacity = '0.3';
     }
   }
 
@@ -229,22 +234,14 @@ class ZoomedWaveformRenderer {
       
       const deck = window.audioEngine.getDeck(this.deckId);
       if (deck && deck.audioBuffer) {
-        // Convert horizontal movement to scratch speed
-        // Positive deltaX = move forward, negative = move backward
-        const sensitivity = 0.01; // Adjust for scratch sensitivity
+        // Convert horizontal movement to scratch speed for pure scratching
+        // Positive deltaX = scratch forward, negative = scratch backward
+        const sensitivity = 0.02; // Adjust for scratch sensitivity
         const scratchSpeed = deltaX * sensitivity;
         
-        // Calculate new position based on scratch movement
-        const windowDuration = Math.min(this.zoomLevel, deck.getDuration() - this.offsetSeconds);
-        const timePerPixel = windowDuration / rect.width;
-        const timeOffset = deltaX * timePerPixel;
-        const newTime = Math.max(0, Math.min(deck.getDuration(), deck.getCurrentTime() + timeOffset));
-        
-        // Seek to new position for scratch effect
-        deck.seek(newTime);
-        
-        // Also apply scratch effect for audio feedback
-        deck.scratch(scratchSpeed * 10); // Scale for audio scratching
+        // Apply only scratch effect without seeking to new positions
+        // This provides audio feedback while keeping the track position unchanged
+        deck.scratch(scratchSpeed * 15); // Scale for audio scratching
       }
       
       lastX = currentX;
@@ -301,16 +298,12 @@ class ZoomedWaveformRenderer {
       
       const deck = window.audioEngine.getDeck(this.deckId);
       if (deck && deck.audioBuffer) {
-        const sensitivity = 0.01;
+        // Convert horizontal movement to scratch speed for pure scratching
+        const sensitivity = 0.02;
         const scratchSpeed = deltaX * sensitivity;
         
-        const windowDuration = Math.min(this.zoomLevel, deck.getDuration() - this.offsetSeconds);
-        const timePerPixel = windowDuration / rect.width;
-        const timeOffset = deltaX * timePerPixel;
-        const newTime = Math.max(0, Math.min(deck.getDuration(), deck.getCurrentTime() + timeOffset));
-        
-        deck.seek(newTime);
-        deck.scratch(scratchSpeed * 10);
+        // Apply only scratch effect without seeking to new positions
+        deck.scratch(scratchSpeed * 15);
       }
       
       lastX = currentX;
