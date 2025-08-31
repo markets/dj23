@@ -79,6 +79,7 @@ class WaveformRenderer {
 
     const width = this.canvas.clientWidth;
     const height = this.canvas.clientHeight;
+    const deck = window.audioEngine.getDeck(this.deckId);
         
     this.ctx.clearRect(0, 0, width, height);
         
@@ -98,7 +99,6 @@ class WaveformRenderer {
     }
 
     // Draw played portion
-    const deck = window.audioEngine.getDeck(this.deckId);
     if (deck && deck.isPlaying) {
       const progress = deck.getCurrentTime() / deck.getDuration();
       const playedWidth = width * progress;
@@ -114,8 +114,53 @@ class WaveformRenderer {
       }
     }
 
+    // Draw cue points markers
+    this.drawCuePoints(width, height, deck);
+
     // Update playhead position
     this.updatePlayhead();
+  }
+
+  drawCuePoints(width, height, deck) {
+    if (!deck || !deck.audioBuffer) return;
+    
+    const duration = deck.getDuration();
+    
+    // Draw CUE 1
+    if (deck.cuePoints[1] !== null) {
+      const cue1Position = (deck.cuePoints[1] / duration) * width;
+      this.ctx.strokeStyle = '#ff6b6b';
+      this.ctx.lineWidth = 3;
+      this.ctx.setLineDash([]);
+      this.ctx.beginPath();
+      this.ctx.moveTo(cue1Position, 0);
+      this.ctx.lineTo(cue1Position, height);
+      this.ctx.stroke();
+      
+      // Draw CUE 1 label
+      this.ctx.fillStyle = '#ff6b6b';
+      this.ctx.font = 'bold 12px Inter';
+      this.ctx.textAlign = 'center';
+      this.ctx.fillText('CUE 1', cue1Position, 15);
+    }
+    
+    // Draw CUE 2
+    if (deck.cuePoints[2] !== null) {
+      const cue2Position = (deck.cuePoints[2] / duration) * width;
+      this.ctx.strokeStyle = '#4ecdc4';
+      this.ctx.lineWidth = 3;
+      this.ctx.setLineDash([]);
+      this.ctx.beginPath();
+      this.ctx.moveTo(cue2Position, 0);
+      this.ctx.lineTo(cue2Position, height);
+      this.ctx.stroke();
+      
+      // Draw CUE 2 label
+      this.ctx.fillStyle = '#4ecdc4';
+      this.ctx.font = 'bold 12px Inter';
+      this.ctx.textAlign = 'center';
+      this.ctx.fillText('CUE 2', cue2Position, 30);
+    }
   }
 
   renderEmpty() {

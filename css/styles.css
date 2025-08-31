@@ -273,8 +273,8 @@ body {
 }
 
 .track-cover {
-  width: 50px;
-  height: 50px;
+  width: 70px;
+  height: 70px;
   border-radius: var(--radius-md);
   overflow: hidden;
   background: var(--bg-primary);
@@ -904,14 +904,16 @@ body {
   font-size: 12px;
 }
 
-/* Slider Styling Base */
+/* Unified Slider Styling Base - Applied to ALL range inputs */
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
   background: transparent;
   cursor: pointer;
+  outline: none;
 }
 
+/* Unified track styling for all horizontal sliders */
 input[type="range"]::-webkit-slider-track {
   background: var(--bg-surface-lighter);
   height: 8px;
@@ -919,6 +921,7 @@ input[type="range"]::-webkit-slider-track {
   border: 1px solid var(--border-light);
 }
 
+/* Unified thumb styling for all sliders */
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   height: 20px;
@@ -928,90 +931,42 @@ input[type="range"]::-webkit-slider-thumb {
   cursor: pointer;
   box-shadow: var(--shadow-sm);
   transition: var(--transition-normal);
+  border: none;
 }
 
+/* Unified hover effect for all sliders */
 input[type="range"]::-webkit-slider-thumb:hover {
   transform: scale(1.1);
   box-shadow: 0 3px 12px rgba(78, 205, 196, 0.4);
 }
 
-/* Standardized slider track styling - all ranges will have consistent border colors */
-.volume-slider::-webkit-slider-track,
-.pitch-slider::-webkit-slider-track,
-.effect-slider::-webkit-slider-track,
-#masterVolume::-webkit-slider-track,
-.crossfader::-webkit-slider-track {
+/* Firefox unified styling */
+input[type="range"]::-moz-range-track {
   background: var(--bg-surface-lighter);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-sm);
-}
-
-/* Firefox track styling */
-.volume-slider::-moz-range-track,
-.pitch-slider::-moz-range-track,
-.effect-slider::-moz-range-track,
-#masterVolume::-moz-range-track,
-.crossfader::-moz-range-track {
-  background: var(--bg-surface-lighter);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-sm);
   height: 8px;
-}
-
-/* Specialized colors for different slider types while maintaining consistent borders */
-.volume-slider::-webkit-slider-track {
-  background: linear-gradient(90deg, #6b2c2c, #8b3a3a);
-}
-
-.pitch-slider::-webkit-slider-track {
-  background: linear-gradient(90deg, #2c2c6b, #3a3a8b);
-}
-
-.effect-slider::-webkit-slider-track {
-  background: linear-gradient(90deg, #6b6b2c, #8b8b3a);
-}
-
-#masterVolume::-webkit-slider-track {
-  background: linear-gradient(90deg, #2c6b2c, #3a8b3a);
-}
-
-.crossfader::-webkit-slider-track {
-  background: linear-gradient(90deg, #6b2c6b, #8b3a8b);
-  height: 10px;
-}
-
-/* Firefox specific track styling */
-.pitch-slider::-moz-range-track {
-  background: linear-gradient(90deg, #2c2c6b, #3a3a8b);
-}
-
-.effect-slider::-moz-range-track {
-  background: linear-gradient(90deg, #6b6b2c, #8b8b3a);
-}
-
-#masterVolume::-moz-range-track {
-  background: linear-gradient(90deg, #2c6b2c, #3a8b3a);
-}
-
-.crossfader::-moz-range-track {
-  background: linear-gradient(90deg, #6b2c6b, #8b3a8b);
-  height: 10px;
-}
-
-/* Vertical sliders standardization */
-.eq-slider::-webkit-slider-track,
-.volume-slider-vertical::-webkit-slider-track,
-.pitch-slider-vertical::-webkit-slider-track {
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border-light);
-  border-radius: var(--radius-lg);
 }
 
-/* Specialized Slider Thumb Colors */
-.volume-slider::-webkit-slider-thumb {
+input[type="range"]::-moz-range-thumb {
+  height: 20px;
+  width: 20px;
+  border-radius: var(--radius-full);
+  background: var(--gradient-primary);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  border: none;
+}
+
+/* Specialized thumb colors for different slider types */
+.volume-slider::-webkit-slider-thumb,
+.volume-slider-vertical::-webkit-slider-thumb,
+#masterVolume::-webkit-slider-thumb {
   background: var(--gradient-secondary);
 }
 
-.pitch-slider::-webkit-slider-thumb {
+.pitch-slider::-webkit-slider-thumb,
+.pitch-slider-vertical::-webkit-slider-thumb {
   background: var(--gradient-accent);
 }
 
@@ -1019,21 +974,51 @@ input[type="range"]::-webkit-slider-thumb:hover {
   background: linear-gradient(45deg, var(--color-accent-yellow), var(--color-accent-orange));
 }
 
-.eq-slider {
+.crossfader::-webkit-slider-thumb {
+  background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+}
+
+.loop-length-slider::-webkit-slider-thumb {
+  background: linear-gradient(45deg, #00b894, #00a085);
+  width: 16px;
+  height: 16px;
+  border: 2px solid white;
+}
+
+/* Vertical sliders - maintain larger size for easier manipulation */
+.eq-slider,
+.volume-slider-vertical,
+.pitch-slider-vertical {
   writing-mode: bt-lr;
   -webkit-appearance: slider-vertical;
   width: 30px;
   height: 100px;
-  background: linear-gradient(180deg, #2c6b2c, #3a8b3a);
-  outline: none;
-  border-radius: var(--spacing-lg);
+  background: var(--bg-surface-lighter);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border-light);
-  /* Ensure vertical movement on Y axis */
-  -webkit-transform: none;
-  -moz-transform: none;
-  -o-transform: none;
-  transform: none;
 }
+
+.eq-slider::-webkit-slider-track,
+.volume-slider-vertical::-webkit-slider-track,
+.pitch-slider-vertical::-webkit-slider-track {
+  background: var(--bg-surface-lighter);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+}
+
+.eq-slider::-webkit-slider-thumb {
+  background: linear-gradient(45deg, #00b894, #00a085);
+  width: 25px;
+  height: 15px;
+  border-radius: var(--radius-sm);
+}
+
+/* Crossfader specific sizing */
+.crossfader {
+  height: 10px;
+}
+
+
 
 .eq-slider::-webkit-slider-track {
   background: linear-gradient(180deg, #1a4a1a, #2c6b2c);
@@ -1303,18 +1288,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   font-weight: 500;
 }
 
-/* EQ Slider improvements for vertical orientation */
-.eq-slider::-webkit-slider-track {
-  background: linear-gradient(180deg, #1a4a1a, #2c6b2c);
-  border-radius: 15px;
-}
 
-.eq-slider::-webkit-slider-thumb {
-  background: linear-gradient(45deg, #00b894, #00a085);
-  width: 25px;
-  height: 15px;
-  border-radius: 8px;
-}
 
 /* Clickable waveform */
 .waveform-container {
