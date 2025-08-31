@@ -573,6 +573,26 @@ class DeckController {
     const duration = deck.getDuration();
     const trackTimeElement = document.getElementById(`trackInfo${this.deckId}`).querySelector('.track-time');
     
+    // Auto-stop when song reaches the end
+    if (deck.isPlaying && currentTime >= duration) {
+      deck.stop();
+      this.updatePlayingState(false);
+      this.updatePauseState(false);
+      // Stop vinyl animation
+      if (this.vinylElement) {
+        this.vinylElement.classList.remove('spinning');
+      }
+      // Force waveform update to show position at beginning
+      if (window.waveformRenderers && window.waveformRenderers[this.deckId]) {
+        window.waveformRenderers[this.deckId].updatePlayhead();
+        window.waveformRenderers[this.deckId].render();
+      }
+      if (window.beatWaveformRenderers && window.beatWaveformRenderers[this.deckId]) {
+        window.beatWaveformRenderers[this.deckId].updatePlayhead();
+        window.beatWaveformRenderers[this.deckId].render();
+      }
+    }
+    
     trackTimeElement.textContent = `${this.formatTime(currentTime)} / ${this.formatTime(duration)}`;
   }
 
