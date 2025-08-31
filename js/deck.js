@@ -296,6 +296,9 @@ class DeckController {
     const deck = window.audioEngine.getDeck(this.deckId);
     const trackInfo = document.getElementById(`trackInfo${this.deckId}`);
         
+    // Stop current track if playing before loading new one
+    this.stop();
+        
     // Show loading state
     trackInfo.classList.add('loading');
     trackInfo.querySelector('.track-name').textContent = 'Loading...';
