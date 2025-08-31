@@ -503,9 +503,6 @@ class ZoomedWaveformRenderer {
     // Draw beat markers (every second)
     this.drawBeatMarkers(width, height, duration);
     
-    // Draw cue points markers in beat view
-    this.drawCuePoints(width, height, deck, duration);
-    
     // Draw red playhead line always in the center for beat view
     this.ctx.strokeStyle = '#ff4757';
     this.ctx.lineWidth = 2;
