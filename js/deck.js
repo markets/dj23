@@ -352,6 +352,13 @@ class DeckController {
       if (this.vinylElement && !this.isScratching) {
         this.vinylElement.classList.add('spinning');
       }
+      // Resume waveform animations
+      if (window.waveformRenderers && window.waveformRenderers[this.deckId]) {
+        window.waveformRenderers[this.deckId].startAnimation();
+      }
+      if (window.beatWaveformRenderers && window.beatWaveformRenderers[this.deckId]) {
+        window.beatWaveformRenderers[this.deckId].startAnimation();
+      }
     }
   }
 
@@ -364,6 +371,13 @@ class DeckController {
       if (this.vinylElement) {
         this.vinylElement.classList.remove('spinning');
       }
+      // Stop waveform animations
+      if (window.waveformRenderers && window.waveformRenderers[this.deckId]) {
+        window.waveformRenderers[this.deckId].stopAnimation();
+      }
+      if (window.beatWaveformRenderers && window.beatWaveformRenderers[this.deckId]) {
+        window.beatWaveformRenderers[this.deckId].stopAnimation();
+      }
     }
   }
 
@@ -375,6 +389,13 @@ class DeckController {
       // Stop vinyl animation
       if (this.vinylElement) {
         this.vinylElement.classList.remove('spinning');
+      }
+      // Stop waveform animations
+      if (window.waveformRenderers && window.waveformRenderers[this.deckId]) {
+        window.waveformRenderers[this.deckId].stopAnimation();
+      }
+      if (window.beatWaveformRenderers && window.beatWaveformRenderers[this.deckId]) {
+        window.beatWaveformRenderers[this.deckId].stopAnimation();
       }
     }
   }

@@ -139,21 +139,59 @@ class Deck {
     this.source.buffer = this.audioBuffer;
     this.source.playbackRate.value = this.playbackRate;
 
-    // Connect the effect chain
+    // Connect the main effect chain
     this.source.connect(this.effectNodes.filter);
     this.effectNodes.filter.connect(this.eqNodes.low);
     this.eqNodes.low.connect(this.eqNodes.mid);
     this.eqNodes.mid.connect(this.eqNodes.high);
+    
+    // Create a splitter for effect sends after EQ
+    const splitter = this.audioContext.createChannelSplitter(2);
+    const merger = this.audioContext.createChannelMerger(2);
+    this.eqNodes.high.connect(splitter);
+    
+    // Main dry signal path
     this.eqNodes.high.connect(this.gainNode);
         
-    // Connect reverb send
-    this.eqNodes.high.connect(this.effectNodes.reverb);
+    // Connect reverb send (wet/dry mix)
+    splitter.connect(this.effectNodes.reverb);
     this.effectNodes.reverb.connect(this.effectNodes.reverbGain);
     this.effectNodes.reverbGain.connect(this.gainNode);
         
     // Connect delay send
-    this.eqNodes.high.connect(this.effectNodes.delay);
+    splitter.connect(this.effectNodes.delay);
     this.effectNodes.delayGain.connect(this.gainNode);
+    
+    // Connect phaser effect chain
+    if (this.effectNodes.phaser && this.effectNodes.phaser.length > 0) {
+      let phaserInput = splitter;
+      
+      // Connect phaser chain
+      for (let i = 0; i < this.effectNodes.phaser.length; i++) {
+        phaserInput.connect(this.effectNodes.phaser[i]);
+        phaserInput = this.effectNodes.phaser[i];
+      }
+      
+      // Connect LFO to modulate phaser frequencies through gain node
+      if (this.effectNodes.phaserLFOGain) {
+        for (let i = 0; i < this.effectNodes.phaser.length; i++) {
+          this.effectNodes.phaserLFOGain.connect(this.effectNodes.phaser[i].frequency);
+        }
+      }
+      
+      // Connect phaser output through gain control
+      phaserInput.connect(this.effectNodes.phaserGain);
+      this.effectNodes.phaserGain.connect(this.gainNode);
+    }
+    
+    // Connect flanger effect
+    if (this.effectNodes.flanger) {
+      splitter.connect(this.effectNodes.flanger);
+      this.effectNodes.flanger.connect(this.effectNodes.flangerGain);
+      this.effectNodes.flangerGain.connect(this.gainNode);
+      
+      // LFO connection is already set up in connectEffectChain
+    }
         
     this.gainNode.connect(this.masterGain);
 

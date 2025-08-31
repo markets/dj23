@@ -26,6 +26,8 @@ class EffectsEngine {
     this.effectNodes.phaserLFO = this.audioContext.createOscillator();
     this.effectNodes.phaserLFO.type = 'sine';
     this.effectNodes.phaserLFO.frequency.value = 0.5;
+    this.effectNodes.phaserLFOGain = this.audioContext.createGain();
+    this.effectNodes.phaserLFOGain.gain.value = 1000; // Modulation depth
     this.effectNodes.phaserGain = this.audioContext.createGain();
     this.effectNodes.phaserGain.gain.value = 0;
     this.effectNodes.phaserDry = this.audioContext.createGain();
@@ -45,6 +47,8 @@ class EffectsEngine {
     this.effectNodes.flangerLFO = this.audioContext.createOscillator();
     this.effectNodes.flangerLFO.type = 'sine';
     this.effectNodes.flangerLFO.frequency.value = 0.25;
+    this.effectNodes.flangerLFOGain = this.audioContext.createGain();
+    this.effectNodes.flangerLFOGain.gain.value = 0.003; // Modulation depth for delay time
     this.effectNodes.flangerGain = this.audioContext.createGain();
     this.effectNodes.flangerGain.gain.value = 0;
     this.effectNodes.flangerFeedback = this.audioContext.createGain();
@@ -73,9 +77,16 @@ class EffectsEngine {
       }
     }
     
+    // Connect phaser LFO through gain node for proper modulation
+    this.effectNodes.phaserLFO.connect(this.effectNodes.phaserLFOGain);
+    
     // Connect flanger feedback loop
     this.effectNodes.flanger.connect(this.effectNodes.flangerFeedback);
     this.effectNodes.flangerFeedback.connect(this.effectNodes.flanger);
+
+    // Connect flanger LFO through gain node for proper modulation
+    this.effectNodes.flangerLFO.connect(this.effectNodes.flangerLFOGain);
+    this.effectNodes.flangerLFOGain.connect(this.effectNodes.flanger.delayTime);
 
     // Main effect chain will be connected when source is created
   }

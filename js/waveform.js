@@ -151,6 +151,9 @@ class WaveformRenderer {
   }
 
   startAnimation() {
+    // Don't start if already animating
+    if (this.animationId) return;
+    
     const animate = () => {
       this.render();
       this.animationId = requestAnimationFrame(animate);
@@ -434,6 +437,9 @@ class ZoomedWaveformRenderer {
   }
 
   startAnimation() {
+    // Don't start if already animating
+    if (this.animationId) return;
+    
     const animate = () => {
       this.render();
       this.animationId = requestAnimationFrame(animate);
