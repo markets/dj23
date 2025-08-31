@@ -593,6 +593,29 @@ class DeckController {
       }
     });
 
+    // Reset vocal/bass/instrumental removal buttons
+    const vocalRemovalButtons = [
+      'removeVocals',
+      'removeBass', 
+      'removeInstrumental'
+    ];
+
+    vocalRemovalButtons.forEach(buttonId => {
+      const button = document.getElementById(`${buttonId}${this.deckId}`);
+      if (button) {
+        button.setAttribute('data-active', 'false');
+        
+        // Reset the corresponding audio effect
+        if (buttonId === 'removeVocals' && deck.vocalRemovalActive) {
+          deck.toggleVocalRemoval();
+        } else if (buttonId === 'removeBass' && deck.bassRemovalActive) {
+          deck.toggleBassRemoval();
+        } else if (buttonId === 'removeInstrumental' && deck.instrumentalRemovalActive) {
+          deck.toggleInstrumentalRemoval();
+        }
+      }
+    });
+
     console.log(`Deck ${this.deckId}: All filters reset to default values`);
   }
 

@@ -205,6 +205,34 @@ class EffectsController {
         deck.setFlanger(value);
       }
     });
+
+    // Vocal/Bass/Instrumental removal buttons
+    const removeVocalsBtn = document.getElementById(`removeVocals${this.deckId}`);
+    removeVocalsBtn.addEventListener('click', () => {
+      const deck = window.audioEngine.getDeck(this.deckId);
+      if (deck) {
+        const isActive = deck.toggleVocalRemoval();
+        removeVocalsBtn.setAttribute('data-active', isActive);
+      }
+    });
+
+    const removeBassBtn = document.getElementById(`removeBass${this.deckId}`);
+    removeBassBtn.addEventListener('click', () => {
+      const deck = window.audioEngine.getDeck(this.deckId);
+      if (deck) {
+        const isActive = deck.toggleBassRemoval();
+        removeBassBtn.setAttribute('data-active', isActive);
+      }
+    });
+
+    const removeInstrumentalBtn = document.getElementById(`removeInstrumental${this.deckId}`);
+    removeInstrumentalBtn.addEventListener('click', () => {
+      const deck = window.audioEngine.getDeck(this.deckId);
+      if (deck) {
+        const isActive = deck.toggleInstrumentalRemoval();
+        removeInstrumentalBtn.setAttribute('data-active', isActive);
+      }
+    });
   }
 }
 

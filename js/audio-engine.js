@@ -117,6 +117,33 @@ class Deck {
     this.effectsEngine = new EffectsEngine(this.audioContext);
     // Merge effects engine nodes with our effect nodes
     Object.assign(this.effectNodes, this.effectsEngine.getEffectNodes());
+
+    // Vocal/Bass/Instrumental removal nodes
+    this.vocalRemovalActive = false;
+    this.bassRemovalActive = false;
+    this.instrumentalRemovalActive = false;
+
+    // Vocal removal (center channel extraction) nodes
+    this.effectNodes.splitter = this.audioContext.createChannelSplitter(2);
+    this.effectNodes.merger = this.audioContext.createChannelMerger(2);
+    this.effectNodes.leftInverter = this.audioContext.createGain();
+    this.effectNodes.leftInverter.gain.value = -1;
+    this.effectNodes.vocalBypass = this.audioContext.createGain();
+    this.effectNodes.vocalBypass.gain.value = 1;
+    this.effectNodes.vocalEffect = this.audioContext.createGain();
+    this.effectNodes.vocalEffect.gain.value = 0;
+
+    // Bass removal (high-pass filter)
+    this.effectNodes.bassRemoval = this.audioContext.createBiquadFilter();
+    this.effectNodes.bassRemoval.type = 'highpass';
+    this.effectNodes.bassRemoval.frequency.value = 20; // Start with no effect
+    this.effectNodes.bassRemoval.Q.value = 0.7;
+
+    // Instrumental removal (band-pass filter for vocal frequencies)
+    this.effectNodes.instrumentalRemoval = this.audioContext.createBiquadFilter();
+    this.effectNodes.instrumentalRemoval.type = 'bandpass';
+    this.effectNodes.instrumentalRemoval.frequency.value = 1000; // Center frequency for vocals
+    this.effectNodes.instrumentalRemoval.Q.value = 0.5; // Moderate Q for wider band
   }
 
   async loadFile(file) {
@@ -197,6 +224,30 @@ class Deck {
       
       // LFO connection is already set up in connectEffectChain
     }
+
+    // Setup vocal removal effect chain (bypass by default)
+    this.eqNodes.high.connect(this.effectNodes.splitter);
+    
+    // Left channel: connect directly to merger
+    this.effectNodes.splitter.connect(this.effectNodes.merger, 0, 0);
+    
+    // Right channel: connect through inverter for vocal removal
+    this.effectNodes.splitter.connect(this.effectNodes.leftInverter, 1);
+    this.effectNodes.leftInverter.connect(this.effectNodes.merger, 0, 1);
+    
+    // Create bypass and effect paths
+    this.effectNodes.merger.connect(this.effectNodes.vocalBypass);
+    this.effectNodes.merger.connect(this.effectNodes.vocalEffect);
+    
+    // Connect bass removal filter
+    this.effectNodes.vocalBypass.connect(this.effectNodes.bassRemoval);
+    this.effectNodes.vocalEffect.connect(this.effectNodes.bassRemoval);
+    
+    // Connect instrumental removal filter
+    this.effectNodes.bassRemoval.connect(this.effectNodes.instrumentalRemoval);
+    
+    // Connect to final gain node
+    this.effectNodes.instrumentalRemoval.connect(this.gainNode);
         
     this.gainNode.connect(this.masterGain);
 
@@ -280,6 +331,53 @@ class Deck {
     if (this.effectsEngine) {
       this.effectsEngine.setFlanger(value);
     }
+  }
+
+  // Vocal/Bass/Instrumental removal methods
+  toggleVocalRemoval() {
+    this.vocalRemovalActive = !this.vocalRemovalActive;
+    
+    if (this.vocalRemovalActive) {
+      // Enable vocal removal effect
+      this.effectNodes.vocalBypass.gain.value = 0;
+      this.effectNodes.vocalEffect.gain.value = 1;
+    } else {
+      // Disable vocal removal effect
+      this.effectNodes.vocalBypass.gain.value = 1;
+      this.effectNodes.vocalEffect.gain.value = 0;
+    }
+    
+    return this.vocalRemovalActive;
+  }
+
+  toggleBassRemoval() {
+    this.bassRemovalActive = !this.bassRemovalActive;
+    
+    if (this.bassRemovalActive) {
+      // Enable bass removal (high-pass filter at 120Hz)
+      this.effectNodes.bassRemoval.frequency.value = 120;
+    } else {
+      // Disable bass removal (set frequency very low)
+      this.effectNodes.bassRemoval.frequency.value = 20;
+    }
+    
+    return this.bassRemovalActive;
+  }
+
+  toggleInstrumentalRemoval() {
+    this.instrumentalRemovalActive = !this.instrumentalRemovalActive;
+    
+    if (this.instrumentalRemovalActive) {
+      // Enable instrumental removal (isolate vocal frequencies 300Hz-3kHz)
+      this.effectNodes.instrumentalRemoval.frequency.value = 1000;
+      this.effectNodes.instrumentalRemoval.Q.value = 2; // Narrower band for isolation
+    } else {
+      // Disable instrumental removal (widen to pass all frequencies)
+      this.effectNodes.instrumentalRemoval.frequency.value = 1000;
+      this.effectNodes.instrumentalRemoval.Q.value = 0.1; // Very wide band (essentially bypass)
+    }
+    
+    return this.instrumentalRemovalActive;
   }
 
   getCurrentTime() {
