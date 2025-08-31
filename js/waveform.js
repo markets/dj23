@@ -567,33 +567,17 @@ class ZoomedWaveformRenderer {
     const windowDuration = Math.min(this.zoomLevel, duration - this.offsetSeconds);
     const secondsPerPixel = windowDuration / width;
     
-    // Draw enhanced beat markers for better visual beat matching
-    // Every second - main beat markers (more visible)
-    this.ctx.strokeStyle = '#888';
-    this.ctx.lineWidth = 2;
-    this.ctx.setLineDash([]);
+    this.ctx.strokeStyle = '#666';
+    this.ctx.lineWidth = 1;
+    this.ctx.setLineDash([2, 2]);
     
-    for (let i = 0; i <= windowDuration; i++) {
+    // Draw vertical lines every second
+    for (let i = 0; i < windowDuration; i++) {
       const x = (i / windowDuration) * width;
       this.ctx.beginPath();
       this.ctx.moveTo(x, 0);
       this.ctx.lineTo(x, height);
       this.ctx.stroke();
-    }
-    
-    // Half-second markers for finer beat matching
-    this.ctx.strokeStyle = '#555';
-    this.ctx.lineWidth = 1;
-    this.ctx.setLineDash([3, 3]);
-    
-    for (let i = 0; i < windowDuration; i++) {
-      const x = ((i + 0.5) / windowDuration) * width;
-      if (x < width) {
-        this.ctx.beginPath();
-        this.ctx.moveTo(x, height * 0.2);
-        this.ctx.lineTo(x, height * 0.8);
-        this.ctx.stroke();
-      }
     }
     
     this.ctx.setLineDash([]);
