@@ -459,7 +459,7 @@ class Deck {
       this.isPitchBending = true;
     }
     
-    const bendAmount = direction > 0 ? 0.5 : -0.5; // +/- 0.5% pitch bend
+    const bendAmount = direction > 0 ? 6 : -6; // +/- 6% pitch bend for more noticeable effect
     const currentPitch = this.originalPitchBeforeBend;
     const newPitch = Math.max(-50, Math.min(50, currentPitch + bendAmount));
     this.setPitch(newPitch);
