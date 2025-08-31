@@ -232,9 +232,18 @@ body {
   font-size: 0.9rem;
 }
 
-/* Waveform - Hide individual deck waveforms since we only want global ones */
+/* Waveform */
 .waveform-container {
-  display: none;
+  position: relative;
+  height: 60px;
+  background: #111;
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--spacing-xl);
+  overflow: hidden;
+  border: 1px solid var(--border-primary);
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.2s ease;
 }
 
 .waveform-container:hover {
