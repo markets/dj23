@@ -1,3 +1,32 @@
+// Utility function to extract basic metadata from audio files
+async function extractMetadata(file) {
+  // Simple metadata extraction based on filename parsing
+  const fileName = file.name;
+  const nameWithoutExt = fileName.replace(/\.[^/.]+$/, '');
+  
+  // Try to parse common filename patterns like "Artist - Title" or "01 - Artist - Title"
+  let title = nameWithoutExt;
+  let artist = null;
+  
+  // Remove track numbers (e.g., "01 - ", "1. ", etc.)
+  title = title.replace(/^\d+[\s\-\.]+/, '');
+  
+  // Try to split by " - " to get artist and title
+  const dashSplit = title.split(' - ');
+  if (dashSplit.length >= 2) {
+    artist = dashSplit[0].trim();
+    title = dashSplit.slice(1).join(' - ').trim();
+  }
+  
+  return {
+    title: title,
+    artist: artist,
+    album: null,
+    year: null,
+    picture: null
+  };
+}
+
 class DeckController {
   constructor(deckId) {
     this.deckId = deckId;
@@ -317,8 +346,11 @@ class DeckController {
     const success = await deck.loadFile(file);
         
     if (success) {
-      // Update track info
-      trackInfo.querySelector('.track-name').textContent = file.name;
+      // Extract metadata from the file
+      const metadata = await extractMetadata(file);
+      
+      // Update track info with metadata
+      this.updateTrackInfo(metadata, file);
       this.updateTrackTime();
             
       // Generate main waveform
@@ -341,6 +373,34 @@ class DeckController {
     }
         
     trackInfo.classList.remove('loading');
+  }
+
+  updateTrackInfo(metadata, file) {
+    const trackInfo = document.getElementById(`trackInfo${this.deckId}`);
+    const trackNameElement = trackInfo.querySelector('.track-name');
+    const albumCoverElement = document.getElementById(`albumCover${this.deckId}`);
+    
+    // Build track display text with metadata
+    let displayText = '';
+    if (metadata.artist && metadata.title) {
+      displayText = `${metadata.artist} - ${metadata.title}`;
+    } else if (metadata.title) {
+      displayText = metadata.title;
+    } else {
+      // Fallback to filename without extension
+      displayText = file.name.replace(/\.[^/.]+$/, '');
+    }
+    
+    trackNameElement.textContent = displayText;
+    trackNameElement.title = displayText; // Tooltip for full text if truncated
+    
+    // Handle album cover
+    if (metadata.picture) {
+      albumCoverElement.src = metadata.picture;
+      albumCoverElement.style.display = 'block';
+    } else {
+      albumCoverElement.style.display = 'none';
+    }
   }
 
   play() {
