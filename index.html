@@ -11,11 +11,16 @@
     <!-- Header -->
     <header class="mixer-header">
       <h1>DJ23</h1>
-      <div class="master-controls">
-        <div class="master-volume">
-          <label>Master</label>
-          <input type="range" id="masterVolume" min="0" max="100" value="75" class="volume-slider">
-          <span class="volume-display">75%</span>
+      <div class="header-controls">
+        <button id="showShortcutsBtn" class="help-button" title="Keyboard Shortcuts (?)">
+          <span>?</span>
+        </button>
+        <div class="master-controls">
+          <div class="master-volume">
+            <label>Master</label>
+            <input type="range" id="masterVolume" min="0" max="100" value="75" class="volume-slider">
+            <span class="volume-display">75%</span>
+          </div>
         </div>
       </div>
     </header>
@@ -293,6 +298,183 @@
           <div class="effect">
             <label>Flanger</label>
             <input type="range" id="flangerB" min="0" max="100" value="0" class="effect-slider">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Keyboard Shortcuts Modal -->
+  <div id="keyboardShortcutsModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Keyboard Shortcuts</h2>
+        <button class="modal-close" id="closeShortcutsModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="shortcuts-grid">
+          <div class="shortcuts-section">
+            <h3>Deck A Controls</h3>
+            <div class="shortcut-item">
+              <kbd>Q</kbd>
+              <span>Play</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>W</kbd>
+              <span>Pause</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>E</kbd>
+              <span>Stop</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>R</kbd>
+              <span>Cue</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>1</kbd>
+              <span>Cue Point 1</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>2</kbd>
+              <span>Cue Point 2</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>Shift + 1</kbd>
+              <span>Set Cue 1</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>Shift + 2</kbd>
+              <span>Set Cue 2</span>
+            </div>
+          </div>
+
+          <div class="shortcuts-section">
+            <h3>Deck B Controls</h3>
+            <div class="shortcut-item">
+              <kbd>A</kbd>
+              <span>Play</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>S</kbd>
+              <span>Pause</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>D</kbd>
+              <span>Stop</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>F</kbd>
+              <span>Cue</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>3</kbd>
+              <span>Cue Point 1</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>4</kbd>
+              <span>Cue Point 2</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>Shift + 3</kbd>
+              <span>Set Cue 1</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>Shift + 4</kbd>
+              <span>Set Cue 2</span>
+            </div>
+          </div>
+
+          <div class="shortcuts-section">
+            <h3>Loop Controls</h3>
+            <div class="shortcut-item">
+              <kbd>T</kbd>
+              <span>Loop In (Deck A)</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>Y</kbd>
+              <span>Loop Out (Deck A)</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>U</kbd>
+              <span>Toggle Loop (Deck A)</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>G</kbd>
+              <span>Loop In (Deck B)</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>H</kbd>
+              <span>Loop Out (Deck B)</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>J</kbd>
+              <span>Toggle Loop (Deck B)</span>
+            </div>
+          </div>
+
+          <div class="shortcuts-section">
+            <h3>Pitch & Sync</h3>
+            <div class="shortcut-item">
+              <kbd>+</kbd>
+              <span>Pitch Bend + (Deck A)</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>-</kbd>
+              <span>Pitch Bend - (Deck A)</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>]</kbd>
+              <span>Pitch Bend + (Deck B)</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>[</kbd>
+              <span>Pitch Bend - (Deck B)</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>Ctrl + S</kbd>
+              <span>Sync A → B</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>Ctrl + D</kbd>
+              <span>Sync B → A</span>
+            </div>
+          </div>
+
+          <div class="shortcuts-section">
+            <h3>General</h3>
+            <div class="shortcut-item">
+              <kbd>Space</kbd>
+              <span>Play/Pause Active Deck</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>?</kbd>
+              <span>Show Shortcuts</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>Esc</kbd>
+              <span>Close Modal</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>←/→</kbd>
+              <span>Crossfader</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>↑/↓</kbd>
+              <span>Master Volume</span>
+            </div>
+          </div>
+
+          <div class="shortcuts-section">
+            <h3>File Operations</h3>
+            <div class="shortcut-item">
+              <kbd>Ctrl + O</kbd>
+              <span>Load Track (Deck A)</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>Ctrl + P</kbd>
+              <span>Load Track (Deck B)</span>
+            </div>
           </div>
         </div>
       </div>
