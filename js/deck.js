@@ -111,6 +111,21 @@ class DeckController {
       });
     });
 
+    // Pitch reset button
+    document.getElementById(`pitchReset${this.deckId}`).addEventListener('click', () => {
+      const deck = window.audioEngine.getDeck(this.deckId);
+      if (deck) {
+        deck.setPitch(0);
+        // Update the slider and display
+        document.getElementById(`pitch${this.deckId}`).value = 0;
+        document.getElementById(`pitchDisplay${this.deckId}`).textContent = '0%';
+        // Update BPM display
+        if (deck.bpm) {
+          document.getElementById(`bpm${this.deckId}`).textContent = deck.bpm.toFixed(1);
+        }
+      }
+    });
+
     // CUE point controls
     document.getElementById(`cue1${this.deckId}`).addEventListener('click', () => {
       const deck = window.audioEngine.getDeck(this.deckId);
