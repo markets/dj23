@@ -125,7 +125,15 @@ class SimpleID3Reader {
             break;
           case 'APIC':
           case 'PIC\0':
-            // Skip image parsing for now to keep it simple
+            // Extract album cover from APIC frame
+            try {
+              const imageData = this.extractAPICImage(view.buffer.slice(dataOffset, dataOffset + frameSize));
+              if (imageData) {
+                metadata.picture = imageData;
+              }
+            } catch (e) {
+              console.warn('Error extracting album cover:', e);
+            }
             break;
         }
         
@@ -136,6 +144,44 @@ class SimpleID3Reader {
     }
     
     return metadata;
+  }
+  
+  static extractAPICImage(buffer) {
+    try {
+      const view = new DataView(buffer);
+      let offset = 1; // Skip encoding byte
+      
+      // Read MIME type (null-terminated string)
+      const mimeBytes = [];
+      while (offset < buffer.byteLength && view.getUint8(offset) !== 0) {
+        mimeBytes.push(view.getUint8(offset));
+        offset++;
+      }
+      offset++; // Skip null terminator
+      
+      if (mimeBytes.length === 0) return null;
+      
+      const mimeType = String.fromCharCode(...mimeBytes);
+      
+      // Skip picture type byte
+      offset++;
+      
+      // Skip description (null-terminated string)
+      while (offset < buffer.byteLength && view.getUint8(offset) !== 0) {
+        offset++;
+      }
+      offset++; // Skip null terminator
+      
+      // The rest is the image data
+      if (offset >= buffer.byteLength) return null;
+      
+      const imageData = buffer.slice(offset);
+      const blob = new Blob([imageData], { type: mimeType });
+      return URL.createObjectURL(blob);
+    } catch (e) {
+      console.warn('Error parsing APIC frame:', e);
+      return null;
+    }
   }
 }
 
@@ -184,6 +230,20 @@ class DeckController {
     
     // Initialize effects controller for this deck
     this.effectsController = new EffectsController(deckId);
+    
+    // Initialize album cover placeholder
+    this.initializeAlbumCover();
+  }
+  
+  initializeAlbumCover() {
+    const albumCoverElement = document.getElementById(`albumCover${this.deckId}`);
+    if (albumCoverElement) {
+      albumCoverElement.style.display = 'block';
+      albumCoverElement.style.backgroundColor = 'var(--bg-tertiary)';
+      albumCoverElement.style.border = '1px solid var(--border-light)';
+      albumCoverElement.alt = 'No album cover';
+      albumCoverElement.src = '';
+    }
   }
 
   setupEventListeners() {
