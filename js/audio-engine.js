@@ -123,6 +123,8 @@ class Deck {
       this.audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
       // Calculate and store the base BPM
       this.baseBPM = this.calculateBPM();
+      // Clear loop state when new track is loaded
+      this.clearLoopState();
       return true;
     } catch (error) {
       console.error('Error loading audio file:', error);
@@ -219,6 +221,16 @@ class Deck {
     this.isPlaying = false;
     this.isPaused = false;
     this.pauseTime = 0;
+    this.clearLoopState();
+  }
+
+  clearLoopState() {
+    this.loopStart = null;
+    this.loopEnd = null;
+    this.isLooping = false;
+    this.originalLoopLength = undefined;
+    this.stopLoopMonitoring();
+    this.updateLoopButtonStates();
   }
 
   stopSource() {
@@ -361,11 +373,13 @@ class Deck {
   setLoopIn() {
     this.loopStart = this.getCurrentTime();
     console.log(`Deck ${this.deckId}: Loop IN set at ${this.loopStart}s`);
+    this.updateLoopButtonStates();
   }
 
   setLoopOut() {
     this.loopEnd = this.getCurrentTime();
     console.log(`Deck ${this.deckId}: Loop OUT set at ${this.loopEnd}s`);
+    this.updateLoopButtonStates();
   }
 
   toggleLoop() {
@@ -379,6 +393,7 @@ class Deck {
         this.stopLoopMonitoring();
         console.log(`Deck ${this.deckId}: Loop disabled`);
       }
+      this.updateLoopButtonStates();
     } else {
       console.log(`Deck ${this.deckId}: Cannot loop - loop points not set`);
     }
@@ -402,6 +417,81 @@ class Deck {
       clearInterval(this.loopCheckInterval);
       this.loopCheckInterval = null;
     }
+  }
+
+  updateLoopButtonStates() {
+    // Update LOOP IN button state
+    const loopInBtn = document.getElementById(`loopIn${this.deckId}`);
+    if (loopInBtn) {
+      if (this.loopStart !== null) {
+        loopInBtn.classList.add('active');
+      } else {
+        loopInBtn.classList.remove('active');
+      }
+    }
+
+    // Update LOOP OUT button state
+    const loopOutBtn = document.getElementById(`loopOut${this.deckId}`);
+    if (loopOutBtn) {
+      if (this.loopEnd !== null) {
+        loopOutBtn.classList.add('active');
+      } else {
+        loopOutBtn.classList.remove('active');
+      }
+    }
+
+    // Update LOOP toggle button state
+    const loopToggleBtn = document.getElementById(`loopToggle${this.deckId}`);
+    if (loopToggleBtn) {
+      if (this.isLooping) {
+        loopToggleBtn.classList.add('active');
+      } else {
+        loopToggleBtn.classList.remove('active');
+      }
+    }
+
+    // Update loop length slider visibility and state
+    this.updateLoopLengthSlider();
+  }
+
+  updateLoopLengthSlider() {
+    const loopLengthSection = document.getElementById(`loopLengthSection${this.deckId}`);
+    const loopLengthSlider = document.getElementById(`loopLength${this.deckId}`);
+    const loopLengthValue = document.getElementById(`loopLengthValue${this.deckId}`);
+
+    if (!loopLengthSection || !loopLengthSlider || !loopLengthValue) return;
+
+    // Show slider only if both loop points are set
+    if (this.loopStart !== null && this.loopEnd !== null) {
+      loopLengthSection.style.display = 'flex';
+      
+      // Store original loop length if not already stored
+      if (this.originalLoopLength === undefined) {
+        this.originalLoopLength = Math.max(0.1, this.loopEnd - this.loopStart); // Minimum 0.1 seconds
+      }
+      
+      // Update slider max value based on original loop length
+      const currentLength = this.loopEnd - this.loopStart;
+      const percentage = this.originalLoopLength > 0 ? Math.round((currentLength / this.originalLoopLength) * 100) : 100;
+      loopLengthSlider.value = percentage;
+      loopLengthValue.textContent = `${percentage}%`;
+    } else {
+      loopLengthSection.style.display = 'none';
+      this.originalLoopLength = undefined;
+    }
+  }
+
+  setLoopLength(percentage) {
+    if (this.loopStart === null || this.originalLoopLength === undefined) return;
+    
+    // Calculate new loop end based on percentage
+    const newLength = (this.originalLoopLength * percentage) / 100;
+    this.loopEnd = this.loopStart + Math.max(0.1, newLength); // Minimum 0.1 seconds
+    
+    // Update UI
+    this.updateLoopLengthSlider();
+    
+    console.log(`Deck ${this.deckId}: Loop length set to ${percentage}% (${newLength.toFixed(2)}s)`);
   }
 
   // Scratching functionality

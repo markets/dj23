@@ -181,6 +181,24 @@ class DeckController {
       }
     });
 
+    // Loop length slider
+    const loopLengthSlider = document.getElementById(`loopLength${this.deckId}`);
+    if (loopLengthSlider) {
+      loopLengthSlider.addEventListener('input', (e) => {
+        const value = parseInt(e.target.value);
+        const deck = window.audioEngine.getDeck(this.deckId);
+        if (deck) {
+          deck.setLoopLength(value);
+        }
+        
+        // Update display value
+        const valueDisplay = document.getElementById(`loopLengthValue${this.deckId}`);
+        if (valueDisplay) {
+          valueDisplay.textContent = `${value}%`;
+        }
+      });
+    }
+
     // Reset filters button
     document.getElementById(`resetFilters${this.deckId}`).addEventListener('click', () => {
       this.resetFilters();
