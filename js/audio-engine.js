@@ -269,6 +269,36 @@ class Deck {
     }
   }
 
+  // Main CUE function - returns to last cue point or beginning
+  cue() {
+    // If playing, pause and return to last cue point
+    if (this.isPlaying) {
+      this.pause();
+      // Find the most recently set cue point
+      let lastCueTime = null;
+      for (let i = 1; i <= 2; i++) {
+        if (this.cuePoints[i] !== null) {
+          lastCueTime = this.cuePoints[i];
+        }
+      }
+      // Go to last cue point or beginning
+      const cueTime = lastCueTime !== null ? lastCueTime : 0;
+      this.seek(cueTime);
+      console.log(`Deck ${this.deckId}: CUE - returned to ${cueTime}s`);
+    } else {
+      // If paused, just go to beginning or last cue point
+      let lastCueTime = null;
+      for (let i = 1; i <= 2; i++) {
+        if (this.cuePoints[i] !== null) {
+          lastCueTime = this.cuePoints[i];
+        }
+      }
+      const cueTime = lastCueTime !== null ? lastCueTime : 0;
+      this.seek(cueTime);
+      console.log(`Deck ${this.deckId}: CUE - moved to ${cueTime}s`);
+    }
+  }
+
   // Loop methods
   setLoopIn() {
     this.loopStart = this.getCurrentTime();
