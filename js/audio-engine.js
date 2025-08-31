@@ -77,6 +77,8 @@ class Deck {
     // Loop points
     this.loopStart = null;
     this.loopEnd = null;
+    this.originalLoopEnd = null; // Store the original loop end point
+    this.loopLengthPercentage = 100; // Current loop length as percentage
     this.isLooping = false;
     this.loopCheckInterval = null;
         
@@ -365,7 +367,19 @@ class Deck {
 
   setLoopOut() {
     this.loopEnd = this.getCurrentTime();
+    this.originalLoopEnd = this.loopEnd; // Store original loop end
+    this.loopLengthPercentage = 100; // Reset to 100% when setting new loop out
     console.log(`Deck ${this.deckId}: Loop OUT set at ${this.loopEnd}s`);
+  }
+
+  setLoopLength(percentage) {
+    if (this.loopStart !== null && this.originalLoopEnd !== null) {
+      this.loopLengthPercentage = percentage;
+      const loopDuration = this.originalLoopEnd - this.loopStart;
+      const adjustedLoopDuration = loopDuration * (percentage / 100);
+      this.loopEnd = this.loopStart + adjustedLoopDuration;
+      console.log(`Deck ${this.deckId}: Loop length set to ${percentage}% (${this.loopEnd}s)`);
+    }
   }
 
   toggleLoop() {

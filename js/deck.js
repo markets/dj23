@@ -181,6 +181,20 @@ class DeckController {
       }
     });
 
+    // Loop length slider
+    const loopLengthSlider = document.getElementById(`loopLength${this.deckId}`);
+    const loopLengthValue = document.getElementById(`loopLengthValue${this.deckId}`);
+    
+    loopLengthSlider.addEventListener('input', (e) => {
+      const percentage = parseInt(e.target.value);
+      loopLengthValue.textContent = `${percentage}%`;
+      
+      const deck = window.audioEngine.getDeck(this.deckId);
+      if (deck) {
+        deck.setLoopLength(percentage);
+      }
+    });
+
     // Reset filters button
     document.getElementById(`resetFilters${this.deckId}`).addEventListener('click', () => {
       this.resetFilters();
