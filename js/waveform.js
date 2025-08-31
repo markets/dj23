@@ -79,6 +79,7 @@ class WaveformRenderer {
 
     const width = this.canvas.clientWidth;
     const height = this.canvas.clientHeight;
+    const deck = window.audioEngine.getDeck(this.deckId);
         
     this.ctx.clearRect(0, 0, width, height);
         
@@ -98,7 +99,6 @@ class WaveformRenderer {
     }
 
     // Draw played portion
-    const deck = window.audioEngine.getDeck(this.deckId);
     if (deck && deck.isPlaying) {
       const progress = deck.getCurrentTime() / deck.getDuration();
       const playedWidth = width * progress;
@@ -114,8 +114,53 @@ class WaveformRenderer {
       }
     }
 
+    // Draw cue points markers
+    this.drawCuePoints(width, height, deck);
+
     // Update playhead position
     this.updatePlayhead();
+  }
+
+  drawCuePoints(width, height, deck) {
+    if (!deck || !deck.audioBuffer) return;
+    
+    const duration = deck.getDuration();
+    
+    // Draw CUE 1
+    if (deck.cuePoints[1] !== null) {
+      const cue1Position = (deck.cuePoints[1] / duration) * width;
+      this.ctx.strokeStyle = '#ff6b6b';
+      this.ctx.lineWidth = 3;
+      this.ctx.setLineDash([]);
+      this.ctx.beginPath();
+      this.ctx.moveTo(cue1Position, 0);
+      this.ctx.lineTo(cue1Position, height);
+      this.ctx.stroke();
+      
+      // Draw CUE 1 label
+      this.ctx.fillStyle = '#ff6b6b';
+      this.ctx.font = 'bold 12px Inter';
+      this.ctx.textAlign = 'center';
+      this.ctx.fillText('CUE 1', cue1Position, 15);
+    }
+    
+    // Draw CUE 2
+    if (deck.cuePoints[2] !== null) {
+      const cue2Position = (deck.cuePoints[2] / duration) * width;
+      this.ctx.strokeStyle = '#4ecdc4';
+      this.ctx.lineWidth = 3;
+      this.ctx.setLineDash([]);
+      this.ctx.beginPath();
+      this.ctx.moveTo(cue2Position, 0);
+      this.ctx.lineTo(cue2Position, height);
+      this.ctx.stroke();
+      
+      // Draw CUE 2 label
+      this.ctx.fillStyle = '#4ecdc4';
+      this.ctx.font = 'bold 12px Inter';
+      this.ctx.textAlign = 'center';
+      this.ctx.fillText('CUE 2', cue2Position, 30);
+    }
   }
 
   renderEmpty() {
@@ -458,6 +503,9 @@ class ZoomedWaveformRenderer {
     // Draw beat markers (every second)
     this.drawBeatMarkers(width, height, duration);
     
+    // Draw cue points markers in beat view
+    this.drawCuePoints(width, height, deck, duration);
+    
     // Draw red playhead line always in the center for beat view
     this.ctx.strokeStyle = '#ff4757';
     this.ctx.lineWidth = 2;
@@ -470,21 +518,85 @@ class ZoomedWaveformRenderer {
     this.updatePlayhead();
   }
 
+  drawCuePoints(width, height, deck, duration) {
+    if (!deck || !deck.audioBuffer) return;
+    
+    const windowDuration = Math.min(this.zoomLevel, duration - this.offsetSeconds);
+    const windowStart = this.offsetSeconds;
+    const windowEnd = this.offsetSeconds + windowDuration;
+    
+    // Draw CUE 1 if it's in the visible window
+    if (deck.cuePoints[1] !== null && deck.cuePoints[1] >= windowStart && deck.cuePoints[1] <= windowEnd) {
+      const cue1RelativePosition = (deck.cuePoints[1] - windowStart) / windowDuration;
+      const cue1X = cue1RelativePosition * width;
+      
+      this.ctx.strokeStyle = '#ff6b6b';
+      this.ctx.lineWidth = 3;
+      this.ctx.setLineDash([]);
+      this.ctx.beginPath();
+      this.ctx.moveTo(cue1X, 0);
+      this.ctx.lineTo(cue1X, height);
+      this.ctx.stroke();
+      
+      // Draw CUE 1 label
+      this.ctx.fillStyle = '#ff6b6b';
+      this.ctx.font = 'bold 10px Inter';
+      this.ctx.textAlign = 'center';
+      this.ctx.fillText('CUE1', cue1X, 12);
+    }
+    
+    // Draw CUE 2 if it's in the visible window
+    if (deck.cuePoints[2] !== null && deck.cuePoints[2] >= windowStart && deck.cuePoints[2] <= windowEnd) {
+      const cue2RelativePosition = (deck.cuePoints[2] - windowStart) / windowDuration;
+      const cue2X = cue2RelativePosition * width;
+      
+      this.ctx.strokeStyle = '#4ecdc4';
+      this.ctx.lineWidth = 3;
+      this.ctx.setLineDash([]);
+      this.ctx.beginPath();
+      this.ctx.moveTo(cue2X, 0);
+      this.ctx.lineTo(cue2X, height);
+      this.ctx.stroke();
+      
+      // Draw CUE 2 label
+      this.ctx.fillStyle = '#4ecdc4';
+      this.ctx.font = 'bold 10px Inter';
+      this.ctx.textAlign = 'center';
+      this.ctx.fillText('CUE2', cue2X, 25);
+    }
+  }
+
   drawBeatMarkers(width, height, duration) {
     const windowDuration = Math.min(this.zoomLevel, duration - this.offsetSeconds);
     const secondsPerPixel = windowDuration / width;
     
-    this.ctx.strokeStyle = '#666';
-    this.ctx.lineWidth = 1;
-    this.ctx.setLineDash([2, 2]);
+    // Draw enhanced beat markers for better visual beat matching
+    // Every second - main beat markers (more visible)
+    this.ctx.strokeStyle = '#888';
+    this.ctx.lineWidth = 2;
+    this.ctx.setLineDash([]);
     
-    // Draw vertical lines every second
-    for (let i = 0; i < windowDuration; i++) {
+    for (let i = 0; i <= windowDuration; i++) {
       const x = (i / windowDuration) * width;
       this.ctx.beginPath();
       this.ctx.moveTo(x, 0);
       this.ctx.lineTo(x, height);
       this.ctx.stroke();
+    }
+    
+    // Half-second markers for finer beat matching
+    this.ctx.strokeStyle = '#555';
+    this.ctx.lineWidth = 1;
+    this.ctx.setLineDash([3, 3]);
+    
+    for (let i = 0; i < windowDuration; i++) {
+      const x = ((i + 0.5) / windowDuration) * width;
+      if (x < width) {
+        this.ctx.beginPath();
+        this.ctx.moveTo(x, height * 0.2);
+        this.ctx.lineTo(x, height * 0.8);
+        this.ctx.stroke();
+      }
     }
     
     this.ctx.setLineDash([]);
