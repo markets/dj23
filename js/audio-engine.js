@@ -71,6 +71,10 @@ class Deck {
     this.originalPlaybackRate = 1;
     this.wasPlayingBeforeScratch = false;
     
+    // Pitch bend properties
+    this.isPitchBending = false;
+    this.originalPitchBeforeBend = undefined;
+    
     // CUE points
     this.cuePoints = { 1: null, 2: null };
     
@@ -449,10 +453,25 @@ class Deck {
 
   // Pitch bend methods
   pitchBend(direction) {
+    // Store the original pitch when starting pitch bend
+    if (!this.isPitchBending) {
+      this.originalPitchBeforeBend = ((this.playbackRate - 1) * 100);
+      this.isPitchBending = true;
+    }
+    
     const bendAmount = direction > 0 ? 0.5 : -0.5; // +/- 0.5% pitch bend
-    const currentPitch = ((this.playbackRate - 1) * 100);
+    const currentPitch = this.originalPitchBeforeBend;
     const newPitch = Math.max(-50, Math.min(50, currentPitch + bendAmount));
     this.setPitch(newPitch);
+  }
+
+  stopPitchBend() {
+    if (this.isPitchBending && this.originalPitchBeforeBend !== undefined) {
+      // Restore the original pitch
+      this.setPitch(this.originalPitchBeforeBend);
+      this.isPitchBending = false;
+      this.originalPitchBeforeBend = undefined;
+    }
   }
 
   getDuration() {

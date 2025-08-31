@@ -446,22 +446,24 @@ body {
 }
 
 .reset-btn {
-  background: var(--gradient-danger);
-  color: white;
-  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  border: 2px solid var(--border-primary);
   padding: var(--spacing-sm) var(--spacing-lg);
   border-radius: var(--radius-md);
   font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
   transition: var(--transition-normal);
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
 }
 
 .reset-btn:hover {
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  background: var(--bg-secondary);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
   transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-sm);
 }
 
 .reset-btn:active {
@@ -1202,6 +1204,7 @@ input[type="range"]::-moz-range-thumb {
   flex-wrap: wrap;
   gap: var(--spacing-sm);
   margin: var(--spacing-lg) 0;
+  justify-content: center;
 }
 
 .cue-point-btn, .set-cue-btn {
@@ -1235,12 +1238,15 @@ input[type="range"]::-moz-range-thumb {
   flex-direction: column;
   gap: var(--spacing-sm);
   margin: var(--spacing-lg) 0;
+  width: 100%;
 }
 
 .loop-buttons {
   display: flex;
   gap: var(--spacing-sm);
   align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 
 .loop-length-inline {
