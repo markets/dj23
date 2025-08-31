@@ -515,54 +515,6 @@ class ZoomedWaveformRenderer {
     this.updatePlayhead();
   }
 
-  drawCuePoints(width, height, deck, duration) {
-    if (!deck || !deck.audioBuffer) return;
-    
-    const windowDuration = Math.min(this.zoomLevel, duration - this.offsetSeconds);
-    const windowStart = this.offsetSeconds;
-    const windowEnd = this.offsetSeconds + windowDuration;
-    
-    // Draw CUE 1 if it's in the visible window
-    if (deck.cuePoints[1] !== null && deck.cuePoints[1] >= windowStart && deck.cuePoints[1] <= windowEnd) {
-      const cue1RelativePosition = (deck.cuePoints[1] - windowStart) / windowDuration;
-      const cue1X = cue1RelativePosition * width;
-      
-      this.ctx.strokeStyle = '#ff6b6b';
-      this.ctx.lineWidth = 3;
-      this.ctx.setLineDash([]);
-      this.ctx.beginPath();
-      this.ctx.moveTo(cue1X, 0);
-      this.ctx.lineTo(cue1X, height);
-      this.ctx.stroke();
-      
-      // Draw CUE 1 label
-      this.ctx.fillStyle = '#ff6b6b';
-      this.ctx.font = 'bold 10px Inter';
-      this.ctx.textAlign = 'center';
-      this.ctx.fillText('CUE1', cue1X, 12);
-    }
-    
-    // Draw CUE 2 if it's in the visible window
-    if (deck.cuePoints[2] !== null && deck.cuePoints[2] >= windowStart && deck.cuePoints[2] <= windowEnd) {
-      const cue2RelativePosition = (deck.cuePoints[2] - windowStart) / windowDuration;
-      const cue2X = cue2RelativePosition * width;
-      
-      this.ctx.strokeStyle = '#4ecdc4';
-      this.ctx.lineWidth = 3;
-      this.ctx.setLineDash([]);
-      this.ctx.beginPath();
-      this.ctx.moveTo(cue2X, 0);
-      this.ctx.lineTo(cue2X, height);
-      this.ctx.stroke();
-      
-      // Draw CUE 2 label
-      this.ctx.fillStyle = '#4ecdc4';
-      this.ctx.font = 'bold 10px Inter';
-      this.ctx.textAlign = 'center';
-      this.ctx.fillText('CUE2', cue2X, 25);
-    }
-  }
-
   drawBeatMarkers(width, height, duration) {
     const windowDuration = Math.min(this.zoomLevel, duration - this.offsetSeconds);
     const secondsPerPixel = windowDuration / width;
