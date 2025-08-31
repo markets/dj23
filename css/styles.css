@@ -942,7 +942,7 @@ input[type="range"]::-webkit-slider-thumb {
 /* Effect slider hover effects (keep original) */
 .effect-slider::-webkit-slider-thumb:hover {
   transform: scale(1.1);
-  box-shadow: 0 3px 12px rgba(255, 204, 107, 0.4);
+  box-shadow: 0 3px 12px rgba(78, 205, 196, 0.4);
 }
 
 /* Firefox unified styling */
@@ -1003,19 +1003,21 @@ input[type="range"]::-moz-range-thumb {
 
 /* Keep effect sliders with original circular design */
 .effect-slider::-webkit-slider-thumb {
-  background: linear-gradient(45deg, var(--color-accent-yellow), var(--color-accent-orange));
+  background: var(--gradient-primary);
   border-radius: var(--radius-full);
   width: 20px;
   height: 20px;
   border: none;
+  box-shadow: var(--shadow-sm);
 }
 
 .effect-slider::-moz-range-thumb {
-  background: linear-gradient(45deg, var(--color-accent-yellow), var(--color-accent-orange));
+  background: var(--gradient-primary);
   border-radius: var(--radius-full);
   width: 20px;
   height: 20px;
   border: none;
+  box-shadow: var(--shadow-sm);
 }
 
 /* Vertical sliders - maintain larger size for easier manipulation */
@@ -1238,6 +1240,15 @@ input[type="range"]::-moz-range-thumb {
 .loop-buttons {
   display: flex;
   gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.loop-length-inline {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-left: var(--spacing-md);
+  min-width: 120px;
 }
 
 .loop-btn {
@@ -1263,7 +1274,8 @@ input[type="range"]::-moz-range-thumb {
   margin-top: var(--spacing-sm);
 }
 
-.loop-length-section label {
+.loop-length-section label,
+.loop-length-inline label {
   font-size: 0.8rem;
   color: var(--text-secondary);
   font-weight: 500;
