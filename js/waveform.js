@@ -234,13 +234,21 @@ class ZoomedWaveformRenderer {
       
       const deck = window.audioEngine.getDeck(this.deckId);
       if (deck && deck.audioBuffer) {
-        // Convert horizontal movement to scratch speed for pure scratching
-        // Positive deltaX = scratch forward, negative = scratch backward
+        // Convert horizontal movement to both position control AND scratch
+        // This provides full control of the record position while scratching
         const sensitivity = 0.02; // Adjust for scratch sensitivity
         const scratchSpeed = deltaX * sensitivity;
         
-        // Apply only scratch effect without seeking to new positions
-        // This provides audio feedback while keeping the track position unchanged
+        // Calculate new position based on scratch movement for position control
+        const windowDuration = Math.min(this.zoomLevel, deck.getDuration() - this.offsetSeconds);
+        const timePerPixel = windowDuration / rect.width;
+        const timeOffset = deltaX * timePerPixel;
+        const newTime = Math.max(0, Math.min(deck.getDuration(), deck.getCurrentTime() + timeOffset));
+        
+        // Seek to new position for full record control
+        deck.seek(newTime);
+        
+        // Also apply scratch effect for audio feedback
         deck.scratch(scratchSpeed * 15); // Scale for audio scratching
       }
       
@@ -298,11 +306,20 @@ class ZoomedWaveformRenderer {
       
       const deck = window.audioEngine.getDeck(this.deckId);
       if (deck && deck.audioBuffer) {
-        // Convert horizontal movement to scratch speed for pure scratching
+        // Convert horizontal movement to both position control AND scratch for touch
         const sensitivity = 0.02;
         const scratchSpeed = deltaX * sensitivity;
         
-        // Apply only scratch effect without seeking to new positions
+        // Calculate new position based on scratch movement for position control
+        const windowDuration = Math.min(this.zoomLevel, deck.getDuration() - this.offsetSeconds);
+        const timePerPixel = windowDuration / rect.width;
+        const timeOffset = deltaX * timePerPixel;
+        const newTime = Math.max(0, Math.min(deck.getDuration(), deck.getCurrentTime() + timeOffset));
+        
+        // Seek to new position for full record control
+        deck.seek(newTime);
+        
+        // Also apply scratch effect for audio feedback
         deck.scratch(scratchSpeed * 15);
       }
       

@@ -133,7 +133,10 @@ class Deck {
   play() {
     if (!this.audioBuffer) return;
 
-    this.stop();
+    // Store the pauseTime before stopping, since stop() will reset it
+    const resumeTime = this.isPaused ? this.pauseTime : 0;
+    
+    this.stopSource(); // Use stopSource instead of stop() to preserve pause state
         
     this.source = this.audioContext.createBufferSource();
     this.source.buffer = this.audioBuffer;
@@ -195,9 +198,9 @@ class Deck {
         
     this.gainNode.connect(this.masterGain);
 
-    const offset = this.isPaused ? this.pauseTime : 0;
-    this.source.start(0, offset);
-    this.startTime = this.audioContext.currentTime - offset;
+    // Start from the saved resume time
+    this.source.start(0, resumeTime);
+    this.startTime = this.audioContext.currentTime - resumeTime;
     this.isPlaying = true;
     this.isPaused = false;
   }
@@ -205,20 +208,25 @@ class Deck {
   pause() {
     if (this.isPlaying && !this.isPaused) {
       this.pauseTime = this.audioContext.currentTime - this.startTime;
-      this.stop();
+      this.stopSource(); // Use helper method that doesn't reset pauseTime
+      this.isPlaying = false;
       this.isPaused = true;
     }
   }
 
   stop() {
+    this.stopSource();
+    this.isPlaying = false;
+    this.isPaused = false;
+    this.pauseTime = 0;
+  }
+
+  stopSource() {
     if (this.source) {
       this.source.stop();
       this.source.disconnect();
       this.source = null;
     }
-    this.isPlaying = false;
-    this.isPaused = false;
-    this.pauseTime = 0;
   }
 
   setVolume(value) {
