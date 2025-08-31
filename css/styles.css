@@ -854,8 +854,9 @@ body {
 
 .pitch-bend-buttons-vertical {
   display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
+  flex-direction: row;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
 }
 
 .pitch-bend-buttons-vertical .pitch-bend-btn {
@@ -906,6 +907,18 @@ input[type="range"]::-webkit-slider-thumb:hover {
   border-radius: var(--radius-sm);
 }
 
+/* Firefox track styling */
+.volume-slider::-moz-range-track,
+.pitch-slider::-moz-range-track,
+.effect-slider::-moz-range-track,
+#masterVolume::-moz-range-track,
+.crossfader::-moz-range-track {
+  background: var(--bg-surface-lighter);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  height: 8px;
+}
+
 /* Specialized colors for different slider types while maintaining consistent borders */
 .volume-slider::-webkit-slider-track {
   background: linear-gradient(90deg, #6b2c2c, #8b3a3a);
@@ -924,6 +937,24 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 .crossfader::-webkit-slider-track {
+  background: linear-gradient(90deg, #6b2c6b, #8b3a8b);
+  height: 10px;
+}
+
+/* Firefox specific track styling */
+.pitch-slider::-moz-range-track {
+  background: linear-gradient(90deg, #2c2c6b, #3a3a8b);
+}
+
+.effect-slider::-moz-range-track {
+  background: linear-gradient(90deg, #6b6b2c, #8b8b3a);
+}
+
+#masterVolume::-moz-range-track {
+  background: linear-gradient(90deg, #2c6b2c, #3a8b3a);
+}
+
+.crossfader::-moz-range-track {
   background: linear-gradient(90deg, #6b2c6b, #8b3a8b);
   height: 10px;
 }
@@ -1004,15 +1035,8 @@ input[type="range"]::-webkit-slider-thumb:hover {
   }
 
   .eq-band {
-    flex-direction: row;
-    justify-content: space-between;
-  }
-
-  .eq-slider {
-    writing-mode: initial;
-    -webkit-appearance: none;
-    width: 150px;
-    height: 6px;
+    flex-direction: column;
+    align-items: center;
   }
 
   .vu-meters {

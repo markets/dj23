@@ -264,7 +264,11 @@ class ZoomedWaveformRenderer {
 
   updateZoomWindow() {
     const deck = window.audioEngine.getDeck(this.deckId);
-    if (!deck || !deck.audioBuffer) return;
+    if (!deck || !deck.audioBuffer) {
+      // When no track is loaded, keep offset at 0 to show middle line only
+      this.offsetSeconds = 0;
+      return;
+    }
 
     const currentTime = deck.getCurrentTime();
     const duration = deck.getDuration();
@@ -348,6 +352,14 @@ class ZoomedWaveformRenderer {
     // Draw beat markers (every second)
     this.drawBeatMarkers(width, height, duration);
     
+    // Draw red playhead line always in the center for beat view
+    this.ctx.strokeStyle = '#ff4757';
+    this.ctx.lineWidth = 2;
+    this.ctx.beginPath();
+    this.ctx.moveTo(width / 2, 0);
+    this.ctx.lineTo(width / 2, height);
+    this.ctx.stroke();
+    
     // Update playhead position
     this.updatePlayhead();
   }
@@ -378,7 +390,7 @@ class ZoomedWaveformRenderer {
         
     this.ctx.clearRect(0, 0, width, height);
         
-    // Draw empty state
+    // Draw empty state with just the center line
     this.ctx.strokeStyle = '#333';
     this.ctx.lineWidth = 1;
     this.ctx.beginPath();
@@ -386,6 +398,14 @@ class ZoomedWaveformRenderer {
     this.ctx.lineTo(width, height / 2);
     this.ctx.stroke();
         
+    // Draw red playhead line in the center (50%) for beat view
+    this.ctx.strokeStyle = '#ff4757';
+    this.ctx.lineWidth = 2;
+    this.ctx.beginPath();
+    this.ctx.moveTo(width / 2, 0);
+    this.ctx.lineTo(width / 2, height);
+    this.ctx.stroke();
+    
     // Draw text
     this.ctx.fillStyle = '#666';
     this.ctx.font = '12px Inter';
