@@ -265,12 +265,9 @@ class ZoomedWaveformRenderer {
           // Stop scratching
           deck.stopScratch();
           
-          // Resume playback if it was playing before scratching
-          if (wasPlayingBeforeScratch) {
-            deck.play();
-          }
-          
-          console.log(`Beat waveform scratch stopped on deck ${this.deckId}`);
+          // Leave track at current position instead of resuming playback
+          // This gives full control of the record position
+          console.log(`Beat waveform scratch stopped on deck ${this.deckId} - staying at current position`);
         }
       }
     });
@@ -335,11 +332,9 @@ class ZoomedWaveformRenderer {
         if (deck && deck.audioBuffer) {
           deck.stopScratch();
           
-          if (wasPlayingBeforeScratch) {
-            deck.play();
-          }
-          
-          console.log(`Beat waveform touch scratch stopped on deck ${this.deckId}`);
+          // Leave track at current position instead of resuming playback
+          // This gives full control of the record position
+          console.log(`Beat waveform touch scratch stopped on deck ${this.deckId} - staying at current position`);
         }
       }
     });

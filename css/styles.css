@@ -723,6 +723,11 @@ body {
   outline: none;
   margin-bottom: var(--spacing-md);
   border: 1px solid #ff8888;
+  /* Invert the direction so top is 100% and bottom is 0% */
+  -webkit-transform: rotate(180deg);
+  -moz-transform: rotate(180deg);
+  -o-transform: rotate(180deg);
+  transform: rotate(180deg);
 }
 
 .volume-slider-vertical::-webkit-slider-thumb {
@@ -1023,6 +1028,11 @@ input[type="range"]::-webkit-slider-thumb:hover {
   outline: none;
   border-radius: var(--spacing-lg);
   border: 1px solid var(--border-light);
+  /* Ensure vertical movement on Y axis */
+  -webkit-transform: none;
+  -moz-transform: none;
+  -o-transform: none;
+  transform: none;
 }
 
 .eq-slider::-webkit-slider-track {
@@ -1088,6 +1098,11 @@ input[type="range"]::-webkit-slider-thumb:hover {
 .transport-controls button.active {
   background: var(--gradient-primary);
   box-shadow: var(--shadow-primary);
+}
+
+.pause-btn.active {
+  background: var(--gradient-secondary) !important;
+  box-shadow: var(--shadow-secondary) !important;
 }
 
 /* Loading Animation */

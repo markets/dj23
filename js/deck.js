@@ -460,6 +460,7 @@ class DeckController {
     if (deck) {
       deck.play();
       this.updatePlayingState(true);
+      this.updatePauseState(false);
       // Start vinyl animation
       if (this.vinylElement && !this.isScratching) {
         this.vinylElement.classList.add('spinning');
@@ -479,6 +480,7 @@ class DeckController {
     if (deck) {
       deck.pause();
       this.updatePlayingState(false);
+      this.updatePauseState(true);
       // Stop vinyl animation
       if (this.vinylElement) {
         this.vinylElement.classList.remove('spinning');
@@ -498,16 +500,19 @@ class DeckController {
     if (deck) {
       deck.stop();
       this.updatePlayingState(false);
+      this.updatePauseState(false);
       // Stop vinyl animation
       if (this.vinylElement) {
         this.vinylElement.classList.remove('spinning');
       }
-      // Stop waveform animations
+      // Force waveform update to show position at beginning
       if (window.waveformRenderers && window.waveformRenderers[this.deckId]) {
-        window.waveformRenderers[this.deckId].stopAnimation();
+        window.waveformRenderers[this.deckId].updatePlayhead();
+        window.waveformRenderers[this.deckId].render();
       }
       if (window.beatWaveformRenderers && window.beatWaveformRenderers[this.deckId]) {
-        window.beatWaveformRenderers[this.deckId].stopAnimation();
+        window.beatWaveformRenderers[this.deckId].updatePlayhead();
+        window.beatWaveformRenderers[this.deckId].render();
       }
     }
   }
@@ -529,6 +534,16 @@ class DeckController {
     } else {
       deckElement.classList.remove('playing');
       playButton.classList.remove('active');
+    }
+  }
+
+  updatePauseState(isPaused) {
+    const pauseButton = document.getElementById(`pause${this.deckId}`);
+    
+    if (isPaused) {
+      pauseButton.classList.add('active');
+    } else {
+      pauseButton.classList.remove('active');
     }
   }
 
