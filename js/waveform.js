@@ -195,50 +195,143 @@ class ZoomedWaveformRenderer {
   }
 
   setupEventListeners() {
-    this.canvas.addEventListener('click', (e) => {
-      if (!this.waveformData) return;
-            
-      const rect = this.canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const percentage = x / rect.width;
-            
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck && deck.audioBuffer) {
-        // Calculate seek time relative to current zoom window
-        const windowDuration = Math.min(this.zoomLevel, deck.getDuration() - this.offsetSeconds);
-        const seekOffset = percentage * windowDuration;
-        const seekTime = this.offsetSeconds + seekOffset;
-        deck.seek(seekTime);
-        console.log(`Beat waveform seek to ${seekTime}s on deck ${this.deckId}`);
-      }
-    });
-
-    // Handle dragging for scrubbing
+    // Handle scratching for beat view waveforms
     let isDragging = false;
+    let lastX = 0;
+    let scratchStartTime = 0;
+    let wasPlayingBeforeScratch = false;
+
     this.canvas.addEventListener('mousedown', (e) => {
+      if (!this.waveformData) return;
+      
       isDragging = true;
       this.canvas.style.cursor = 'grabbing';
+      
+      const rect = this.canvas.getBoundingClientRect();
+      lastX = e.clientX - rect.left;
+      
+      const deck = window.audioEngine.getDeck(this.deckId);
+      if (deck && deck.audioBuffer) {
+        // Start scratching
+        wasPlayingBeforeScratch = deck.isPlaying;
+        deck.startScratch();
+        scratchStartTime = deck.getCurrentTime();
+        console.log(`Beat waveform scratch started on deck ${this.deckId}`);
+      }
     });
 
     document.addEventListener('mousemove', (e) => {
       if (!isDragging || !this.waveformData) return;
       
       const rect = this.canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const percentage = Math.max(0, Math.min(1, x / rect.width));
+      const currentX = e.clientX - rect.left;
+      const deltaX = currentX - lastX;
       
       const deck = window.audioEngine.getDeck(this.deckId);
       if (deck && deck.audioBuffer) {
+        // Convert horizontal movement to scratch speed
+        // Positive deltaX = move forward, negative = move backward
+        const sensitivity = 0.01; // Adjust for scratch sensitivity
+        const scratchSpeed = deltaX * sensitivity;
+        
+        // Calculate new position based on scratch movement
         const windowDuration = Math.min(this.zoomLevel, deck.getDuration() - this.offsetSeconds);
-        const seekOffset = percentage * windowDuration;
-        const seekTime = this.offsetSeconds + seekOffset;
-        deck.seek(seekTime);
+        const timePerPixel = windowDuration / rect.width;
+        const timeOffset = deltaX * timePerPixel;
+        const newTime = Math.max(0, Math.min(deck.getDuration(), deck.getCurrentTime() + timeOffset));
+        
+        // Seek to new position for scratch effect
+        deck.seek(newTime);
+        
+        // Also apply scratch effect for audio feedback
+        deck.scratch(scratchSpeed * 10); // Scale for audio scratching
       }
+      
+      lastX = currentX;
     });
 
     document.addEventListener('mouseup', () => {
-      isDragging = false;
-      this.canvas.style.cursor = 'pointer';
+      if (isDragging) {
+        isDragging = false;
+        this.canvas.style.cursor = 'pointer';
+        
+        const deck = window.audioEngine.getDeck(this.deckId);
+        if (deck && deck.audioBuffer) {
+          // Stop scratching
+          deck.stopScratch();
+          
+          // Resume playback if it was playing before scratching
+          if (wasPlayingBeforeScratch) {
+            deck.play();
+          }
+          
+          console.log(`Beat waveform scratch stopped on deck ${this.deckId}`);
+        }
+      }
+    });
+
+    // Touch events for mobile scratching
+    this.canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (!this.waveformData) return;
+      
+      const touch = e.touches[0];
+      const rect = this.canvas.getBoundingClientRect();
+      
+      isDragging = true;
+      lastX = touch.clientX - rect.left;
+      
+      const deck = window.audioEngine.getDeck(this.deckId);
+      if (deck && deck.audioBuffer) {
+        wasPlayingBeforeScratch = deck.isPlaying;
+        deck.startScratch();
+        scratchStartTime = deck.getCurrentTime();
+        console.log(`Beat waveform touch scratch started on deck ${this.deckId}`);
+      }
+    });
+
+    this.canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (!isDragging || !this.waveformData) return;
+      
+      const touch = e.touches[0];
+      const rect = this.canvas.getBoundingClientRect();
+      const currentX = touch.clientX - rect.left;
+      const deltaX = currentX - lastX;
+      
+      const deck = window.audioEngine.getDeck(this.deckId);
+      if (deck && deck.audioBuffer) {
+        const sensitivity = 0.01;
+        const scratchSpeed = deltaX * sensitivity;
+        
+        const windowDuration = Math.min(this.zoomLevel, deck.getDuration() - this.offsetSeconds);
+        const timePerPixel = windowDuration / rect.width;
+        const timeOffset = deltaX * timePerPixel;
+        const newTime = Math.max(0, Math.min(deck.getDuration(), deck.getCurrentTime() + timeOffset));
+        
+        deck.seek(newTime);
+        deck.scratch(scratchSpeed * 10);
+      }
+      
+      lastX = currentX;
+    });
+
+    this.canvas.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      if (isDragging) {
+        isDragging = false;
+        
+        const deck = window.audioEngine.getDeck(this.deckId);
+        if (deck && deck.audioBuffer) {
+          deck.stopScratch();
+          
+          if (wasPlayingBeforeScratch) {
+            deck.play();
+          }
+          
+          console.log(`Beat waveform touch scratch stopped on deck ${this.deckId}`);
+        }
+      }
     });
 
     window.addEventListener('resize', () => {
