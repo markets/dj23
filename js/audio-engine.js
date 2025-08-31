@@ -329,18 +329,31 @@ class Deck {
     }
   }
 
-  // Main CUE function - prioritizes cue1 or goes to start
+  // Main CUE function - returns to last cue point or beginning
   cue() {
-    // If playing, pause and return to cue1 or beginning
+    // If playing, pause and return to last cue point
     if (this.isPlaying) {
       this.pause();
-      // Prioritize cue1, fallback to beginning
-      const cueTime = this.cuePoints[1] !== null ? this.cuePoints[1] : 0;
+      // Find the most recently set cue point
+      let lastCueTime = null;
+      for (let i = 1; i <= 2; i++) {
+        if (this.cuePoints[i] !== null) {
+          lastCueTime = this.cuePoints[i];
+        }
+      }
+      // Go to last cue point or beginning
+      const cueTime = lastCueTime !== null ? lastCueTime : 0;
       this.seek(cueTime);
       console.log(`Deck ${this.deckId}: CUE - returned to ${cueTime}s`);
     } else {
-      // If paused, go to cue1 or beginning
-      const cueTime = this.cuePoints[1] !== null ? this.cuePoints[1] : 0;
+      // If paused, just go to beginning or last cue point
+      let lastCueTime = null;
+      for (let i = 1; i <= 2; i++) {
+        if (this.cuePoints[i] !== null) {
+          lastCueTime = this.cuePoints[i];
+        }
+      }
+      const cueTime = lastCueTime !== null ? lastCueTime : 0;
       this.seek(cueTime);
       console.log(`Deck ${this.deckId}: CUE - moved to ${cueTime}s`);
     }
