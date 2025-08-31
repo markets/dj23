@@ -39,6 +39,10 @@ class AudioEngine {
     }
   }
 
+  getMasterVolume() {
+    return this.masterGain ? this.masterGain.gain.value : 0.75;
+  }
+
   getDeck(deckId) {
     return this.decks[deckId];
   }
@@ -71,6 +75,10 @@ class Deck {
     this.originalPlaybackRate = 1;
     this.wasPlayingBeforeScratch = false;
     
+    // Pitch bend properties
+    this.isPitchBending = false;
+    this.originalPitchBeforeBend = undefined;
+    
     // CUE points
     this.cuePoints = { 1: null, 2: null };
     
@@ -89,6 +97,10 @@ class Deck {
     // Main gain node
     this.gainNode = this.audioContext.createGain();
     this.gainNode.gain.value = this.volume;
+
+    // Global gain node for EQ
+    this.globalGainNode = this.audioContext.createGain();
+    this.globalGainNode.gain.value = 1.0; // 0dB by default
 
     // EQ nodes
     this.eqNodes.high = this.audioContext.createBiquadFilter();
@@ -156,16 +168,17 @@ class Deck {
     this.eqNodes.high.connect(splitter);
     
     // Main dry signal path
-    this.eqNodes.high.connect(this.gainNode);
+    this.eqNodes.high.connect(this.globalGainNode);
+    this.globalGainNode.connect(this.gainNode);
         
     // Connect reverb send (wet/dry mix)
     splitter.connect(this.effectNodes.reverb);
     this.effectNodes.reverb.connect(this.effectNodes.reverbGain);
-    this.effectNodes.reverbGain.connect(this.gainNode);
+    this.effectNodes.reverbGain.connect(this.globalGainNode);
         
     // Connect delay send
     splitter.connect(this.effectNodes.delay);
-    this.effectNodes.delayGain.connect(this.gainNode);
+    this.effectNodes.delayGain.connect(this.globalGainNode);
     
     // Connect phaser effect chain
     if (this.effectNodes.phaser && this.effectNodes.phaser.length > 0) {
@@ -186,14 +199,14 @@ class Deck {
       
       // Connect phaser output through gain control
       phaserInput.connect(this.effectNodes.phaserGain);
-      this.effectNodes.phaserGain.connect(this.gainNode);
+      this.effectNodes.phaserGain.connect(this.globalGainNode);
     }
     
     // Connect flanger effect
     if (this.effectNodes.flanger) {
       splitter.connect(this.effectNodes.flanger);
       this.effectNodes.flanger.connect(this.effectNodes.flangerGain);
-      this.effectNodes.flangerGain.connect(this.gainNode);
+      this.effectNodes.flangerGain.connect(this.globalGainNode);
       
       // LFO connection is already set up in connectEffectChain
     }
@@ -246,7 +259,13 @@ class Deck {
   }
 
   setEQ(band, value) {
-    if (this.eqNodes[band]) {
+    if (band === 'gain') {
+      // Handle global gain - convert dB to linear gain
+      if (this.globalGainNode) {
+        const gainValue = Math.pow(10, value / 20);
+        this.globalGainNode.gain.value = gainValue;
+      }
+    } else if (this.eqNodes[band]) {
       this.eqNodes[band].gain.value = value;
     }
   }
@@ -449,10 +468,25 @@ class Deck {
 
   // Pitch bend methods
   pitchBend(direction) {
-    const bendAmount = direction > 0 ? 0.5 : -0.5; // +/- 0.5% pitch bend
-    const currentPitch = ((this.playbackRate - 1) * 100);
+    // Store the original pitch when starting pitch bend
+    if (!this.isPitchBending) {
+      this.originalPitchBeforeBend = ((this.playbackRate - 1) * 100);
+      this.isPitchBending = true;
+    }
+    
+    const bendAmount = direction > 0 ? 6 : -6; // +/- 6% pitch bend for more noticeable effect
+    const currentPitch = this.originalPitchBeforeBend;
     const newPitch = Math.max(-50, Math.min(50, currentPitch + bendAmount));
     this.setPitch(newPitch);
+  }
+
+  stopPitchBend() {
+    if (this.isPitchBending && this.originalPitchBeforeBend !== undefined) {
+      // Restore the original pitch
+      this.setPitch(this.originalPitchBeforeBend);
+      this.isPitchBending = false;
+      this.originalPitchBeforeBend = undefined;
+    }
   }
 
   getDuration() {

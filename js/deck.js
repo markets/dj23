@@ -54,7 +54,7 @@ class DeckController {
     });
 
     // EQ controls
-    ['high', 'mid', 'low'].forEach(band => {
+    ['high', 'mid', 'low', 'gain'].forEach(band => {
       const eqSlider = document.getElementById(`${band}${this.deckId}`);
       eqSlider.addEventListener('input', (e) => {
         const value = parseInt(e.target.value);
@@ -94,12 +94,36 @@ class DeckController {
 
     // Stop pitch bend on mouse up
     ['pitchBendPlus', 'pitchBendMinus'].forEach(buttonId => {
-      document.getElementById(`${buttonId}${this.deckId}`).addEventListener('mouseup', () => {
+      const button = document.getElementById(`${buttonId}${this.deckId}`);
+      button.addEventListener('mouseup', () => {
         const deck = window.audioEngine.getDeck(this.deckId);
         if (deck) {
-          deck.pitchBend(0);
+          deck.stopPitchBend();
         }
       });
+      
+      // Also stop pitch bend when mouse leaves the button
+      button.addEventListener('mouseleave', () => {
+        const deck = window.audioEngine.getDeck(this.deckId);
+        if (deck) {
+          deck.stopPitchBend();
+        }
+      });
+    });
+
+    // Pitch reset button
+    document.getElementById(`pitchReset${this.deckId}`).addEventListener('click', () => {
+      const deck = window.audioEngine.getDeck(this.deckId);
+      if (deck) {
+        deck.setPitch(0);
+        // Update the slider and display
+        document.getElementById(`pitch${this.deckId}`).value = 0;
+        document.getElementById(`pitchDisplay${this.deckId}`).textContent = '0%';
+        // Update BPM display
+        if (deck.bpm) {
+          document.getElementById(`bpm${this.deckId}`).textContent = deck.bpm.toFixed(1);
+        }
+      }
     });
 
     // CUE point controls
@@ -563,16 +587,7 @@ class DeckController {
     const deck = window.audioEngine.getDeck(this.deckId);
     if (!deck) return;
 
-    // Reset EQ controls
-    ['high', 'mid', 'low'].forEach(band => {
-      const slider = document.getElementById(`${band}${this.deckId}`);
-      const display = slider.nextElementSibling;
-      slider.value = '0';
-      display.textContent = '0';
-      deck.setEQ(band, 0);
-    });
-
-    // Reset effects controls
+    // Reset effects controls only (not EQ)
     const effects = [
       { id: 'filter', defaultValue: 50 },
       { id: 'reverb', defaultValue: 0 },
@@ -591,12 +606,15 @@ class DeckController {
           deck.setReverb(effect.defaultValue);
         } else if (effect.id === 'delay') {
           deck.setDelay(effect.defaultValue);
+        } else if (effect.id === 'phaser') {
+          deck.setPhaser(effect.defaultValue);
+        } else if (effect.id === 'flanger') {
+          deck.setFlanger(effect.defaultValue);
         }
-        // Note: phaser and flanger methods may need to be implemented in audio-engine.js
       }
     });
 
-    console.log(`Deck ${this.deckId}: All filters reset to default values`);
+    console.log(`Deck ${this.deckId}: Effects reset to default values`);
   }
 
   updateBPMDisplay() {

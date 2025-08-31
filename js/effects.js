@@ -25,20 +25,20 @@ class EffectsEngine {
     this.effectNodes.phaser = [];
     this.effectNodes.phaserLFO = this.audioContext.createOscillator();
     this.effectNodes.phaserLFO.type = 'sine';
-    this.effectNodes.phaserLFO.frequency.value = 0.5;
+    this.effectNodes.phaserLFO.frequency.value = 0.3; // Slower sweep for smoother effect
     this.effectNodes.phaserLFOGain = this.audioContext.createGain();
-    this.effectNodes.phaserLFOGain.gain.value = 1000; // Modulation depth
+    this.effectNodes.phaserLFOGain.gain.value = 800; // Reduced modulation depth for subtlety
     this.effectNodes.phaserGain = this.audioContext.createGain();
     this.effectNodes.phaserGain.gain.value = 0;
     this.effectNodes.phaserDry = this.audioContext.createGain();
     this.effectNodes.phaserDry.gain.value = 1;
     
-    // Create 6 allpass filters for phaser
-    for (let i = 0; i < 6; i++) {
+    // Create 8 allpass filters for richer phaser effect
+    for (let i = 0; i < 8; i++) {
       this.effectNodes.phaser[i] = this.audioContext.createBiquadFilter();
       this.effectNodes.phaser[i].type = 'allpass';
-      this.effectNodes.phaser[i].frequency.value = 1000 + (i * 300);
-      this.effectNodes.phaser[i].Q.value = 10;
+      this.effectNodes.phaser[i].frequency.value = 500 + (i * 200); // Better frequency spacing
+      this.effectNodes.phaser[i].Q.value = 5; // Reduced Q for smoother response
     }
     
     // Flanger effect (short delay with feedback)
@@ -131,8 +131,16 @@ class EffectsEngine {
 
   setPhaser(value) {
     if (this.effectNodes.phaserGain) {
-      this.effectNodes.phaserGain.gain.value = value / 100;
-      this.effectNodes.phaserDry.gain.value = 1 - (value / 100);
+      // Better wet/dry mix curve for more musical phasing
+      const wetLevel = (value / 100) * 0.7; // Max 70% wet for better balance
+      const dryLevel = 1 - (wetLevel * 0.5); // Keep some dry signal for punch
+      this.effectNodes.phaserGain.gain.value = wetLevel;
+      this.effectNodes.phaserDry.gain.value = dryLevel;
+      
+      // Adjust LFO depth based on effect intensity
+      if (this.effectNodes.phaserLFOGain) {
+        this.effectNodes.phaserLFOGain.gain.value = 400 + (value * 8); // Dynamic modulation depth
+      }
     }
   }
 
