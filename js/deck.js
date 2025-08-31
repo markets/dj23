@@ -47,6 +47,8 @@ class DeckController {
       const deck = window.audioEngine.getDeck(this.deckId);
       if (deck) {
         deck.setPitch(value);
+        // Update BPM display to reflect pitch change
+        this.updateBPMDisplay();
       }
       document.getElementById(`pitchDisplay${this.deckId}`).textContent = `${value}%`;
     });
@@ -177,6 +179,11 @@ class DeckController {
       if (deck) {
         deck.toggleLoop();
       }
+    });
+
+    // Reset filters button
+    document.getElementById(`resetFilters${this.deckId}`).addEventListener('click', () => {
+      this.resetFilters();
     });
   }
 
@@ -310,8 +317,8 @@ class DeckController {
     const success = await deck.loadFile(file);
         
     if (success) {
-      // Update track info
-      trackInfo.querySelector('.track-name').textContent = file.name;
+      // Extract metadata and update track display
+      await this.extractAndDisplayMetadata(file);
       this.updateTrackTime();
             
       // Generate main waveform
@@ -328,12 +335,124 @@ class DeckController {
       }
             
       // Update BPM display
-      document.getElementById(`bpm${this.deckId}`).textContent = deck.getBPM();
+      this.updateBPMDisplay();
     } else {
       trackInfo.querySelector('.track-name').textContent = 'Failed to load';
     }
         
     trackInfo.classList.remove('loading');
+  }
+
+  async extractAndDisplayMetadata(file) {
+    return new Promise((resolve) => {
+      // Use jsmediatags to extract metadata
+      window.jsmediatags.read(file, {
+        onSuccess: (tag) => {
+          const tags = tag.tags;
+          let displayTitle = '';
+          
+          // Extract artist and title
+          const artist = tags.artist || '';
+          const title = tags.title || '';
+          const album = tags.album || '';
+          
+          // Format display title
+          if (artist && title) {
+            displayTitle = `${artist} - ${title}`;
+          } else if (title) {
+            displayTitle = title;
+          } else {
+            // Fallback to filename parsing
+            displayTitle = this.parseFilenameForMetadata(file.name);
+          }
+          
+          // Update track name display
+          const trackNameElement = document.querySelector(`#trackInfo${this.deckId} .track-name`);
+          trackNameElement.textContent = displayTitle;
+          
+          // Add album info if available
+          if (album) {
+            trackNameElement.title = `Album: ${album}`;
+          }
+          
+          // Handle album cover
+          this.displayAlbumCover(tags.picture);
+          
+          resolve();
+        },
+        onError: (error) => {
+          console.log('Metadata extraction failed:', error);
+          // Fallback to filename parsing
+          const trackNameElement = document.querySelector(`#trackInfo${this.deckId} .track-name`);
+          trackNameElement.textContent = this.parseFilenameForMetadata(file.name);
+          this.displayAlbumCover(null);
+          resolve();
+        }
+      });
+    });
+  }
+
+  parseFilenameForMetadata(filename) {
+    // Remove file extension
+    const nameWithoutExt = filename.replace(/\.[^/.]+$/, '');
+    
+    // Try to parse common patterns
+    const patterns = [
+      /^(\d+[\s\-_]*)?(.+?)\s*[\-_]\s*(.+)$/,  // "01 - Artist - Title" or "Artist - Title"
+      /^(.+?)[\s\-_]+(.+)$/                     // "Artist Title" or "Artist_Title"
+    ];
+    
+    for (const pattern of patterns) {
+      const match = nameWithoutExt.match(pattern);
+      if (match) {
+        const parts = match.slice(1).filter(part => part && !part.match(/^\d+$/));
+        if (parts.length >= 2) {
+          return `${parts[0].trim()} - ${parts[1].trim()}`;
+        }
+      }
+    }
+    
+    // If no pattern matches, return cleaned filename
+    return nameWithoutExt.trim();
+  }
+
+  displayAlbumCover(pictureData) {
+    const albumCoverElement = document.getElementById(`albumCover${this.deckId}`);
+    
+    if (pictureData && pictureData.data) {
+      try {
+        // Create blob from picture data
+        const byteArray = new Uint8Array(pictureData.data);
+        const blob = new Blob([byteArray], { type: pictureData.format });
+        const imageUrl = URL.createObjectURL(blob);
+        
+        // Set image source and show it
+        albumCoverElement.src = imageUrl;
+        albumCoverElement.style.display = 'block';
+        
+        // Clean up previous blob URL
+        if (albumCoverElement.dataset.blobUrl) {
+          URL.revokeObjectURL(albumCoverElement.dataset.blobUrl);
+        }
+        albumCoverElement.dataset.blobUrl = imageUrl;
+      } catch (error) {
+        console.log('Error displaying album cover:', error);
+        this.hideAlbumCover();
+      }
+    } else {
+      this.hideAlbumCover();
+    }
+  }
+
+  hideAlbumCover() {
+    const albumCoverElement = document.getElementById(`albumCover${this.deckId}`);
+    albumCoverElement.style.display = 'none';
+    
+    // Clean up blob URL if exists
+    if (albumCoverElement.dataset.blobUrl) {
+      URL.revokeObjectURL(albumCoverElement.dataset.blobUrl);
+      delete albumCoverElement.dataset.blobUrl;
+    }
   }
 
   play() {
@@ -344,6 +463,13 @@ class DeckController {
       // Start vinyl animation
       if (this.vinylElement && !this.isScratching) {
         this.vinylElement.classList.add('spinning');
+      }
+      // Resume waveform animations
+      if (window.waveformRenderers && window.waveformRenderers[this.deckId]) {
+        window.waveformRenderers[this.deckId].startAnimation();
+      }
+      if (window.beatWaveformRenderers && window.beatWaveformRenderers[this.deckId]) {
+        window.beatWaveformRenderers[this.deckId].startAnimation();
       }
     }
   }
@@ -357,6 +483,13 @@ class DeckController {
       if (this.vinylElement) {
         this.vinylElement.classList.remove('spinning');
       }
+      // Stop waveform animations
+      if (window.waveformRenderers && window.waveformRenderers[this.deckId]) {
+        window.waveformRenderers[this.deckId].stopAnimation();
+      }
+      if (window.beatWaveformRenderers && window.beatWaveformRenderers[this.deckId]) {
+        window.beatWaveformRenderers[this.deckId].stopAnimation();
+      }
     }
   }
 
@@ -368,6 +501,13 @@ class DeckController {
       // Stop vinyl animation
       if (this.vinylElement) {
         this.vinylElement.classList.remove('spinning');
+      }
+      // Stop waveform animations
+      if (window.waveformRenderers && window.waveformRenderers[this.deckId]) {
+        window.waveformRenderers[this.deckId].stopAnimation();
+      }
+      if (window.beatWaveformRenderers && window.beatWaveformRenderers[this.deckId]) {
+        window.beatWaveformRenderers[this.deckId].stopAnimation();
       }
     }
   }
@@ -407,5 +547,56 @@ class DeckController {
     const minutes = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  resetFilters() {
+    const deck = window.audioEngine.getDeck(this.deckId);
+    if (!deck) return;
+
+    // Reset EQ controls
+    ['high', 'mid', 'low'].forEach(band => {
+      const slider = document.getElementById(`${band}${this.deckId}`);
+      const display = slider.nextElementSibling;
+      slider.value = '0';
+      display.textContent = '0';
+      deck.setEQ(band, 0);
+    });
+
+    // Reset effects controls
+    const effects = [
+      { id: 'filter', defaultValue: 50 },
+      { id: 'reverb', defaultValue: 0 },
+      { id: 'delay', defaultValue: 0 },
+      { id: 'phaser', defaultValue: 0 },
+      { id: 'flanger', defaultValue: 0 }
+    ];
+
+    effects.forEach(effect => {
+      const slider = document.getElementById(`${effect.id}${this.deckId}`);
+      if (slider) {
+        slider.value = effect.defaultValue;
+        if (effect.id === 'filter') {
+          deck.setFilter(effect.defaultValue);
+        } else if (effect.id === 'reverb') {
+          deck.setReverb(effect.defaultValue);
+        } else if (effect.id === 'delay') {
+          deck.setDelay(effect.defaultValue);
+        }
+        // Note: phaser and flanger methods may need to be implemented in audio-engine.js
+      }
+    });
+
+    console.log(`Deck ${this.deckId}: All filters reset to default values`);
+  }
+
+  updateBPMDisplay() {
+    const deck = window.audioEngine.getDeck(this.deckId);
+    if (!deck || !deck.audioBuffer) return;
+
+    const baseBPM = deck.getBaseBPM(); // Get the original BPM
+    const pitchPercentage = ((deck.playbackRate - 1) * 100);
+    const adjustedBPM = Math.round(baseBPM * deck.playbackRate);
+    
+    document.getElementById(`bpm${this.deckId}`).textContent = adjustedBPM;
   }
 }

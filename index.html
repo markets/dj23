@@ -54,8 +54,13 @@
         </div>
 
         <div class="track-info" id="trackInfoA">
-          <div class="track-name">No track loaded</div>
-          <div class="track-time">00:00 / 00:00</div>
+          <div class="track-details">
+            <div class="track-name">No track loaded</div>
+            <div class="track-time">00:00 / 00:00</div>
+          </div>
+          <div class="track-cover" id="trackCoverA">
+            <img id="albumCoverA" class="album-cover" style="display: none;" alt="Album Cover">
+          </div>
         </div>
 
         <div class="waveform-container">
@@ -143,6 +148,11 @@
             <input type="range" id="flangerA" min="0" max="100" value="0" class="effect-slider">
           </div>
         </div>
+
+        <!-- Reset Button -->
+        <div class="reset-section">
+          <button id="resetFiltersA" class="reset-btn">RESET FILTERS</button>
+        </div>
       </div>
 
       <!-- Center Mixer Section -->
@@ -191,13 +201,13 @@
         <div class="volume-controls-vertical">
           <div class="volume-control-vertical">
             <label>Volume A</label>
-            <input type="range" id="volumeA" min="0" max="100" value="75" class="volume-slider-vertical" orient="vertical">
-            <span class="volume-display">75%</span>
+            <input type="range" id="volumeA" min="0" max="100" value="100" class="volume-slider-vertical" orient="vertical">
+            <span class="volume-display">100%</span>
           </div>
           <div class="volume-control-vertical">
             <label>Volume B</label>
-            <input type="range" id="volumeB" min="0" max="100" value="75" class="volume-slider-vertical" orient="vertical">
-            <span class="volume-display">75%</span>
+            <input type="range" id="volumeB" min="0" max="100" value="0" class="volume-slider-vertical" orient="vertical">
+            <span class="volume-display">0%</span>
           </div>
         </div>
       </div>
@@ -211,8 +221,13 @@
         </div>
 
         <div class="track-info" id="trackInfoB">
-          <div class="track-name">No track loaded</div>
-          <div class="track-time">00:00 / 00:00</div>
+          <div class="track-details">
+            <div class="track-name">No track loaded</div>
+            <div class="track-time">00:00 / 00:00</div>
+          </div>
+          <div class="track-cover" id="trackCoverB">
+            <img id="albumCoverB" class="album-cover" style="display: none;" alt="Album Cover">
+          </div>
         </div>
 
         <div class="waveform-container">
@@ -299,6 +314,11 @@
             <label>Flanger</label>
             <input type="range" id="flangerB" min="0" max="100" value="0" class="effect-slider">
           </div>
+        </div>
+
+        <!-- Reset Button -->
+        <div class="reset-section">
+          <button id="resetFiltersB" class="reset-btn">RESET FILTERS</button>
         </div>
       </div>
     </div>
@@ -481,6 +501,7 @@
     </div>
   </div>
 
+  <script src="js/jsmediatags.min.js"></script>
   <script src="js/audio-engine.js"></script>
   <script src="js/effects.js"></script>
   <script src="js/deck.js"></script>

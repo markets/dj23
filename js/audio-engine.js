@@ -63,6 +63,9 @@ class Deck {
     this.playbackRate = 1;
     this.volume = 0.75;
     
+    // Store original BPM for pitch-adjusted calculations
+    this.baseBPM = 120; // Default BPM, will be updated when track loads
+    
     // Scratching properties
     this.isScratching = false;
     this.originalPlaybackRate = 1;
@@ -118,6 +121,8 @@ class Deck {
     try {
       const arrayBuffer = await file.arrayBuffer();
       this.audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+      // Calculate and store the base BPM
+      this.baseBPM = this.calculateBPM();
       return true;
     } catch (error) {
       console.error('Error loading audio file:', error);
@@ -134,21 +139,59 @@ class Deck {
     this.source.buffer = this.audioBuffer;
     this.source.playbackRate.value = this.playbackRate;
 
-    // Connect the effect chain
+    // Connect the main effect chain
     this.source.connect(this.effectNodes.filter);
     this.effectNodes.filter.connect(this.eqNodes.low);
     this.eqNodes.low.connect(this.eqNodes.mid);
     this.eqNodes.mid.connect(this.eqNodes.high);
+    
+    // Create a splitter for effect sends after EQ
+    const splitter = this.audioContext.createChannelSplitter(2);
+    const merger = this.audioContext.createChannelMerger(2);
+    this.eqNodes.high.connect(splitter);
+    
+    // Main dry signal path
     this.eqNodes.high.connect(this.gainNode);
         
-    // Connect reverb send
-    this.eqNodes.high.connect(this.effectNodes.reverb);
+    // Connect reverb send (wet/dry mix)
+    splitter.connect(this.effectNodes.reverb);
     this.effectNodes.reverb.connect(this.effectNodes.reverbGain);
     this.effectNodes.reverbGain.connect(this.gainNode);
         
     // Connect delay send
-    this.eqNodes.high.connect(this.effectNodes.delay);
+    splitter.connect(this.effectNodes.delay);
     this.effectNodes.delayGain.connect(this.gainNode);
+    
+    // Connect phaser effect chain
+    if (this.effectNodes.phaser && this.effectNodes.phaser.length > 0) {
+      let phaserInput = splitter;
+      
+      // Connect phaser chain
+      for (let i = 0; i < this.effectNodes.phaser.length; i++) {
+        phaserInput.connect(this.effectNodes.phaser[i]);
+        phaserInput = this.effectNodes.phaser[i];
+      }
+      
+      // Connect LFO to modulate phaser frequencies through gain node
+      if (this.effectNodes.phaserLFOGain) {
+        for (let i = 0; i < this.effectNodes.phaser.length; i++) {
+          this.effectNodes.phaserLFOGain.connect(this.effectNodes.phaser[i].frequency);
+        }
+      }
+      
+      // Connect phaser output through gain control
+      phaserInput.connect(this.effectNodes.phaserGain);
+      this.effectNodes.phaserGain.connect(this.gainNode);
+    }
+    
+    // Connect flanger effect
+    if (this.effectNodes.flanger) {
+      splitter.connect(this.effectNodes.flanger);
+      this.effectNodes.flanger.connect(this.effectNodes.flangerGain);
+      this.effectNodes.flangerGain.connect(this.gainNode);
+      
+      // LFO connection is already set up in connectEffectChain
+    }
         
     this.gainNode.connect(this.masterGain);
 
@@ -235,13 +278,18 @@ class Deck {
   }
 
   seek(time) {
-    if (!this.audioBuffer) return;
+    if (!this.audioBuffer) {
+      console.log(`Deck ${this.deckId}: Cannot seek - no audio buffer loaded`);
+      return;
+    }
     
     const wasPlaying = this.isPlaying;
     const duration = this.getDuration();
     
     // Clamp time to valid range
     time = Math.max(0, Math.min(time, duration));
+    
+    console.log(`Deck ${this.deckId}: Seeking to ${time.toFixed(2)}s (duration: ${duration.toFixed(2)}s, was playing: ${wasPlaying})`);
     
     if (wasPlaying) {
       this.stop();
@@ -252,6 +300,8 @@ class Deck {
       this.pauseTime = time;
       this.isPaused = true;
     }
+    
+    console.log(`Deck ${this.deckId}: Seek completed - current time: ${this.getCurrentTime().toFixed(2)}s`);
   }
 
   // CUE point methods
@@ -266,6 +316,36 @@ class Deck {
     if (this.cuePoints[cueNumber] !== null) {
       this.seek(this.cuePoints[cueNumber]);
       console.log(`Deck ${this.deckId}: Jumped to CUE ${cueNumber} at ${this.cuePoints[cueNumber]}s`);
+    }
+  }
+
+  // Main CUE function - returns to last cue point or beginning
+  cue() {
+    // If playing, pause and return to last cue point
+    if (this.isPlaying) {
+      this.pause();
+      // Find the most recently set cue point
+      let lastCueTime = null;
+      for (let i = 1; i <= 2; i++) {
+        if (this.cuePoints[i] !== null) {
+          lastCueTime = this.cuePoints[i];
+        }
+      }
+      // Go to last cue point or beginning
+      const cueTime = lastCueTime !== null ? lastCueTime : 0;
+      this.seek(cueTime);
+      console.log(`Deck ${this.deckId}: CUE - returned to ${cueTime}s`);
+    } else {
+      // If paused, just go to beginning or last cue point
+      let lastCueTime = null;
+      for (let i = 1; i <= 2; i++) {
+        if (this.cuePoints[i] !== null) {
+          lastCueTime = this.cuePoints[i];
+        }
+      }
+      const cueTime = lastCueTime !== null ? lastCueTime : 0;
+      this.seek(cueTime);
+      console.log(`Deck ${this.deckId}: CUE - moved to ${cueTime}s`);
     }
   }
 
@@ -358,8 +438,18 @@ class Deck {
   }
 
   getBPM() {
+    // Return the current BPM adjusted for pitch changes
+    return Math.round(this.baseBPM * this.playbackRate);
+  }
+
+  getBaseBPM() {
+    // Return the original BPM without pitch adjustments
+    return this.baseBPM;
+  }
+
+  calculateBPM() {
     // Simplified BPM detection - in a real implementation, you'd use more sophisticated analysis
-    if (!this.audioBuffer) return 0;
+    if (!this.audioBuffer) return 120;
     return Math.floor(120 + Math.random() * 60); // Placeholder
   }
 
