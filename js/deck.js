@@ -66,34 +66,6 @@ class DeckController {
       });
     });
 
-    // Effect controls
-    const filterSlider = document.getElementById(`filter${this.deckId}`);
-    filterSlider.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.setFilter(value);
-      }
-    });
-
-    const reverbSlider = document.getElementById(`reverb${this.deckId}`);
-    reverbSlider.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.setReverb(value);
-      }
-    });
-
-    const delaySlider = document.getElementById(`delay${this.deckId}`);
-    delaySlider.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.setDelay(value);
-      }
-    });
-
     // Volume control
     const volumeSlider = document.getElementById(`volume${this.deckId}`);
     volumeSlider.addEventListener('input', (e) => {
