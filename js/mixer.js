@@ -154,6 +154,31 @@ class MixerController {
         
     updateVU();
   }
+
+  // Transport control methods for keyboard shortcuts
+  playDeck(deckId) {
+    if (this.deckControllers[deckId]) {
+      this.deckControllers[deckId].play();
+    }
+  }
+
+  pauseDeck(deckId) {
+    if (this.deckControllers[deckId]) {
+      this.deckControllers[deckId].pause();
+    }
+  }
+
+  stopDeck(deckId) {
+    if (this.deckControllers[deckId]) {
+      this.deckControllers[deckId].stop();
+    }
+  }
+
+  cueDeck(deckId) {
+    if (this.deckControllers[deckId]) {
+      this.deckControllers[deckId].cue();
+    }
+  }
 }
 
 // Global mixer controller
