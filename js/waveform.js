@@ -269,14 +269,9 @@ class ZoomedWaveformRenderer {
     const currentTime = deck.getCurrentTime();
     const duration = deck.getDuration();
     
-    // Different zoom windows for different beat waveforms
-    if (this.zoomIndex === 1) {
-      // Beat Zoom 1: Centers around current position
-      this.offsetSeconds = Math.max(0, currentTime - this.zoomLevel / 2);
-    } else {
-      // Beat Zoom 2: Shows upcoming section
-      this.offsetSeconds = Math.max(0, currentTime);
-    }
+    // For top waveforms: always center the current position so red line stays in middle
+    // This makes the waveform move on X-axis while the playhead stays centered
+    this.offsetSeconds = Math.max(0, currentTime - this.zoomLevel / 2);
     
     // Ensure we don't go beyond track duration
     this.offsetSeconds = Math.min(this.offsetSeconds, Math.max(0, duration - this.zoomLevel));
@@ -402,18 +397,11 @@ class ZoomedWaveformRenderer {
     const deck = window.audioEngine.getDeck(this.deckId);
     const playhead = document.getElementById(`beatPlayhead${this.deckId}`);
         
-    if (deck && deck.isPlaying && deck.getDuration() > 0) {
-      const currentTime = deck.getCurrentTime();
-      const windowDuration = Math.min(this.zoomLevel, deck.getDuration() - this.offsetSeconds);
-      
-      if (currentTime >= this.offsetSeconds && currentTime <= this.offsetSeconds + this.zoomLevel) {
-        const progressInWindow = (currentTime - this.offsetSeconds) / windowDuration;
-        const position = Math.min(progressInWindow * 100, 100);
-        playhead.style.left = `${position}%`;
-        playhead.style.opacity = '1';
-      } else {
-        playhead.style.opacity = '0.3';
-      }
+    if (deck && deck.getDuration() > 0) {
+      // Always keep the red line in the middle for top waveforms
+      // The waveform moves on X-axis instead of the playhead moving
+      playhead.style.left = '50%';
+      playhead.style.opacity = deck.isPlaying ? '1' : '0.7';
     } else {
       playhead.style.left = '50%';
       playhead.style.opacity = '0.3';

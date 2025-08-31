@@ -178,6 +178,11 @@ class DeckController {
         deck.toggleLoop();
       }
     });
+
+    // Reset filters button
+    document.getElementById(`resetFilters${this.deckId}`).addEventListener('click', () => {
+      this.resetFilters();
+    });
   }
 
   setupVinylControls() {
@@ -407,5 +412,45 @@ class DeckController {
     const minutes = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  resetFilters() {
+    const deck = window.audioEngine.getDeck(this.deckId);
+    if (!deck) return;
+
+    // Reset EQ controls
+    ['high', 'mid', 'low'].forEach(band => {
+      const slider = document.getElementById(`${band}${this.deckId}`);
+      const display = slider.nextElementSibling;
+      slider.value = '0';
+      display.textContent = '0';
+      deck.setEQ(band, 0);
+    });
+
+    // Reset effects controls
+    const effects = [
+      { id: 'filter', defaultValue: 50 },
+      { id: 'reverb', defaultValue: 0 },
+      { id: 'delay', defaultValue: 0 },
+      { id: 'phaser', defaultValue: 0 },
+      { id: 'flanger', defaultValue: 0 }
+    ];
+
+    effects.forEach(effect => {
+      const slider = document.getElementById(`${effect.id}${this.deckId}`);
+      if (slider) {
+        slider.value = effect.defaultValue;
+        if (effect.id === 'filter') {
+          deck.setFilter(effect.defaultValue);
+        } else if (effect.id === 'reverb') {
+          deck.setReverb(effect.defaultValue);
+        } else if (effect.id === 'delay') {
+          deck.setDelay(effect.defaultValue);
+        }
+        // Note: phaser and flanger methods may need to be implemented in audio-engine.js
+      }
+    });
+
+    console.log(`Deck ${this.deckId}: All filters reset to default values`);
   }
 }
