@@ -25,7 +25,6 @@
   --text-primary: #ffffff;
   --text-secondary: #ccc;
   --text-muted: #888;
-  --text-disabled: #666;
   
   /* Border Colors */
   --border-primary: #333;
@@ -59,7 +58,6 @@
   /* Transitions */
   --transition-fast: all 0.1s ease;
   --transition-normal: all 0.2s ease;
-  --transition-slow: all 0.3s ease;
   
   /* Gradients */
   --gradient-primary: linear-gradient(45deg, var(--color-primary), var(--color-primary-dark));
@@ -1016,20 +1014,6 @@ input[type="range"]::-moz-range-thumb {
 /* Crossfader specific sizing */
 .crossfader {
   height: 10px;
-}
-
-
-
-.eq-slider::-webkit-slider-track {
-  background: linear-gradient(180deg, #1a4a1a, #2c6b2c);
-  border-radius: var(--spacing-lg);
-}
-
-.eq-slider::-webkit-slider-thumb {
-  background: linear-gradient(45deg, #00b894, #00a085);
-  width: 25px;
-  height: 15px;
-  border-radius: var(--radius-sm);
 }
 
 /* Responsive Design */

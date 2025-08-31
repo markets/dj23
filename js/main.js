@@ -37,14 +37,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   console.log('- Click on waveforms to seek to position');
   console.log('- Use beat matching waveforms for precise mixing');
   console.log('- Use EQ and effects to shape your sound');
-});
+  
+  // Handle audio context resume on user interaction (setup once after initialization)
+  document.addEventListener('click', async () => {
+    if (window.audioEngine && window.audioEngine.audioContext) {
+      await window.audioEngine.resumeContext();
+    }
+  }, { once: true });
 
-// Handle audio context resume on user interaction
-document.addEventListener('click', async () => {
-  if (window.audioEngine && window.audioEngine.audioContext) {
-    await window.audioEngine.resumeContext();
-  }
-}, { once: true });
+  // Initialize modal event listeners
+  // Close modal when clicking outside
+  document.getElementById('keyboardShortcutsModal').addEventListener('click', (e) => {
+    if (e.target.id === 'keyboardShortcutsModal') {
+      hideShortcutsModal();
+    }
+  });
+  
+  // Close modal with close button
+  document.getElementById('closeShortcutsModal').addEventListener('click', hideShortcutsModal);
+  
+  // Open modal with help button
+  document.getElementById('showShortcutsBtn').addEventListener('click', showShortcutsModal);
+});
 
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
@@ -259,22 +273,6 @@ function hideShortcutsModal() {
   modal.classList.remove('show');
   document.body.style.overflow = 'auto';
 }
-
-// Initialize modal event listeners
-document.addEventListener('DOMContentLoaded', () => {
-  // Close modal when clicking outside
-  document.getElementById('keyboardShortcutsModal').addEventListener('click', (e) => {
-    if (e.target.id === 'keyboardShortcutsModal') {
-      hideShortcutsModal();
-    }
-  });
-  
-  // Close modal with close button
-  document.getElementById('closeShortcutsModal').addEventListener('click', hideShortcutsModal);
-  
-  // Open modal with help button
-  document.getElementById('showShortcutsBtn').addEventListener('click', showShortcutsModal);
-});
 
 // Error handling
 window.addEventListener('error', (e) => {
