@@ -919,21 +919,28 @@ input[type="range"]::-webkit-slider-track {
   border: 1px solid var(--border-light);
 }
 
-/* Unified thumb styling for all sliders */
+/* Base thumb styling for all sliders */
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  height: 20px;
-  width: 20px;
-  border-radius: var(--radius-full);
-  background: var(--gradient-primary);
   cursor: pointer;
-  box-shadow: var(--shadow-sm);
   transition: var(--transition-normal);
-  border: none;
 }
 
-/* Unified hover effect for all sliders */
-input[type="range"]::-webkit-slider-thumb:hover {
+/* Professional fader hover effects */
+.volume-slider::-webkit-slider-thumb:hover,
+.volume-slider-vertical::-webkit-slider-thumb:hover,
+#masterVolume::-webkit-slider-thumb:hover,
+.pitch-slider::-webkit-slider-thumb:hover,
+.pitch-slider-vertical::-webkit-slider-thumb:hover,
+.crossfader::-webkit-slider-thumb:hover,
+.loop-length-slider::-webkit-slider-thumb:hover,
+.eq-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.05);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.2);
+}
+
+/* Effect slider hover effects (keep original) */
+.effect-slider::-webkit-slider-thumb:hover {
   transform: scale(1.1);
   box-shadow: 0 3px 12px rgba(78, 205, 196, 0.4);
 }
@@ -946,41 +953,71 @@ input[type="range"]::-moz-range-track {
   border: 1px solid var(--border-light);
 }
 
+/* Base Firefox thumb styling */
 input[type="range"]::-moz-range-thumb {
-  height: 20px;
-  width: 20px;
-  border-radius: var(--radius-full);
-  background: var(--gradient-primary);
   cursor: pointer;
-  box-shadow: var(--shadow-sm);
-  border: none;
 }
 
-/* Specialized thumb colors for different slider types */
+/* Professional Fader Styling - Black rectangles with white lines */
 .volume-slider::-webkit-slider-thumb,
 .volume-slider-vertical::-webkit-slider-thumb,
-#masterVolume::-webkit-slider-thumb {
-  background: var(--gradient-secondary);
-}
-
+#masterVolume::-webkit-slider-thumb,
 .pitch-slider::-webkit-slider-thumb,
-.pitch-slider-vertical::-webkit-slider-thumb {
-  background: var(--gradient-accent);
+.pitch-slider-vertical::-webkit-slider-thumb,
+.crossfader::-webkit-slider-thumb,
+.loop-length-slider::-webkit-slider-thumb,
+.eq-slider::-webkit-slider-thumb {
+  background: linear-gradient(to right, #1a1a1a 0%, #1a1a1a 45%, #ffffff 47%, #ffffff 53%, #1a1a1a 55%, #1a1a1a 100%);
+  border-radius: 3px;
+  width: 24px;
+  height: 18px;
+  border: 1px solid #333;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
 }
 
+/* Vertical slider professional fader styling */
+.volume-slider-vertical::-webkit-slider-thumb,
+.pitch-slider-vertical::-webkit-slider-thumb,
+.eq-slider::-webkit-slider-thumb {
+  background: linear-gradient(to bottom, #1a1a1a 0%, #1a1a1a 45%, #ffffff 47%, #ffffff 53%, #1a1a1a 55%, #1a1a1a 100%);
+  width: 18px;
+  height: 24px;
+}
+
+/* Firefox professional fader styling */
+.volume-slider::-moz-range-thumb,
+.volume-slider-vertical::-moz-range-thumb,
+#masterVolume::-moz-range-thumb,
+.pitch-slider::-moz-range-thumb,
+.pitch-slider-vertical::-moz-range-thumb,
+.crossfader::-moz-range-thumb,
+.loop-length-slider::-moz-range-thumb,
+.eq-slider::-moz-range-thumb {
+  background: linear-gradient(to right, #1a1a1a 0%, #1a1a1a 45%, #ffffff 47%, #ffffff 53%, #1a1a1a 55%, #1a1a1a 100%);
+  border-radius: 3px;
+  width: 24px;
+  height: 18px;
+  border: 1px solid #333;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+
+/* Keep effect sliders with original circular design */
 .effect-slider::-webkit-slider-thumb {
-  background: linear-gradient(45deg, var(--color-accent-yellow), var(--color-accent-orange));
+  background: var(--gradient-primary);
+  border-radius: var(--radius-full);
+  width: 20px;
+  height: 20px;
+  border: none;
+  box-shadow: var(--shadow-sm);
 }
 
-.crossfader::-webkit-slider-thumb {
-  background: linear-gradient(45deg, #ff6b6b, #ee5a24);
-}
-
-.loop-length-slider::-webkit-slider-thumb {
-  background: linear-gradient(45deg, #00b894, #00a085);
-  width: 16px;
-  height: 16px;
-  border: 2px solid white;
+.effect-slider::-moz-range-thumb {
+  background: var(--gradient-primary);
+  border-radius: var(--radius-full);
+  width: 20px;
+  height: 20px;
+  border: none;
+  box-shadow: var(--shadow-sm);
 }
 
 /* Vertical sliders - maintain larger size for easier manipulation */
@@ -1203,6 +1240,15 @@ input[type="range"]::-moz-range-thumb {
 .loop-buttons {
   display: flex;
   gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.loop-length-inline {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-left: var(--spacing-md);
+  min-width: 120px;
 }
 
 .loop-btn {
@@ -1228,7 +1274,8 @@ input[type="range"]::-moz-range-thumb {
   margin-top: var(--spacing-sm);
 }
 
-.loop-length-section label {
+.loop-length-section label,
+.loop-length-inline label {
   font-size: 0.8rem;
   color: var(--text-secondary);
   font-weight: 500;
