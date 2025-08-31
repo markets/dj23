@@ -208,7 +208,10 @@ class EffectsController {
 
     // Vocal/Bass/Instrumental removal buttons
     const removeVocalsBtn = document.getElementById(`removeVocals${this.deckId}`);
-    removeVocalsBtn.addEventListener('click', () => {
+    removeVocalsBtn.addEventListener('click', async () => {
+      await window.audioEngine.initialize();
+      await window.audioEngine.resumeContext();
+      
       const deck = window.audioEngine.getDeck(this.deckId);
       if (deck) {
         const isActive = deck.toggleVocalRemoval();
@@ -217,7 +220,10 @@ class EffectsController {
     });
 
     const removeBassBtn = document.getElementById(`removeBass${this.deckId}`);
-    removeBassBtn.addEventListener('click', () => {
+    removeBassBtn.addEventListener('click', async () => {
+      await window.audioEngine.initialize();
+      await window.audioEngine.resumeContext();
+      
       const deck = window.audioEngine.getDeck(this.deckId);
       if (deck) {
         const isActive = deck.toggleBassRemoval();
@@ -226,7 +232,10 @@ class EffectsController {
     });
 
     const removeInstrumentalBtn = document.getElementById(`removeInstrumental${this.deckId}`);
-    removeInstrumentalBtn.addEventListener('click', () => {
+    removeInstrumentalBtn.addEventListener('click', async () => {
+      await window.audioEngine.initialize();
+      await window.audioEngine.resumeContext();
+      
       const deck = window.audioEngine.getDeck(this.deckId);
       if (deck) {
         const isActive = deck.toggleInstrumentalRemoval();
