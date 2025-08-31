@@ -39,6 +39,10 @@ class AudioEngine {
     }
   }
 
+  getMasterVolume() {
+    return this.masterGain ? this.masterGain.gain.value : 0.75;
+  }
+
   getDeck(deckId) {
     return this.decks[deckId];
   }

@@ -116,13 +116,18 @@ class MixerController {
 
   startVUAnimation() {
     const updateVU = () => {
+      // Get master volume for VU meter scaling
+      const masterVolume = window.audioEngine.getMasterVolume();
+      
       // Update deck VU meters
       ['A', 'B'].forEach(deckId => {
         const deck = window.audioEngine.getDeck(deckId);
         if (deck && deck.isPlaying) {
           const analyserData = deck.getAnalyserData();
           const average = analyserData.reduce((sum, value) => sum + value, 0) / analyserData.length;
-          this.updateVUMeter(deckId, average);
+          // Apply master volume to VU meter display
+          const scaledLevel = average * masterVolume;
+          this.updateVUMeter(deckId, scaledLevel);
         } else {
           this.updateVUMeter(deckId, 0);
         }
@@ -142,8 +147,10 @@ class MixerController {
         const dataB = deckB.getAnalyserData();
         masterLevel += dataB.reduce((sum, value) => sum + value, 0) / dataB.length;
       }
-            
-      this.updateVUMeter('master', masterLevel / 2);
+      
+      // Apply master volume to master VU meter display
+      const scaledMasterLevel = (masterLevel / 2) * masterVolume;
+      this.updateVUMeter('master', scaledMasterLevel);
             
       // Update track times for both decks
       if (this.deckControllers.A) this.deckControllers.A.updateTrackTime();
