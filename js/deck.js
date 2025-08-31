@@ -1,226 +1,3 @@
-// Simple ID3 tag reader for basic metadata extraction
-class SimpleID3Reader {
-  static async readMetadata(file) {
-    try {
-      const buffer = await file.arrayBuffer();
-      const view = new DataView(buffer);
-      
-      // Check for ID3v2 header
-      if (view.getUint8(0) === 0x49 && view.getUint8(1) === 0x44 && view.getUint8(2) === 0x33) {
-        return this.readID3v2(view);
-      }
-      
-      // Check for ID3v1 at the end of file
-      if (buffer.byteLength > 128) {
-        const id3v1Offset = buffer.byteLength - 128;
-        const tagView = new DataView(buffer, id3v1Offset);
-        if (tagView.getUint8(0) === 0x54 && tagView.getUint8(1) === 0x41 && tagView.getUint8(2) === 0x47) {
-          return this.readID3v1(tagView);
-        }
-      }
-      
-      return null;
-    } catch (error) {
-      console.warn('Error reading ID3 tags:', error);
-      return null;
-    }
-  }
-  
-  static readID3v1(view) {
-    const decoder = new TextDecoder('latin1');
-    
-    const title = decoder.decode(view.buffer.slice(view.byteOffset + 3, view.byteOffset + 33)).replace(/\0/g, '').trim();
-    const artist = decoder.decode(view.buffer.slice(view.byteOffset + 33, view.byteOffset + 63)).replace(/\0/g, '').trim();
-    const album = decoder.decode(view.buffer.slice(view.byteOffset + 63, view.byteOffset + 93)).replace(/\0/g, '').trim();
-    const year = decoder.decode(view.buffer.slice(view.byteOffset + 93, view.byteOffset + 97)).replace(/\0/g, '').trim();
-    
-    return {
-      title: title || null,
-      artist: artist || null,
-      album: album || null,
-      year: year || null,
-      picture: null
-    };
-  }
-  
-  static readID3v2(view) {
-    // Simple ID3v2 reader - just extract basic text frames
-    const version = view.getUint8(3);
-    let headerSize = 10;
-    
-    // Calculate tag size
-    const tagSize = (view.getUint8(6) << 21) | (view.getUint8(7) << 14) | (view.getUint8(8) << 7) | view.getUint8(9);
-    
-    const metadata = {
-      title: null,
-      artist: null,
-      album: null,
-      year: null,
-      picture: null
-    };
-    
-    let offset = headerSize;
-    const endOffset = Math.min(headerSize + tagSize, view.buffer.byteLength);
-    
-    while (offset < endOffset - 10) {
-      try {
-        // Read frame header
-        const frameId = String.fromCharCode(
-          view.getUint8(offset),
-          view.getUint8(offset + 1),
-          view.getUint8(offset + 2),
-          view.getUint8(offset + 3)
-        );
-        
-        if (frameId === '\0\0\0\0') break;
-        
-        let frameSize;
-        if (version >= 4) {
-          frameSize = (view.getUint8(offset + 4) << 21) | (view.getUint8(offset + 5) << 14) | (view.getUint8(offset + 6) << 7) | view.getUint8(offset + 7);
-        } else {
-          frameSize = (view.getUint8(offset + 4) << 24) | (view.getUint8(offset + 5) << 16) | (view.getUint8(offset + 6) << 8) | view.getUint8(offset + 7);
-        }
-        
-        if (frameSize === 0 || offset + 10 + frameSize > endOffset) break;
-        
-        const dataOffset = offset + 10;
-        const encoding = view.getUint8(dataOffset);
-        
-        // Skip encoding byte and read text
-        let text = '';
-        try {
-          if (encoding === 0 || encoding === 3) {
-            // ISO-8859-1 or UTF-8
-            const decoder = new TextDecoder(encoding === 0 ? 'latin1' : 'utf-8');
-            text = decoder.decode(view.buffer.slice(dataOffset + 1, dataOffset + frameSize)).replace(/\0/g, '').trim();
-          } else if (encoding === 1 || encoding === 2) {
-            // UTF-16
-            const decoder = new TextDecoder('utf-16');
-            text = decoder.decode(view.buffer.slice(dataOffset + 1, dataOffset + frameSize)).replace(/\0/g, '').trim();
-          }
-        } catch (e) {
-          // Fallback to latin1
-          const decoder = new TextDecoder('latin1');
-          text = decoder.decode(view.buffer.slice(dataOffset + 1, dataOffset + frameSize)).replace(/\0/g, '').trim();
-        }
-        
-        // Map frame IDs to metadata
-        switch (frameId) {
-          case 'TIT2':
-          case 'TT2\0':
-            metadata.title = text;
-            break;
-          case 'TPE1':
-          case 'TP1\0':
-            metadata.artist = text;
-            break;
-          case 'TALB':
-          case 'TAL\0':
-            metadata.album = text;
-            break;
-          case 'TYER':
-          case 'TYE\0':
-          case 'TDRC':
-            metadata.year = text;
-            break;
-          case 'APIC':
-          case 'PIC\0':
-            // Extract album cover from APIC frame
-            try {
-              const imageData = this.extractAPICImage(view.buffer.slice(dataOffset, dataOffset + frameSize));
-              if (imageData) {
-                metadata.picture = imageData;
-              }
-            } catch (e) {
-              console.warn('Error extracting album cover:', e);
-            }
-            break;
-        }
-        
-        offset += 10 + frameSize;
-      } catch (e) {
-        break;
-      }
-    }
-    
-    return metadata;
-  }
-  
-  static extractAPICImage(buffer) {
-    try {
-      const view = new DataView(buffer);
-      let offset = 1; // Skip encoding byte
-      
-      // Read MIME type (null-terminated string)
-      const mimeBytes = [];
-      while (offset < buffer.byteLength && view.getUint8(offset) !== 0) {
-        mimeBytes.push(view.getUint8(offset));
-        offset++;
-      }
-      offset++; // Skip null terminator
-      
-      if (mimeBytes.length === 0) return null;
-      
-      const mimeType = String.fromCharCode(...mimeBytes);
-      
-      // Skip picture type byte
-      offset++;
-      
-      // Skip description (null-terminated string)
-      while (offset < buffer.byteLength && view.getUint8(offset) !== 0) {
-        offset++;
-      }
-      offset++; // Skip null terminator
-      
-      // The rest is the image data
-      if (offset >= buffer.byteLength) return null;
-      
-      const imageData = buffer.slice(offset);
-      const blob = new Blob([imageData], { type: mimeType });
-      return URL.createObjectURL(blob);
-    } catch (e) {
-      console.warn('Error parsing APIC frame:', e);
-      return null;
-    }
-  }
-}
-
-// Utility function to extract metadata from audio files
-async function extractMetadata(file) {
-  // First try to read ID3 tags
-  const id3Metadata = await SimpleID3Reader.readMetadata(file);
-  
-  if (id3Metadata && (id3Metadata.title || id3Metadata.artist)) {
-    return id3Metadata;
-  }
-  
-  // Fallback to filename parsing
-  const fileName = file.name;
-  const nameWithoutExt = fileName.replace(/\.[^/.]+$/, '');
-  
-  // Try to parse common filename patterns like "Artist - Title" or "01 - Artist - Title"
-  let title = nameWithoutExt;
-  let artist = null;
-  
-  // Remove track numbers (e.g., "01 - ", "1. ", etc.)
-  title = title.replace(/^\d+[\s\-\.]+/, '');
-  
-  // Try to split by " - " to get artist and title
-  const dashSplit = title.split(' - ');
-  if (dashSplit.length >= 2) {
-    artist = dashSplit[0].trim();
-    title = dashSplit.slice(1).join(' - ').trim();
-  }
-  
-  return {
-    title: title,
-    artist: artist,
-    album: null,
-    year: null,
-    picture: null
-  };
-}
-
 class DeckController {
   constructor(deckId) {
     this.deckId = deckId;
@@ -230,20 +7,6 @@ class DeckController {
     
     // Initialize effects controller for this deck
     this.effectsController = new EffectsController(deckId);
-    
-    // Initialize album cover placeholder
-    this.initializeAlbumCover();
-  }
-  
-  initializeAlbumCover() {
-    const albumCoverElement = document.getElementById(`albumCover${this.deckId}`);
-    if (albumCoverElement) {
-      albumCoverElement.style.display = 'block';
-      albumCoverElement.style.backgroundColor = 'var(--bg-tertiary)';
-      albumCoverElement.style.border = '1px solid var(--border-light)';
-      albumCoverElement.alt = 'No album cover';
-      albumCoverElement.src = '';
-    }
   }
 
   setupEventListeners() {
@@ -554,11 +317,8 @@ class DeckController {
     const success = await deck.loadFile(file);
         
     if (success) {
-      // Extract metadata from the file
-      const metadata = await extractMetadata(file);
-      
-      // Update track info with metadata
-      this.updateTrackInfo(metadata, file);
+      // Extract metadata and update track display
+      await this.extractAndDisplayMetadata(file);
       this.updateTrackTime();
             
       // Generate main waveform
@@ -583,49 +343,115 @@ class DeckController {
     trackInfo.classList.remove('loading');
   }
 
-  updateTrackInfo(metadata, file) {
-    const trackInfo = document.getElementById(`trackInfo${this.deckId}`);
-    const trackNameElement = trackInfo.querySelector('.track-name');
+  async extractAndDisplayMetadata(file) {
+    return new Promise((resolve) => {
+      // Use jsmediatags to extract metadata
+      window.jsmediatags.read(file, {
+        onSuccess: (tag) => {
+          const tags = tag.tags;
+          let displayTitle = '';
+          
+          // Extract artist and title
+          const artist = tags.artist || '';
+          const title = tags.title || '';
+          const album = tags.album || '';
+          
+          // Format display title
+          if (artist && title) {
+            displayTitle = `${artist} - ${title}`;
+          } else if (title) {
+            displayTitle = title;
+          } else {
+            // Fallback to filename parsing
+            displayTitle = this.parseFilenameForMetadata(file.name);
+          }
+          
+          // Update track name display
+          const trackNameElement = document.querySelector(`#trackInfo${this.deckId} .track-name`);
+          trackNameElement.textContent = displayTitle;
+          
+          // Add album info if available
+          if (album) {
+            trackNameElement.title = `Album: ${album}`;
+          }
+          
+          // Handle album cover
+          this.displayAlbumCover(tags.picture);
+          
+          resolve();
+        },
+        onError: (error) => {
+          console.log('Metadata extraction failed:', error);
+          // Fallback to filename parsing
+          const trackNameElement = document.querySelector(`#trackInfo${this.deckId} .track-name`);
+          trackNameElement.textContent = this.parseFilenameForMetadata(file.name);
+          this.displayAlbumCover(null);
+          resolve();
+        }
+      });
+    });
+  }
+
+  parseFilenameForMetadata(filename) {
+    // Remove file extension
+    const nameWithoutExt = filename.replace(/\.[^/.]+$/, '');
+    
+    // Try to parse common patterns
+    const patterns = [
+      /^(\d+[\s\-_]*)?(.+?)\s*[\-_]\s*(.+)$/,  // "01 - Artist - Title" or "Artist - Title"
+      /^(.+?)[\s\-_]+(.+)$/                     // "Artist Title" or "Artist_Title"
+    ];
+    
+    for (const pattern of patterns) {
+      const match = nameWithoutExt.match(pattern);
+      if (match) {
+        const parts = match.slice(1).filter(part => part && !part.match(/^\d+$/));
+        if (parts.length >= 2) {
+          return `${parts[0].trim()} - ${parts[1].trim()}`;
+        }
+      }
+    }
+    
+    // If no pattern matches, return cleaned filename
+    return nameWithoutExt.trim();
+  }
+
+  displayAlbumCover(pictureData) {
     const albumCoverElement = document.getElementById(`albumCover${this.deckId}`);
     
-    // Build track display text with metadata
-    let displayText = '';
-    if (metadata.artist && metadata.title) {
-      displayText = `${metadata.artist} - ${metadata.title}`;
-    } else if (metadata.title) {
-      displayText = metadata.title;
+    if (pictureData && pictureData.data) {
+      try {
+        // Create blob from picture data
+        const byteArray = new Uint8Array(pictureData.data);
+        const blob = new Blob([byteArray], { type: pictureData.format });
+        const imageUrl = URL.createObjectURL(blob);
+        
+        // Set image source and show it
+        albumCoverElement.src = imageUrl;
+        albumCoverElement.style.display = 'block';
+        
+        // Clean up previous blob URL
+        if (albumCoverElement.dataset.blobUrl) {
+          URL.revokeObjectURL(albumCoverElement.dataset.blobUrl);
+        }
+        albumCoverElement.dataset.blobUrl = imageUrl;
+      } catch (error) {
+        console.log('Error displaying album cover:', error);
+        this.hideAlbumCover();
+      }
     } else {
-      // Fallback to filename without extension
-      displayText = file.name.replace(/\.[^/.]+$/, '');
+      this.hideAlbumCover();
     }
+  }
+
+  hideAlbumCover() {
+    const albumCoverElement = document.getElementById(`albumCover${this.deckId}`);
+    albumCoverElement.style.display = 'none';
     
-    // Add album information if available
-    if (metadata.album) {
-      displayText += ` (${metadata.album})`;
-    }
-    
-    trackNameElement.textContent = displayText;
-    trackNameElement.title = displayText; // Tooltip for full text if truncated
-    
-    // Store metadata for potential future use
-    trackNameElement.dataset.artist = metadata.artist || '';
-    trackNameElement.dataset.title = metadata.title || '';
-    trackNameElement.dataset.album = metadata.album || '';
-    trackNameElement.dataset.year = metadata.year || '';
-    
-    // Handle album cover
-    if (metadata.picture) {
-      albumCoverElement.src = metadata.picture;
-      albumCoverElement.style.display = 'block';
-      albumCoverElement.style.backgroundColor = '';
-      albumCoverElement.style.border = '';
-    } else {
-      // Show placeholder when no cover is available
-      albumCoverElement.style.display = 'block';
-      albumCoverElement.style.backgroundColor = 'var(--bg-tertiary)';
-      albumCoverElement.style.border = '1px solid var(--border-light)';
-      albumCoverElement.alt = 'No album cover';
-      albumCoverElement.src = '';
+    // Clean up blob URL if exists
+    if (albumCoverElement.dataset.blobUrl) {
+      URL.revokeObjectURL(albumCoverElement.dataset.blobUrl);
+      delete albumCoverElement.dataset.blobUrl;
     }
   }
 
