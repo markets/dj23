@@ -54,7 +54,7 @@ class DeckController {
     });
 
     // EQ controls
-    ['high', 'mid', 'low'].forEach(band => {
+    ['high', 'mid', 'low', 'gain'].forEach(band => {
       const eqSlider = document.getElementById(`${band}${this.deckId}`);
       eqSlider.addEventListener('input', (e) => {
         const value = parseInt(e.target.value);

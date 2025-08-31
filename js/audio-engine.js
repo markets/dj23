@@ -94,6 +94,10 @@ class Deck {
     this.gainNode = this.audioContext.createGain();
     this.gainNode.gain.value = this.volume;
 
+    // Global gain node for EQ
+    this.globalGainNode = this.audioContext.createGain();
+    this.globalGainNode.gain.value = 1.0; // 0dB by default
+
     // EQ nodes
     this.eqNodes.high = this.audioContext.createBiquadFilter();
     this.eqNodes.high.type = 'highshelf';
@@ -160,16 +164,17 @@ class Deck {
     this.eqNodes.high.connect(splitter);
     
     // Main dry signal path
-    this.eqNodes.high.connect(this.gainNode);
+    this.eqNodes.high.connect(this.globalGainNode);
+    this.globalGainNode.connect(this.gainNode);
         
     // Connect reverb send (wet/dry mix)
     splitter.connect(this.effectNodes.reverb);
     this.effectNodes.reverb.connect(this.effectNodes.reverbGain);
-    this.effectNodes.reverbGain.connect(this.gainNode);
+    this.effectNodes.reverbGain.connect(this.globalGainNode);
         
     // Connect delay send
     splitter.connect(this.effectNodes.delay);
-    this.effectNodes.delayGain.connect(this.gainNode);
+    this.effectNodes.delayGain.connect(this.globalGainNode);
     
     // Connect phaser effect chain
     if (this.effectNodes.phaser && this.effectNodes.phaser.length > 0) {
@@ -190,14 +195,14 @@ class Deck {
       
       // Connect phaser output through gain control
       phaserInput.connect(this.effectNodes.phaserGain);
-      this.effectNodes.phaserGain.connect(this.gainNode);
+      this.effectNodes.phaserGain.connect(this.globalGainNode);
     }
     
     // Connect flanger effect
     if (this.effectNodes.flanger) {
       splitter.connect(this.effectNodes.flanger);
       this.effectNodes.flanger.connect(this.effectNodes.flangerGain);
-      this.effectNodes.flangerGain.connect(this.gainNode);
+      this.effectNodes.flangerGain.connect(this.globalGainNode);
       
       // LFO connection is already set up in connectEffectChain
     }
@@ -250,7 +255,13 @@ class Deck {
   }
 
   setEQ(band, value) {
-    if (this.eqNodes[band]) {
+    if (band === 'gain') {
+      // Handle global gain - convert dB to linear gain
+      if (this.globalGainNode) {
+        const gainValue = Math.pow(10, value / 20);
+        this.globalGainNode.gain.value = gainValue;
+      }
+    } else if (this.eqNodes[band]) {
       this.eqNodes[band].gain.value = value;
     }
   }
