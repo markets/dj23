@@ -123,45 +123,58 @@ class Deck {
     this.bassRemovalActive = false;
     this.instrumentalRemovalActive = false;
 
-    // Improved vocal removal processor - uses a bypass/effect mixer
-    this.effectNodes.vocalProcessor = this.audioContext.createGain();
-    this.effectNodes.vocalEffect = this.audioContext.createChannelSplitter(2);
+    // Simplified vocal removal using L-R processing (center channel extraction)
+    this.effectNodes.vocalSplitter = this.audioContext.createChannelSplitter(2);
     this.effectNodes.vocalMerger = this.audioContext.createChannelMerger(2);
-    this.effectNodes.vocalInverter = this.audioContext.createGain();
-    this.effectNodes.vocalInverter.gain.value = -1;
+    this.effectNodes.vocalLeftGain = this.audioContext.createGain();
+    this.effectNodes.vocalRightGain = this.audioContext.createGain();
+    this.effectNodes.vocalRightInvert = this.audioContext.createGain();
+    this.effectNodes.vocalMixDown = this.audioContext.createGain();
     this.effectNodes.vocalBypass = this.audioContext.createGain();
-    this.effectNodes.vocalBypass.gain.value = 1; // Start with bypass active
-    this.effectNodes.vocalMix = this.audioContext.createGain();
-    this.effectNodes.vocalMix.gain.value = 0; // Start with effect inactive
-
-    // Connect vocal removal chain
-    this.effectNodes.vocalProcessor.connect(this.effectNodes.vocalBypass);
-    this.effectNodes.vocalProcessor.connect(this.effectNodes.vocalEffect);
+    this.effectNodes.vocalOutput = this.audioContext.createGain();
     
-    // Left channel goes directly to merger
-    this.effectNodes.vocalEffect.connect(this.effectNodes.vocalMerger, 0, 0);
-    // Right channel goes through inverter then to merger (creating the phase cancellation)
-    this.effectNodes.vocalEffect.connect(this.effectNodes.vocalInverter, 1, 0);
-    this.effectNodes.vocalInverter.connect(this.effectNodes.vocalMerger, 0, 1);
+    // Setup vocal removal chain: Input -> Splitter -> (L and -R) -> Sum -> Stereo out
+    this.effectNodes.vocalLeftGain.gain.value = 1;
+    this.effectNodes.vocalRightGain.gain.value = 1;
+    this.effectNodes.vocalRightInvert.gain.value = -1; // Invert right channel
+    this.effectNodes.vocalMixDown.gain.value = 0.5; // Reduce level after mixing
+    this.effectNodes.vocalBypass.gain.value = 1; // Bypass enabled by default
+    this.effectNodes.vocalOutput.gain.value = 0; // Effect disabled by default
     
-    this.effectNodes.vocalMerger.connect(this.effectNodes.vocalMix);
+    // Connect vocal removal chain for L-R (left minus right) processing
+    this.effectNodes.vocalSplitter.connect(this.effectNodes.vocalLeftGain, 0, 0);  // Left channel
+    this.effectNodes.vocalSplitter.connect(this.effectNodes.vocalRightGain, 1, 0); // Right channel
+    this.effectNodes.vocalRightGain.connect(this.effectNodes.vocalRightInvert);
+    
+    // Mix L + (-R) for vocal removal
+    this.effectNodes.vocalLeftGain.connect(this.effectNodes.vocalMixDown);
+    this.effectNodes.vocalRightInvert.connect(this.effectNodes.vocalMixDown);
+    
+    // Convert mono back to stereo
+    this.effectNodes.vocalMixDown.connect(this.effectNodes.vocalMerger, 0, 0); // Left
+    this.effectNodes.vocalMixDown.connect(this.effectNodes.vocalMerger, 0, 1); // Right
+    this.effectNodes.vocalMerger.connect(this.effectNodes.vocalOutput);
 
-    // Bass removal (high-pass filter)
+    // Bass removal (aggressive high-pass filter)
     this.effectNodes.bassRemoval = this.audioContext.createBiquadFilter();
     this.effectNodes.bassRemoval.type = 'highpass';
-    this.effectNodes.bassRemoval.frequency.value = 20; // Start with no effect
-    this.effectNodes.bassRemoval.Q.value = 0.7;
+    this.effectNodes.bassRemoval.frequency.value = 20; // Start bypassed
+    this.effectNodes.bassRemoval.Q.value = 1.2; // Sharper cutoff
 
-    // Instrumental removal (band-pass filter for vocal frequencies)
+    // Instrumental removal (band-pass filter targeting vocal frequencies 300Hz-3kHz)
     this.effectNodes.instrumentalRemoval = this.audioContext.createBiquadFilter();
-    this.effectNodes.instrumentalRemoval.type = 'allpass'; // Start with no effect
-    this.effectNodes.instrumentalRemoval.frequency.value = 1000;
-    this.effectNodes.instrumentalRemoval.Q.value = 0.7;
-
-    // Create the final output mixer that combines bypass and effect signals
-    this.effectNodes.finalMixer = this.audioContext.createGain();
-    this.effectNodes.vocalBypass.connect(this.effectNodes.finalMixer);
-    this.effectNodes.vocalMix.connect(this.effectNodes.finalMixer);
+    this.effectNodes.instrumentalRemoval.type = 'bandpass';
+    this.effectNodes.instrumentalRemoval.frequency.value = 1000; // Center frequency
+    this.effectNodes.instrumentalRemoval.Q.value = 0.8; // Moderate Q for vocal range
+    this.effectNodes.instrumentalBypass = this.audioContext.createGain();
+    this.effectNodes.instrumentalOutput = this.audioContext.createGain();
+    
+    // Setup instrumental removal bypass
+    this.effectNodes.instrumentalBypass.gain.value = 1; // Bypass enabled by default
+    this.effectNodes.instrumentalOutput.gain.value = 0; // Effect disabled by default
+    
+    // Vocal/Instrumental processing mixer
+    this.effectNodes.voiceProcessor = this.audioContext.createGain();
   }
 
   async loadFile(file) {
@@ -194,20 +207,40 @@ class Deck {
     this.source.buffer = this.audioBuffer;
     this.source.playbackRate.value = this.playbackRate;
 
-    // Connect the main effect chain sequentially to avoid multiple parallel paths
+    // Connect the main effect chain sequentially
     this.source.connect(this.effectNodes.filter);
     this.effectNodes.filter.connect(this.eqNodes.low);
     this.eqNodes.low.connect(this.eqNodes.mid);
     this.eqNodes.mid.connect(this.eqNodes.high);
     
-    // Create main mixer for effects sends
+    // Create main mixer for final output
     const mainMixer = this.audioContext.createGain();
     
-    // Connect main signal through vocal/bass/instrumental removal chain
-    this.eqNodes.high.connect(this.effectNodes.finalMixer);
-    this.effectNodes.finalMixer.connect(this.effectNodes.bassRemoval);
+    // Route audio through vocal/bass/instrumental processing chain
+    this.eqNodes.high.connect(this.effectNodes.voiceProcessor);
+    
+    // Setup vocal removal chain - split for processing and bypass
+    this.effectNodes.voiceProcessor.connect(this.effectNodes.vocalSplitter);
+    this.effectNodes.voiceProcessor.connect(this.effectNodes.vocalBypass);
+    
+    // Mix vocal processing outputs
+    const vocalMixer = this.audioContext.createGain();
+    this.effectNodes.vocalBypass.connect(vocalMixer);
+    this.effectNodes.vocalOutput.connect(vocalMixer);
+    
+    // Connect through bass removal filter
+    vocalMixer.connect(this.effectNodes.bassRemoval);
+    
+    // Setup instrumental removal processing with bypass
+    const instrumentalMixer = this.audioContext.createGain();
+    this.effectNodes.bassRemoval.connect(this.effectNodes.instrumentalBypass);
     this.effectNodes.bassRemoval.connect(this.effectNodes.instrumentalRemoval);
-    this.effectNodes.instrumentalRemoval.connect(mainMixer);
+    this.effectNodes.instrumentalBypass.connect(instrumentalMixer);
+    this.effectNodes.instrumentalRemoval.connect(this.effectNodes.instrumentalOutput);
+    this.effectNodes.instrumentalOutput.connect(instrumentalMixer);
+    
+    // Connect to main mixer for effects sends
+    instrumentalMixer.connect(mainMixer);
     
     // Create a splitter for effect sends
     const effectSplitter = this.audioContext.createChannelSplitter(2);
@@ -344,14 +377,14 @@ class Deck {
     this.vocalRemovalActive = !this.vocalRemovalActive;
     
     if (this.vocalRemovalActive) {
-      // Enable vocal removal effect: reduce bypass, increase effect mix
-      this.effectNodes.vocalBypass.gain.value = 0.3; // Reduce original signal
-      this.effectNodes.vocalMix.gain.value = 0.7; // Increase processed signal
-      console.log(`Deck ${this.deckId}: Vocal removal enabled`);
+      // Enable vocal removal effect: reduce bypass, enable effect
+      this.effectNodes.vocalBypass.gain.value = 0; // Disable original signal
+      this.effectNodes.vocalOutput.gain.value = 1; // Enable processed signal
+      console.log(`Deck ${this.deckId}: Vocal removal enabled (L-R center extraction)`);
     } else {
-      // Disable vocal removal effect: full bypass, no effect
-      this.effectNodes.vocalBypass.gain.value = 1;
-      this.effectNodes.vocalMix.gain.value = 0;
+      // Disable vocal removal effect: enable bypass, disable effect
+      this.effectNodes.vocalBypass.gain.value = 1; // Enable original signal
+      this.effectNodes.vocalOutput.gain.value = 0; // Disable processed signal
       console.log(`Deck ${this.deckId}: Vocal removal disabled`);
     }
     
@@ -362,12 +395,14 @@ class Deck {
     this.bassRemovalActive = !this.bassRemovalActive;
     
     if (this.bassRemovalActive) {
-      // Enable bass removal (high-pass filter at 120Hz)
-      this.effectNodes.bassRemoval.frequency.value = 120;
-      console.log(`Deck ${this.deckId}: Bass removal enabled (120Hz highpass)`);
+      // Enable bass removal (aggressive high-pass filter at 150Hz)
+      this.effectNodes.bassRemoval.frequency.value = 150;
+      this.effectNodes.bassRemoval.Q.value = 1.5; // Sharper cutoff
+      console.log(`Deck ${this.deckId}: Bass removal enabled (150Hz highpass, Q=1.5)`);
     } else {
       // Disable bass removal (set frequency very low)
       this.effectNodes.bassRemoval.frequency.value = 20;
+      this.effectNodes.bassRemoval.Q.value = 0.7;
       console.log(`Deck ${this.deckId}: Bass removal disabled`);
     }
     
@@ -378,15 +413,16 @@ class Deck {
     this.instrumentalRemovalActive = !this.instrumentalRemovalActive;
     
     if (this.instrumentalRemovalActive) {
-      // Enable instrumental removal (band-pass filter for vocal frequencies)
-      this.effectNodes.instrumentalRemoval.type = 'bandpass';
-      this.effectNodes.instrumentalRemoval.frequency.value = 1000; // Center on vocal frequencies
-      this.effectNodes.instrumentalRemoval.Q.value = 1.5; // Moderate Q for vocal range
-      console.log(`Deck ${this.deckId}: Instrumental removal enabled (vocal isolation)`);
+      // Enable instrumental removal: isolate vocal frequencies (300Hz-3kHz)
+      this.effectNodes.instrumentalBypass.gain.value = 0; // Disable original signal
+      this.effectNodes.instrumentalOutput.gain.value = 1; // Enable filtered signal
+      this.effectNodes.instrumentalRemoval.frequency.value = 1000; // Center at 1kHz
+      this.effectNodes.instrumentalRemoval.Q.value = 1.2; // Moderate Q for vocal range
+      console.log(`Deck ${this.deckId}: Instrumental removal enabled (vocal isolation 300Hz-3kHz)`);
     } else {
-      // Disable instrumental removal (all-pass to let everything through)
-      this.effectNodes.instrumentalRemoval.type = 'allpass';
-      this.effectNodes.instrumentalRemoval.Q.value = 0.7;
+      // Disable instrumental removal: bypass filter
+      this.effectNodes.instrumentalBypass.gain.value = 1; // Enable original signal
+      this.effectNodes.instrumentalOutput.gain.value = 0; // Disable filtered signal
       console.log(`Deck ${this.deckId}: Instrumental removal disabled`);
     }
     
