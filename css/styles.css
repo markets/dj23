@@ -857,6 +857,84 @@ body {
   color: var(--text-secondary);
 }
 
+/* Vertical Loop Control */
+.loop-control-vertical {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.loop-control-vertical label {
+  margin-bottom: var(--spacing-md);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.loop-buttons-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
+}
+
+.loop-btn-vertical {
+  border: none;
+  color: white;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: 500;
+  transition: var(--transition-normal);
+  font-size: 0.8rem;
+  background: linear-gradient(45deg, #00b894, #00a085);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  width: 50px;
+}
+
+.loop-btn-vertical:hover {
+  box-shadow: 0 3px 12px rgba(0, 184, 148, 0.4);
+}
+
+.loop-slider-vertical {
+  writing-mode: bt-lr; /* IE */
+  writing-mode: vertical-lr; /* Standard */
+  -webkit-appearance: slider-vertical;
+  width: 25px;
+  height: 120px;
+  background: linear-gradient(180deg, #00b894 0%, #00a085 100%);
+  border-radius: 12px;
+  outline: none;
+  margin: var(--spacing-md) 0;
+  border: 1px solid #00d4aa;
+}
+
+.loop-slider-vertical::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 30px;
+  height: 15px;
+  border-radius: var(--radius-sm);
+  background: var(--text-primary);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.loop-slider-vertical::-moz-range-thumb {
+  width: 30px;
+  height: 15px;
+  border-radius: var(--radius-sm);
+  background: var(--text-primary);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.loop-control-vertical .loop-length-value {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-top: var(--spacing-xs);
+}
+
 .pitch-slider-vertical {
   writing-mode: bt-lr; /* IE */
   writing-mode: vertical-lr; /* Standard */
@@ -896,6 +974,13 @@ body {
   flex-direction: row;
   gap: var(--spacing-sm);
   margin-bottom: var(--spacing-sm);
+}
+
+.pitch-control-vertical #pitchDisplayA,
+.pitch-control-vertical #pitchDisplayB {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-top: var(--spacing-xs);
 }
 
 .pitch-bend-buttons-vertical .pitch-bend-btn {
