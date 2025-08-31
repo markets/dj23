@@ -63,6 +63,9 @@ class Deck {
     this.playbackRate = 1;
     this.volume = 0.75;
     
+    // Store original BPM for pitch-adjusted calculations
+    this.baseBPM = 120; // Default BPM, will be updated when track loads
+    
     // Scratching properties
     this.isScratching = false;
     this.originalPlaybackRate = 1;
@@ -118,6 +121,8 @@ class Deck {
     try {
       const arrayBuffer = await file.arrayBuffer();
       this.audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+      // Calculate and store the base BPM
+      this.baseBPM = this.calculateBPM();
       return true;
     } catch (error) {
       console.error('Error loading audio file:', error);
@@ -235,13 +240,18 @@ class Deck {
   }
 
   seek(time) {
-    if (!this.audioBuffer) return;
+    if (!this.audioBuffer) {
+      console.log(`Deck ${this.deckId}: Cannot seek - no audio buffer loaded`);
+      return;
+    }
     
     const wasPlaying = this.isPlaying;
     const duration = this.getDuration();
     
     // Clamp time to valid range
     time = Math.max(0, Math.min(time, duration));
+    
+    console.log(`Deck ${this.deckId}: Seeking to ${time.toFixed(2)}s (duration: ${duration.toFixed(2)}s, was playing: ${wasPlaying})`);
     
     if (wasPlaying) {
       this.stop();
@@ -252,6 +262,8 @@ class Deck {
       this.pauseTime = time;
       this.isPaused = true;
     }
+    
+    console.log(`Deck ${this.deckId}: Seek completed - current time: ${this.getCurrentTime().toFixed(2)}s`);
   }
 
   // CUE point methods
@@ -388,8 +400,18 @@ class Deck {
   }
 
   getBPM() {
+    // Return the current BPM adjusted for pitch changes
+    return Math.round(this.baseBPM * this.playbackRate);
+  }
+
+  getBaseBPM() {
+    // Return the original BPM without pitch adjustments
+    return this.baseBPM;
+  }
+
+  calculateBPM() {
     // Simplified BPM detection - in a real implementation, you'd use more sophisticated analysis
-    if (!this.audioBuffer) return 0;
+    if (!this.audioBuffer) return 120;
     return Math.floor(120 + Math.random() * 60); // Placeholder
   }
 

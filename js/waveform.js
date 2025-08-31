@@ -22,7 +22,10 @@ class WaveformRenderer {
 
   setupEventListeners() {
     this.canvas.addEventListener('click', (e) => {
-      if (!this.waveformData) return;
+      if (!this.waveformData) {
+        console.log(`Deck ${this.deckId}: No waveform data available for seeking`);
+        return;
+      }
             
       const rect = this.canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
@@ -31,8 +34,10 @@ class WaveformRenderer {
       const deck = window.audioEngine.getDeck(this.deckId);
       if (deck && deck.audioBuffer) {
         const seekTime = percentage * deck.getDuration();
+        console.log(`Deck ${this.deckId}: Waveform clicked - seeking to ${seekTime.toFixed(2)}s (${(percentage * 100).toFixed(1)}%)`);
         deck.seek(seekTime);
-        console.log(`Seek to ${seekTime}s on deck ${this.deckId}`);
+      } else {
+        console.log(`Deck ${this.deckId}: No audio buffer available for seeking`);
       }
     });
 

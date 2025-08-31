@@ -20,6 +20,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Start beat waveform animations
   window.beatWaveformRenderers.A.startAnimation();
   window.beatWaveformRenderers.B.startAnimation();
+  
+  // Set initial deck volumes (Deck A: 100%, Deck B: 0%)
+  const deckA = window.audioEngine.getDeck('A');
+  const deckB = window.audioEngine.getDeck('B');
+  if (deckA) deckA.setVolume(100);
+  if (deckB) deckB.setVolume(0);
     
   console.log('✅ DJ23 - Ready to mix!');
     

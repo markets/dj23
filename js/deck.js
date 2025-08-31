@@ -47,6 +47,8 @@ class DeckController {
       const deck = window.audioEngine.getDeck(this.deckId);
       if (deck) {
         deck.setPitch(value);
+        // Update BPM display to reflect pitch change
+        this.updateBPMDisplay();
       }
       document.getElementById(`pitchDisplay${this.deckId}`).textContent = `${value}%`;
     });
@@ -333,7 +335,7 @@ class DeckController {
       }
             
       // Update BPM display
-      document.getElementById(`bpm${this.deckId}`).textContent = deck.getBPM();
+      this.updateBPMDisplay();
     } else {
       trackInfo.querySelector('.track-name').textContent = 'Failed to load';
     }
@@ -452,5 +454,16 @@ class DeckController {
     });
 
     console.log(`Deck ${this.deckId}: All filters reset to default values`);
+  }
+
+  updateBPMDisplay() {
+    const deck = window.audioEngine.getDeck(this.deckId);
+    if (!deck || !deck.audioBuffer) return;
+
+    const baseBPM = deck.getBaseBPM(); // Get the original BPM
+    const pitchPercentage = ((deck.playbackRate - 1) * 100);
+    const adjustedBPM = Math.round(baseBPM * deck.playbackRate);
+    
+    document.getElementById(`bpm${this.deckId}`).textContent = adjustedBPM;
   }
 }
