@@ -488,8 +488,8 @@ class Deck {
     const newLength = (this.originalLoopLength * percentage) / 100;
     this.loopEnd = this.loopStart + Math.max(0.1, newLength); // Minimum 0.1 seconds
     
-    // Update UI
-    this.updateLoopLengthSlider();
+    // Update UI - both button states and slider
+    this.updateLoopButtonStates();
     
     console.log(`Deck ${this.deckId}: Loop length set to ${percentage}% (${newLength.toFixed(2)}s)`);
   }
