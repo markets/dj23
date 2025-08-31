@@ -570,6 +570,12 @@ class DeckController {
     const trackTimeElement = document.getElementById(`trackInfo${this.deckId}`).querySelector('.track-time');
     
     trackTimeElement.textContent = `${this.formatTime(currentTime)} / ${this.formatTime(duration)}`;
+    
+    // Auto-stop when track reaches end (only if playing and not looping)
+    if (deck.isPlaying && !deck.isLooping && duration > 0 && currentTime >= duration) {
+      console.log(`Deck ${this.deckId}: Auto-stopping at track end (${currentTime.toFixed(2)}s / ${duration.toFixed(2)}s)`);
+      this.stop();
+    }
   }
 
   formatTime(seconds) {
