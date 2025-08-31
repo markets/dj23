@@ -183,21 +183,17 @@ class DeckController {
 
     // Loop length slider
     const loopLengthSlider = document.getElementById(`loopLength${this.deckId}`);
-    if (loopLengthSlider) {
-      loopLengthSlider.addEventListener('input', (e) => {
-        const value = parseInt(e.target.value);
-        const deck = window.audioEngine.getDeck(this.deckId);
-        if (deck) {
-          deck.setLoopLength(value);
-        }
-        
-        // Update display value
-        const valueDisplay = document.getElementById(`loopLengthValue${this.deckId}`);
-        if (valueDisplay) {
-          valueDisplay.textContent = `${value}%`;
-        }
-      });
-    }
+    const loopLengthValue = document.getElementById(`loopLengthValue${this.deckId}`);
+    
+    loopLengthSlider.addEventListener('input', (e) => {
+      const percentage = parseInt(e.target.value);
+      loopLengthValue.textContent = `${percentage}%`;
+      
+      const deck = window.audioEngine.getDeck(this.deckId);
+      if (deck) {
+        deck.setLoopLength(percentage);
+      }
+    });
 
     // Reset filters button
     document.getElementById(`resetFilters${this.deckId}`).addEventListener('click', () => {
@@ -572,26 +568,6 @@ class DeckController {
     const currentTime = deck.getCurrentTime();
     const duration = deck.getDuration();
     const trackTimeElement = document.getElementById(`trackInfo${this.deckId}`).querySelector('.track-time');
-    
-    // Auto-stop when song reaches the end
-    if (deck.isPlaying && currentTime >= duration) {
-      deck.stop();
-      this.updatePlayingState(false);
-      this.updatePauseState(false);
-      // Stop vinyl animation
-      if (this.vinylElement) {
-        this.vinylElement.classList.remove('spinning');
-      }
-      // Force waveform update to show position at beginning
-      if (window.waveformRenderers && window.waveformRenderers[this.deckId]) {
-        window.waveformRenderers[this.deckId].updatePlayhead();
-        window.waveformRenderers[this.deckId].render();
-      }
-      if (window.beatWaveformRenderers && window.beatWaveformRenderers[this.deckId]) {
-        window.beatWaveformRenderers[this.deckId].updatePlayhead();
-        window.beatWaveformRenderers[this.deckId].render();
-      }
-    }
     
     trackTimeElement.textContent = `${this.formatTime(currentTime)} / ${this.formatTime(duration)}`;
   }
