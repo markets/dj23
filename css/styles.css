@@ -1034,7 +1034,9 @@ body {
 /* Unified Slider Styling Base - Applied to ALL range inputs */
 input[type="range"] {
   appearance: none;
-  background: transparent;
+  background: var(--bg-surface-lighter);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   outline: none;
 }
@@ -1080,6 +1082,21 @@ input[type="range"]::-moz-range-thumb {
   cursor: pointer;
 }
 
+/* Horizontal Fader Track Styling */
+.horizontal-fader::-webkit-slider-track {
+  background: var(--bg-surface-lighter);
+  height: 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+}
+
+.horizontal-fader::-moz-range-track {
+  background: var(--bg-surface-lighter);
+  height: 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+}
+
 /* Professional Fader Base Classes */
 
 /* Horizontal Fader - Professional styling for horizontal sliders */
@@ -1122,6 +1139,11 @@ input[type="range"]::-moz-range-thumb {
 }
 
 /* Keep effect sliders with original circular design */
+.effect-slider {
+  background: transparent;
+  border: none;
+}
+
 .effect-slider::-webkit-slider-thumb {
   background: var(--gradient-primary);
   border-radius: var(--radius-full);
