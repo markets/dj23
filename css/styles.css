@@ -627,25 +627,6 @@ body {
   box-shadow: 0 3px 10px rgba(102, 126, 234, 0.4);
 }
 
-/* Cue Controls */
-.cue-controls {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
-}
-
-.cue-volume, .cue-mix {
-  text-align: center;
-}
-
-.cue-volume label, .cue-mix label {
-  display: block;
-  margin-bottom: var(--spacing-sm);
-  font-weight: 500;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-}
-
 /* VU Meters */
 .vu-meter {
   text-align: center;
