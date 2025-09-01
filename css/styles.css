@@ -540,10 +540,12 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 60px;
+  height: 60px;
+  width: 100%;
   color: white;
   font-weight: 500;
   border: 1px solid var(--border-primary);
+  overflow-x: hidden;
 }
 
 .sound-pad-btn:hover {
@@ -560,6 +562,10 @@ body {
   font-size: 0.9rem;
   font-weight: 600;
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
 }
 
 .sound-edit-btn {
