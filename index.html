@@ -18,7 +18,7 @@
         <div class="master-controls">
           <div class="master-volume">
             <label>Master</label>
-            <input type="range" id="masterVolume" min="0" max="100" value="75" class="volume-slider horizontal-fader">
+            <input type="range" id="masterVolume" min="0" max="100" value="75" class="master-volume-slider horizontal-fader">
             <span class="volume-display">75%</span>
           </div>
         </div>
@@ -267,6 +267,33 @@
               <button id="editPad6" class="sound-edit-btn" title="Upload custom audio">Edit</button>
               <input type="file" id="soundFile6" class="sound-file-input" accept="audio/*" style="display: none;">
             </div>
+            <div class="sound-pad-item">
+              <button id="soundPad7" class="sound-pad-btn" data-sound="applause">
+                <span class="sound-label">Applause</span>
+              </button>
+              <button id="editPad7" class="sound-edit-btn" title="Upload custom audio">Edit</button>
+              <input type="file" id="soundFile7" class="sound-file-input" accept="audio/*" style="display: none;">
+            </div>
+            <div class="sound-pad-item">
+              <button id="soundPad8" class="sound-pad-btn" data-sound="drop">
+                <span class="sound-label">Drop</span>
+              </button>
+              <button id="editPad8" class="sound-edit-btn" title="Upload custom audio">Edit</button>
+              <input type="file" id="soundFile8" class="sound-file-input" accept="audio/*" style="display: none;">
+            </div>
+            <div class="sound-pad-item">
+              <button id="soundPad9" class="sound-pad-btn" data-sound="whoosh">
+                <span class="sound-label">Whoosh</span>
+              </button>
+              <button id="editPad9" class="sound-edit-btn" title="Upload custom audio">Edit</button>
+              <input type="file" id="soundFile9" class="sound-file-input" accept="audio/*" style="display: none;">
+            </div>
+          </div>
+          <!-- Sound Pad Volume Control -->
+          <div class="sound-pad-volume-control">
+            <label>Volume</label>
+            <input type="range" id="soundPadVolume" min="0" max="100" value="100" class="sound-pad-volume-fader horizontal-fader">
+            <span class="volume-display">100%</span>
           </div>
         </div>
       </div>

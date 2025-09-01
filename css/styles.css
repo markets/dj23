@@ -150,6 +150,7 @@ body {
   font-weight: 600;
   font-size: 0.9rem;
   color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
 }
 
 /* Main Mixer Interface */
@@ -516,7 +517,7 @@ body {
 .sound-pad {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(2, 1fr);
+  grid-template-rows: repeat(3, 1fr);
   gap: var(--spacing-sm);
   max-width: 240px;
   margin: 0 auto;
@@ -532,17 +533,19 @@ body {
   background: var(--gradient-accent);
   border: none;
   border-radius: var(--radius-lg);
-  padding: var(--spacing-md);
+  padding: var(--spacing-sm);
   cursor: pointer;
   transition: var(--transition-normal);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 60px;
+  height: 75px;
+  width: 75px;
   color: white;
   font-weight: 500;
   border: 1px solid var(--border-primary);
+  overflow-x: hidden;
 }
 
 .sound-pad-btn:hover {
@@ -556,9 +559,11 @@ body {
 }
 
 .sound-label {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
   text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sound-edit-btn {
@@ -578,6 +583,36 @@ body {
   background: var(--bg-surface-light);
   color: var(--text-primary);
   border-color: var(--border-light);
+}
+
+/* Sound Pad Volume Control */
+.sound-pad-volume-control {
+  text-align: center;
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+}
+
+.sound-pad-volume-control label {
+  display: block;
+  margin-bottom: var(--spacing-md);
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.sound-pad-volume-fader {
+  width: 100%;
+  margin-bottom: var(--spacing-sm);
+  height: 4px;
+  border-radius: var(--spacing-xs);
+  outline: none;
+  appearance: none;
+}
+
+.sound-pad-volume-control .volume-display {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
 /* BPM Section */
@@ -703,6 +738,11 @@ body {
 }
 
 /* Volume Controls Vertical */
+.master-volume-slider {
+  height: 4px;
+  width: 150px;
+}
+
 .volume-controls-vertical {
   display: flex;
   justify-content: space-around;

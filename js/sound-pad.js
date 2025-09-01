@@ -2,13 +2,17 @@ class SoundPad {
   constructor(audioEngine) {
     this.audioEngine = audioEngine;
     this.sounds = {};
+    this.volume = 1.0; // Volume level from 0.0 to 1.0
     this.defaultSounds = {
       airhorn: 'sounds/airhorn.mp3',
       siren: 'sounds/siren.mp3', 
       scratch: 'sounds/scratch.mp3',
       clap: 'sounds/clap.mp3',
       boom: 'sounds/boom.mp3',
-      laser: 'sounds/laser.mp3'
+      laser: 'sounds/laser.mp3',
+      applause: 'sounds/applause.mp3',
+      drop: 'sounds/drop.mp3',
+      whoosh: 'sounds/whoosh.mp3'
     };
     this.setupEventListeners();
     this.loadDefaultSounds();
@@ -71,8 +75,13 @@ class SoundPad {
       const source = this.audioEngine.audioContext.createBufferSource();
       source.buffer = this.sounds[soundName];
       
-      // Connect to master gain
-      source.connect(this.audioEngine.masterGain);
+      // Create gain node for volume control
+      const gainNode = this.audioEngine.audioContext.createGain();
+      gainNode.gain.value = this.volume;
+      
+      // Connect source -> gainNode -> masterGain
+      source.connect(gainNode);
+      gainNode.connect(this.audioEngine.masterGain);
       source.start();
     } catch (error) {
       console.error('Error playing sound:', error);
@@ -105,7 +114,7 @@ class SoundPad {
   // Setup event listeners for sound pad buttons and file inputs
   setupEventListeners() {
     // Add event listeners for each sound pad button
-    for (let i = 1; i <= 6; i++) {
+    for (let i = 1; i <= 9; i++) {
       const button = document.getElementById(`soundPad${i}`);
       const editButton = document.getElementById(`editPad${i}`);
       const fileInput = document.getElementById(`soundFile${i}`);
@@ -140,6 +149,20 @@ class SoundPad {
         button.setAttribute('title', 'Click to play sound');
         editButton.setAttribute('title', 'Upload custom audio file');
       }
+    }
+
+    // Sound Pad Volume Control
+    const volumeFader = document.getElementById('soundPadVolume');
+    if (volumeFader) {
+      volumeFader.addEventListener('input', (e) => {
+        const value = parseInt(e.target.value);
+        this.volume = value / 100; // Convert percentage to 0.0-1.0 range
+        // Update volume display
+        const volumeDisplay = e.target.nextElementSibling;
+        if (volumeDisplay) {
+          volumeDisplay.textContent = `${value}%`;
+        }
+      });
     }
   }
 }
