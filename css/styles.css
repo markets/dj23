@@ -568,14 +568,10 @@ body {
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.6);
 }
 
-.sound-icon {
-  font-size: 1.2rem;
-  margin-bottom: var(--spacing-xs);
-}
-
 .sound-label {
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-weight: 600;
+  text-align: center;
 }
 
 /* BPM Section */
