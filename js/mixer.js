@@ -28,9 +28,9 @@ class MixerController {
       this.updateCrossfader();
     });
 
-    // Initialize deck UI controllers
-    this.deckControllers.A = new DeckUIController('A');
-    this.deckControllers.B = new DeckUIController('B');
+    // Initialize deck controllers
+    this.deckControllers.A = new DeckController('A');
+    this.deckControllers.B = new DeckController('B');
 
     // Sync buttons
     document.getElementById('syncAB').addEventListener('click', () => {
