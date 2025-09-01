@@ -102,8 +102,7 @@ body {
   font-size: 2.5rem;
   font-weight: 700;
   background: var(--gradient-header);
-  -webkit-background-clip: text;
-          background-clip: text;
+  background-clip: text;
   color: transparent;
 }
 
@@ -499,14 +498,11 @@ body {
   height: 8px;
   border-radius: var(--spacing-xs);
   outline: none;
-  -webkit-appearance: none;
-     -moz-appearance: none;
-          appearance: none;
+  appearance: none;
 }
 
 .crossfader::-webkit-slider-thumb {
-  -webkit-appearance: none;
-          appearance: none;
+  appearance: none;
   width: 25px;
   height: 25px;
   background: var(--gradient-header);
@@ -779,9 +775,7 @@ body {
 
 .volume-slider-vertical {
   writing-mode: vertical-lr;
-  -webkit-appearance: slider-vertical;
-     -moz-appearance: slider-vertical;
-          appearance: slider-vertical;
+  appearance: slider-vertical;
   width: 20px;
   height: 120px;
   background: linear-gradient(180deg, var(--color-secondary) 0%, var(--color-secondary-dark) 100%);
@@ -794,8 +788,7 @@ body {
 }
 
 .volume-slider-vertical::-webkit-slider-thumb {
-  -webkit-appearance: none;
-          appearance: none;
+  appearance: none;
   width: 24px;
   height: 12px;
   border-radius: 6px;
@@ -965,9 +958,7 @@ body {
 
 .loop-slider-vertical {
   writing-mode: vertical-lr;
-  -webkit-appearance: slider-vertical;
-     -moz-appearance: slider-vertical;
-          appearance: slider-vertical;
+  appearance: slider-vertical;
   width: 25px;
   height: 100px;
   background: linear-gradient(180deg, var(--color-accent-blue) 0%, var(--color-accent-purple) 100%);
@@ -978,8 +969,7 @@ body {
 }
 
 .loop-slider-vertical::-webkit-slider-thumb {
-  -webkit-appearance: none;
-          appearance: none;
+  appearance: none;
   width: 30px;
   height: 15px;
   border-radius: var(--radius-sm);
@@ -1006,9 +996,7 @@ body {
 
 .pitch-slider-vertical {
   writing-mode: vertical-lr;
-  -webkit-appearance: slider-vertical;
-     -moz-appearance: slider-vertical;
-          appearance: slider-vertical;
+  appearance: slider-vertical;
   width: 25px;
   height: 140px !important;
   background: linear-gradient(180deg, var(--color-accent-blue) 0%, var(--color-accent-purple) 100%);
@@ -1019,8 +1007,7 @@ body {
 }
 
 .pitch-slider-vertical::-webkit-slider-thumb {
-  -webkit-appearance: none;
-          appearance: none;
+  appearance: none;
   width: 30px;
   height: 15px;
   border-radius: var(--radius-sm);
@@ -1089,9 +1076,7 @@ body {
 
 /* Unified Slider Styling Base - Applied to ALL range inputs */
 input[type="range"] {
-  -webkit-appearance: none;
-     -moz-appearance: none;
-          appearance: none;
+  appearance: none;
   background: transparent;
   cursor: pointer;
   outline: none;
@@ -1107,10 +1092,8 @@ input[type="range"]::-webkit-slider-track {
 
 /* Base thumb styling for all sliders */
 input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-          appearance: none;
+  appearance: none;
   cursor: pointer;
-  -webkit-transition: var(--transition-normal);
   transition: var(--transition-normal);
 }
 
@@ -1207,9 +1190,7 @@ input[type="range"]::-moz-range-thumb {
 .volume-slider-vertical,
 .pitch-slider-vertical {
   writing-mode: vertical-lr;
-  -webkit-appearance: slider-vertical;
-     -moz-appearance: slider-vertical;
-          appearance: slider-vertical;
+  appearance: slider-vertical;
   width: 30px;
   height: 100px;
   background: var(--bg-surface-lighter);
@@ -1655,8 +1636,7 @@ input[type="range"]::-moz-range-thumb {
   font-size: 1.8rem;
   font-weight: 600;
   background: var(--gradient-header);
-  -webkit-background-clip: text;
-          background-clip: text;
+  background-clip: text;
   color: transparent;
 }
 
