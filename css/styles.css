@@ -500,8 +500,6 @@ body {
   appearance: none;
 }
 
-
-
 .crossfader-labels {
   display: flex;
   justify-content: space-between;
@@ -947,8 +945,6 @@ body {
   box-shadow: 0 3px 12px rgba(0, 184, 148, 0.4);
 }
 
-
-
 .loop-control-vertical .loop-length-value {
   font-size: 0.9rem;
   color: var(--text-secondary);
@@ -1105,8 +1101,6 @@ input[type="range"]::-moz-range-thumb {
   border: 1px solid #333;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
 }
-
-
 
 /* Firefox professional fader styling */
 .horizontal-fader::-moz-range-thumb {
