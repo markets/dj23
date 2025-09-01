@@ -580,6 +580,37 @@ body {
   border-color: var(--border-light);
 }
 
+/* Sound Pad Volume Control */
+.sound-pad-volume-control {
+  text-align: center;
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--border-light);
+}
+
+.sound-pad-volume-control label {
+  display: block;
+  margin-bottom: var(--spacing-md);
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.sound-pad-volume-fader {
+  width: 100%;
+  margin-bottom: var(--spacing-sm);
+  height: 4px;
+  border-radius: var(--spacing-xs);
+  outline: none;
+  appearance: none;
+}
+
+.sound-pad-volume-control .volume-display {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
 /* BPM Section */
 .bpm-section {
   text-align: center;
