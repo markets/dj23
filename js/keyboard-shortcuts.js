@@ -15,25 +15,21 @@ class KeyboardShortcuts {
   }
 
   setupModal() {
-    // Initialize modal event listeners
     const modal = document.getElementById('keyboardShortcutsModal');
     if (modal) {
       this.modalElement = modal;
       
-      // Close modal when clicking outside
       modal.addEventListener('click', (e) => {
         if (e.target.id === 'keyboardShortcutsModal') {
           this.hideModal();
         }
       });
       
-      // Close modal with close button
       const closeBtn = document.getElementById('closeShortcutsModal');
       if (closeBtn) {
         closeBtn.addEventListener('click', () => this.hideModal());
       }
       
-      // Open modal with help button
       const showBtn = document.getElementById('showShortcutsBtn');
       if (showBtn) {
         showBtn.addEventListener('click', () => this.showModal());
@@ -42,7 +38,6 @@ class KeyboardShortcuts {
   }
 
   handleKeyDown(e) {
-    // Don't handle shortcuts if modal is open
     if (this.isModalOpen) {
       if (e.code === 'Escape') {
         this.hideModal();
@@ -65,7 +60,6 @@ class KeyboardShortcuts {
       e.preventDefault();
     }
 
-    // Handle Ctrl combinations
     if (e.ctrlKey) {
       this.handleCtrlCombinations(e);
       return;
@@ -77,19 +71,15 @@ class KeyboardShortcuts {
   handleCtrlCombinations(e) {
     switch (e.code) {
       case 'KeyS':
-        // Sync A → B
         document.getElementById('syncAB')?.click();
         break;
       case 'KeyD':
-        // Sync B → A
         document.getElementById('syncBA')?.click();
         break;
       case 'KeyO':
-        // Load track to Deck A
         document.getElementById('fileInputA')?.click();
         break;
       case 'KeyP':
-        // Load track to Deck B
         document.getElementById('fileInputB')?.click();
         break;
     }

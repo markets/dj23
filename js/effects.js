@@ -6,14 +6,12 @@ class EffectsEngine {
   }
 
   initializeEffects() {
-    // Reverb effect
     this.effectNodes.reverb = this.audioContext.createConvolver();
     this.effectNodes.reverbGain = this.audioContext.createGain();
     this.effectNodes.reverbGain.gain.value = 0;
     this.effectNodes.reverbDry = this.audioContext.createGain();
     this.effectNodes.reverbDry.gain.value = 1;
 
-    // Delay effect
     this.effectNodes.delay = this.audioContext.createDelay(1);
     this.effectNodes.delay.delayTime.value = 0.3;
     this.effectNodes.delayGain = this.audioContext.createGain();
@@ -21,34 +19,31 @@ class EffectsEngine {
     this.effectNodes.delayFeedback = this.audioContext.createGain();
     this.effectNodes.delayFeedback.gain.value = 0.3;
 
-    // Phaser effect (using multiple allpass filters)
     this.effectNodes.phaser = [];
     this.effectNodes.phaserLFO = this.audioContext.createOscillator();
     this.effectNodes.phaserLFO.type = 'sine';
-    this.effectNodes.phaserLFO.frequency.value = 0.3; // Slower sweep for smoother effect
+    this.effectNodes.phaserLFO.frequency.value = 0.3;
     this.effectNodes.phaserLFOGain = this.audioContext.createGain();
-    this.effectNodes.phaserLFOGain.gain.value = 800; // Reduced modulation depth for subtlety
+    this.effectNodes.phaserLFOGain.gain.value = 800;
     this.effectNodes.phaserGain = this.audioContext.createGain();
     this.effectNodes.phaserGain.gain.value = 0;
     this.effectNodes.phaserDry = this.audioContext.createGain();
     this.effectNodes.phaserDry.gain.value = 1;
     
-    // Create 8 allpass filters for richer phaser effect
     for (let i = 0; i < 8; i++) {
       this.effectNodes.phaser[i] = this.audioContext.createBiquadFilter();
       this.effectNodes.phaser[i].type = 'allpass';
-      this.effectNodes.phaser[i].frequency.value = 500 + (i * 200); // Better frequency spacing
-      this.effectNodes.phaser[i].Q.value = 5; // Reduced Q for smoother response
+      this.effectNodes.phaser[i].frequency.value = 500 + (i * 200);
+      this.effectNodes.phaser[i].Q.value = 5;
     }
     
-    // Flanger effect (short delay with feedback)
     this.effectNodes.flanger = this.audioContext.createDelay(0.02);
     this.effectNodes.flanger.delayTime.value = 0.005;
     this.effectNodes.flangerLFO = this.audioContext.createOscillator();
     this.effectNodes.flangerLFO.type = 'sine';
     this.effectNodes.flangerLFO.frequency.value = 0.25;
     this.effectNodes.flangerLFOGain = this.audioContext.createGain();
-    this.effectNodes.flangerLFOGain.gain.value = 0.003; // Modulation depth for delay time
+    this.effectNodes.flangerLFOGain.gain.value = 0.003;
     this.effectNodes.flangerGain = this.audioContext.createGain();
     this.effectNodes.flangerGain.gain.value = 0;
     this.effectNodes.flangerFeedback = this.audioContext.createGain();
@@ -56,7 +51,6 @@ class EffectsEngine {
     this.effectNodes.flangerDry = this.audioContext.createGain();
     this.effectNodes.flangerDry.gain.value = 1;
 
-    // Connect effect chain
     this.connectEffectChain();
     this.createReverbImpulse();
     this.startEffectOscillators();
