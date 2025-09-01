@@ -947,11 +947,11 @@ body {
   writing-mode: vertical-lr;
   appearance: slider-vertical;
   width: 25px;
-  height: 140px !important;
+  height: 150px !important;
   background: linear-gradient(180deg, var(--color-accent-blue) 0%, var(--color-accent-purple) 100%);
   border-radius: 12px;
   outline: none;
-  margin: var(--spacing-md) 0;
+  margin: var(--spacing-sm) 0;
   border: 1px solid #8899ff;
 }
 
