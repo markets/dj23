@@ -9,7 +9,10 @@ class SoundPad {
       scratch: 'sounds/scratch.mp3',
       clap: 'sounds/clap.mp3',
       boom: 'sounds/boom.mp3',
-      laser: 'sounds/laser.mp3'
+      laser: 'sounds/laser.mp3',
+      horn: 'sounds/horn.mp3',
+      drop: 'sounds/drop.mp3',
+      whoosh: 'sounds/whoosh.mp3'
     };
     this.setupEventListeners();
     this.loadDefaultSounds();
@@ -111,7 +114,7 @@ class SoundPad {
   // Setup event listeners for sound pad buttons and file inputs
   setupEventListeners() {
     // Add event listeners for each sound pad button
-    for (let i = 1; i <= 6; i++) {
+    for (let i = 1; i <= 9; i++) {
       const button = document.getElementById(`soundPad${i}`);
       const editButton = document.getElementById(`editPad${i}`);
       const fileInput = document.getElementById(`soundFile${i}`);
