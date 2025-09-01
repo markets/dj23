@@ -955,37 +955,7 @@ body {
   box-shadow: 0 3px 12px rgba(0, 184, 148, 0.4);
 }
 
-.loop-slider-vertical {
-  writing-mode: vertical-lr;
-  appearance: slider-vertical;
-  width: 25px;
-  height: 100px;
-  background: linear-gradient(180deg, var(--color-accent-blue) 0%, var(--color-accent-purple) 100%);
-  border-radius: 10px;
-  outline: none;
-  margin: var(--spacing-md) 0;
-  border: 1px solid var(--border-light);
-}
 
-.loop-slider-vertical::-webkit-slider-thumb {
-  appearance: none;
-  width: 30px;
-  height: 15px;
-  border-radius: var(--radius-sm);
-  background: var(--text-primary);
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-}
-
-.loop-slider-vertical::-moz-range-thumb {
-  width: 30px;
-  height: 15px;
-  border-radius: var(--radius-sm);
-  background: var(--text-primary);
-  cursor: pointer;
-  border: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-}
 
 .loop-control-vertical .loop-length-value {
   font-size: 0.9rem;
@@ -1186,6 +1156,7 @@ input[type="range"]::-moz-range-thumb {
 
 /* Vertical sliders - maintain larger size for easier manipulation */
 .eq-slider,
+.loop-slider-vertical,
 .volume-slider-vertical,
 .pitch-slider-vertical {
   writing-mode: vertical-lr;
@@ -1198,18 +1169,12 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .eq-slider::-webkit-slider-track,
+.loop-slider-vertical::-webkit-slider-track,
 .volume-slider-vertical::-webkit-slider-track,
 .pitch-slider-vertical::-webkit-slider-track {
   background: var(--bg-surface-lighter);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-lg);
-}
-
-.eq-slider::-webkit-slider-thumb {
-  background: linear-gradient(45deg, #00b894, #00a085);
-  width: 25px;
-  height: 15px;
-  border-radius: var(--radius-sm);
 }
 
 /* Crossfader specific sizing */
