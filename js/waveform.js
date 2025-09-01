@@ -86,19 +86,15 @@ class WaveformRenderer {
     const barWidth = width / this.waveformData.length;
     const centerY = height / 2;
 
-    // Draw waveform
     this.ctx.fillStyle = '#333';
     for (let i = 0; i < this.waveformData.length; i++) {
       const barHeight = this.waveformData[i] * centerY * 0.8;
       const x = i * barWidth;
             
-      // Draw positive part
       this.ctx.fillRect(x, centerY - barHeight, barWidth - 1, barHeight);
-      // Draw negative part
       this.ctx.fillRect(x, centerY, barWidth - 1, barHeight);
     }
 
-    // Draw played portion
     if (deck && deck.isPlaying) {
       const progress = deck.getCurrentTime() / deck.getDuration();
       const playedWidth = width * progress;
@@ -114,10 +110,8 @@ class WaveformRenderer {
       }
     }
 
-    // Draw cue points markers
     this.drawCuePoints(width, height, deck);
 
-    // Update playhead position
     this.updatePlayhead();
   }
 
@@ -137,14 +131,12 @@ class WaveformRenderer {
       this.ctx.lineTo(cue1Position, height);
       this.ctx.stroke();
       
-      // Draw CUE 1 label
       this.ctx.fillStyle = '#ff6b6b';
       this.ctx.font = 'bold 12px Inter';
       this.ctx.textAlign = 'center';
       this.ctx.fillText('CUE 1', cue1Position, 15);
     }
     
-    // Draw CUE 2
     if (deck.cuePoints[2] !== null) {
       const cue2Position = (deck.cuePoints[2] / duration) * width;
       this.ctx.strokeStyle = '#4ecdc4';
@@ -155,7 +147,6 @@ class WaveformRenderer {
       this.ctx.lineTo(cue2Position, height);
       this.ctx.stroke();
       
-      // Draw CUE 2 label
       this.ctx.fillStyle = '#4ecdc4';
       this.ctx.font = 'bold 12px Inter';
       this.ctx.textAlign = 'center';
