@@ -1,9 +1,9 @@
 {
   "private": true,
   "scripts": {
-    "start": "http-server -p 8080 -c-1",
-    "build:css": "postcss css/styles.css -o css/styles.css",
-    "dev": "npm run build:css && npm start"
+    "dev": "npm run build:css && npm run server",
+    "build:css": "postcss css/styles.css -o dist/styles.css",
+    "server": "http-server -p 8080 -c-1"
   },
   "devDependencies": {
     "http-server": "^14.1.1",
