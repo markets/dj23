@@ -1,10 +1,15 @@
 {
   "private": true,
   "scripts": {
-    "start": "http-server -p 8080 -c-1"
+    "dev": "npm run build:css && npm run server",
+    "build:css": "postcss css/styles.css -o dist/styles.css",
+    "server": "http-server -p 8080 -c-1"
   },
   "devDependencies": {
-    "http-server": "^14.1.1"
+    "http-server": "^14.1.1",
+    "postcss": "^8.4.32",
+    "postcss-cli": "^11.0.0",
+    "autoprefixer": "^10.4.16"
   },
   "dependencies": {
     "jsmediatags": "^3.9.7"
