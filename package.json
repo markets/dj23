@@ -1,8 +1,8 @@
 {
   "private": true,
   "scripts": {
-    "dev": "npm run build:css && npm run server",
-    "build:css": "postcss css/styles.css -o dist/styles.css",
+    "dev": "npm run build:css & npm run server",
+    "build:css": "postcss css/styles.css -o dist/styles.css -w",
     "server": "http-server -p 8080 -c-1"
   },
   "devDependencies": {

@@ -417,6 +417,7 @@ body {
 .effect-slider {
   flex: 1;
   margin-left: var(--spacing-lg);
+  height: 4px;
 }
 
 /* Reset Button */
@@ -494,7 +495,7 @@ body {
 .crossfader {
   width: 100%;
   margin-bottom: var(--spacing-md);
-  height: 8px;
+  height: 4px;
   border-radius: var(--spacing-xs);
   outline: none;
   appearance: none;
@@ -1138,11 +1139,6 @@ input[type="range"]::-moz-range-thumb {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
 }
 
-/* Keep effect sliders with original circular design */
-.effect-slider {
-  background: transparent;
-  border: none;
-}
 
 .effect-slider::-webkit-slider-thumb {
   background: var(--gradient-primary);
@@ -1169,7 +1165,7 @@ input[type="range"]::-moz-range-thumb {
 .pitch-slider-vertical {
   writing-mode: vertical-lr;
   appearance: slider-vertical;
-  width: 30px;
+  width: 20px;
   height: 100px;
   background: var(--bg-surface-lighter);
   border-radius: var(--radius-lg);
@@ -1183,17 +1179,6 @@ input[type="range"]::-moz-range-thumb {
   background: var(--bg-surface-lighter);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-lg);
-}
-
-/* Crossfader specific sizing */
-.crossfader {
-  height: 10px;
-}
-
-/* Responsive Design */
-.responsive-grid {
-  display: grid;
-  gap: var(--spacing-xl);
 }
 
 @media (max-width: 1200px) {
