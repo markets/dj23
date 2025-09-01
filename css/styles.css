@@ -1114,13 +1114,8 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 /* Professional fader hover effects */
-.volume-slider::-webkit-slider-thumb:hover,
-.volume-slider-vertical::-webkit-slider-thumb:hover,
-#masterVolume::-webkit-slider-thumb:hover,
-.pitch-slider::-webkit-slider-thumb:hover,
-.pitch-slider-vertical::-webkit-slider-thumb:hover,
-.crossfader::-webkit-slider-thumb:hover,
-.eq-slider::-webkit-slider-thumb:hover {
+.horizontal-fader::-webkit-slider-thumb:hover,
+.vertical-fader::-webkit-slider-thumb:hover {
   transform: scale(1.05);
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.2);
 }
@@ -1144,14 +1139,10 @@ input[type="range"]::-moz-range-thumb {
   cursor: pointer;
 }
 
-/* Professional Fader Styling - Black rectangles with white lines */
-.volume-slider::-webkit-slider-thumb,
-.volume-slider-vertical::-webkit-slider-thumb,
-#masterVolume::-webkit-slider-thumb,
-.pitch-slider::-webkit-slider-thumb,
-.pitch-slider-vertical::-webkit-slider-thumb,
-.crossfader::-webkit-slider-thumb,
-.eq-slider::-webkit-slider-thumb {
+/* Professional Fader Base Classes */
+
+/* Horizontal Fader - Professional styling for horizontal sliders */
+.horizontal-fader::-webkit-slider-thumb {
   background: linear-gradient(to right, #1a1a1a 0%, #1a1a1a 45%, #ffffff 47%, #ffffff 53%, #1a1a1a 55%, #1a1a1a 100%);
   border-radius: 3px;
   width: 24px;
@@ -1160,27 +1151,33 @@ input[type="range"]::-moz-range-thumb {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
 }
 
-/* Vertical slider professional fader styling */
-.volume-slider-vertical::-webkit-slider-thumb,
-.pitch-slider-vertical::-webkit-slider-thumb,
-.eq-slider::-webkit-slider-thumb {
+/* Vertical Fader - Professional styling for vertical sliders */
+.vertical-fader::-webkit-slider-thumb {
   background: linear-gradient(to bottom, #1a1a1a 0%, #1a1a1a 45%, #ffffff 47%, #ffffff 53%, #1a1a1a 55%, #1a1a1a 100%);
+  border-radius: 3px;
   width: 18px;
   height: 24px;
+  border: 1px solid #333;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
 }
 
+
+
 /* Firefox professional fader styling */
-.volume-slider::-moz-range-thumb,
-.volume-slider-vertical::-moz-range-thumb,
-#masterVolume::-moz-range-thumb,
-.pitch-slider::-moz-range-thumb,
-.pitch-slider-vertical::-moz-range-thumb,
-.crossfader::-moz-range-thumb,
-.eq-slider::-moz-range-thumb {
+.horizontal-fader::-moz-range-thumb {
   background: linear-gradient(to right, #1a1a1a 0%, #1a1a1a 45%, #ffffff 47%, #ffffff 53%, #1a1a1a 55%, #1a1a1a 100%);
   border-radius: 3px;
   width: 24px;
   height: 18px;
+  border: 1px solid #333;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+
+.vertical-fader::-moz-range-thumb {
+  background: linear-gradient(to bottom, #1a1a1a 0%, #1a1a1a 45%, #ffffff 47%, #ffffff 53%, #1a1a1a 55%, #1a1a1a 100%);
+  border-radius: 3px;
+  width: 18px;
+  height: 24px;
   border: 1px solid #333;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
 }

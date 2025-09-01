@@ -18,7 +18,7 @@
         <div class="master-controls">
           <div class="master-volume">
             <label>Master</label>
-            <input type="range" id="masterVolume" min="0" max="100" value="75" class="volume-slider">
+            <input type="range" id="masterVolume" min="0" max="100" value="75" class="volume-slider horizontal-fader">
             <span class="volume-display">75%</span>
           </div>
         </div>
@@ -93,7 +93,7 @@
               <button id="pitchBendPlusA" class="pitch-bend-btn">+</button>
               <button id="pitchBendMinusA" class="pitch-bend-btn">-</button>
             </div>
-            <input type="range" id="pitchA" min="-50" max="50" value="0" class="pitch-slider-vertical" orient="vertical">
+            <input type="range" id="pitchA" min="-50" max="50" value="0" class="pitch-slider-vertical vertical-fader" orient="vertical">
             <button id="pitchResetA" class="pitch-reset-btn" title="Reset pitch to 0%">0</button>
             <span id="pitchDisplayA">0%</span>
           </div>
@@ -116,22 +116,22 @@
         <div class="eq-section">
           <div class="eq-band">
             <label>High</label>
-            <input type="range" id="highA" min="-20" max="20" value="0" class="eq-slider" orient="vertical">
+            <input type="range" id="highA" min="-20" max="20" value="0" class="eq-slider vertical-fader" orient="vertical">
             <span class="eq-value">0</span>
           </div>
           <div class="eq-band">
             <label>Mid</label>
-            <input type="range" id="midA" min="-20" max="20" value="0" class="eq-slider" orient="vertical">
+            <input type="range" id="midA" min="-20" max="20" value="0" class="eq-slider vertical-fader" orient="vertical">
             <span class="eq-value">0</span>
           </div>
           <div class="eq-band">
             <label>Low</label>
-            <input type="range" id="lowA" min="-20" max="20" value="0" class="eq-slider" orient="vertical">
+            <input type="range" id="lowA" min="-20" max="20" value="0" class="eq-slider vertical-fader" orient="vertical">
             <span class="eq-value">0</span>
           </div>
           <div class="eq-band">
             <label>Gain</label>
-            <input type="range" id="gainA" min="-20" max="20" value="0" class="eq-slider" orient="vertical">
+            <input type="range" id="gainA" min="-20" max="20" value="0" class="eq-slider vertical-fader" orient="vertical">
             <span class="eq-value">0</span>
           </div>
         </div>
@@ -202,19 +202,19 @@
         <div class="volume-controls-vertical">
           <div class="volume-control-vertical">
             <label>Volume A</label>
-            <input type="range" id="volumeA" min="0" max="100" value="100" class="volume-slider-vertical" orient="vertical">
+            <input type="range" id="volumeA" min="0" max="100" value="100" class="volume-slider-vertical vertical-fader" orient="vertical">
             <span class="volume-display">100%</span>
           </div>
           <div class="volume-control-vertical">
             <label>Volume B</label>
-            <input type="range" id="volumeB" min="0" max="100" value="0" class="volume-slider-vertical" orient="vertical">
+            <input type="range" id="volumeB" min="0" max="100" value="0" class="volume-slider-vertical vertical-fader" orient="vertical">
             <span class="volume-display">0%</span>
           </div>
         </div>
 
         <div class="crossfader-section">
           <label>Crossfader</label>
-          <input type="range" id="crossfader" min="0" max="100" value="50" class="crossfader">
+          <input type="range" id="crossfader" min="0" max="100" value="50" class="crossfader horizontal-fader">
           <div class="crossfader-labels">
             <span>A</span>
             <span>B</span>
@@ -319,7 +319,7 @@
               <button id="pitchBendPlusB" class="pitch-bend-btn">+</button>
               <button id="pitchBendMinusB" class="pitch-bend-btn">-</button>
             </div>
-            <input type="range" id="pitchB" min="-50" max="50" value="0" class="pitch-slider-vertical" orient="vertical">
+            <input type="range" id="pitchB" min="-50" max="50" value="0" class="pitch-slider-vertical vertical-fader" orient="vertical">
             <button id="pitchResetB" class="pitch-reset-btn" title="Reset pitch to 0%">0</button>
             <span id="pitchDisplayB">0%</span>
           </div>
@@ -342,22 +342,22 @@
         <div class="eq-section">
           <div class="eq-band">
             <label>High</label>
-            <input type="range" id="highB" min="-20" max="20" value="0" class="eq-slider" orient="vertical">
+            <input type="range" id="highB" min="-20" max="20" value="0" class="eq-slider vertical-fader" orient="vertical">
             <span class="eq-value">0</span>
           </div>
           <div class="eq-band">
             <label>Mid</label>
-            <input type="range" id="midB" min="-20" max="20" value="0" class="eq-slider" orient="vertical">
+            <input type="range" id="midB" min="-20" max="20" value="0" class="eq-slider vertical-fader" orient="vertical">
             <span class="eq-value">0</span>
           </div>
           <div class="eq-band">
             <label>Low</label>
-            <input type="range" id="lowB" min="-20" max="20" value="0" class="eq-slider" orient="vertical">
+            <input type="range" id="lowB" min="-20" max="20" value="0" class="eq-slider vertical-fader" orient="vertical">
             <span class="eq-value">0</span>
           </div>
           <div class="eq-band">
             <label>Gain</label>
-            <input type="range" id="gainB" min="-20" max="20" value="0" class="eq-slider" orient="vertical">
+            <input type="range" id="gainB" min="-20" max="20" value="0" class="eq-slider vertical-fader" orient="vertical">
             <span class="eq-value">0</span>
           </div>
         </div>
