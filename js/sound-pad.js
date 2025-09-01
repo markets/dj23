@@ -10,7 +10,7 @@ class SoundPad {
       clap: 'sounds/clap.mp3',
       boom: 'sounds/boom.mp3',
       laser: 'sounds/laser.mp3',
-      horn: 'sounds/horn.mp3',
+      crash: 'sounds/crash.mp3',
       drop: 'sounds/drop.mp3',
       whoosh: 'sounds/whoosh.mp3'
     };
