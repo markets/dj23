@@ -107,25 +107,25 @@ class SoundPad {
     // Add event listeners for each sound pad button
     for (let i = 1; i <= 6; i++) {
       const button = document.getElementById(`soundPad${i}`);
+      const editButton = document.getElementById(`editPad${i}`);
       const fileInput = document.getElementById(`soundFile${i}`);
       
-      if (button && fileInput) {
-        // Button click - check if Shift is held for file upload, otherwise play sound
-        button.addEventListener('click', async (e) => {
-          if (e.shiftKey) {
-            // Shift+click to upload custom file
-            fileInput.click();
-          } else {
-            // Regular click to play sound
-            const soundName = button.getAttribute('data-sound');
-            this.playSound(soundName);
-            
-            // Visual feedback
-            button.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-              button.style.transform = '';
-            }, 100);
-          }
+      if (button && editButton && fileInput) {
+        // Main button click - play sound
+        button.addEventListener('click', (e) => {
+          const soundName = button.getAttribute('data-sound');
+          this.playSound(soundName);
+          
+          // Visual feedback
+          button.style.transform = 'scale(0.95)';
+          setTimeout(() => {
+            button.style.transform = '';
+          }, 100);
+        });
+
+        // Edit button click - upload custom file
+        editButton.addEventListener('click', (e) => {
+          fileInput.click();
         });
 
         // File input change event
@@ -136,8 +136,9 @@ class SoundPad {
           }
         });
 
-        // Add tooltip to indicate Shift+click for upload
-        button.setAttribute('title', 'Click to play sound, Shift+click to upload custom audio file');
+        // Add tooltip to indicate edit button function
+        button.setAttribute('title', 'Click to play sound');
+        editButton.setAttribute('title', 'Upload custom audio file');
       }
     }
   }
