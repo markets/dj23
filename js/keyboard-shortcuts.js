@@ -1,7 +1,3 @@
-/**
- * DJ23 Keyboard Shortcuts Controller
- * Handles all keyboard shortcuts for the DJ application
- */
 class KeyboardShortcuts {
   constructor() {
     this.modalElement = null;
