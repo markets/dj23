@@ -500,15 +500,7 @@ body {
   appearance: none;
 }
 
-.crossfader::-webkit-slider-thumb {
-  appearance: none;
-  width: 25px;
-  height: 25px;
-  background: var(--gradient-header);
-  border-radius: var(--radius-full);
-  cursor: pointer;
-  box-shadow: var(--shadow-sm);
-}
+
 
 .crossfader-labels {
   display: flex;
