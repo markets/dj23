@@ -124,7 +124,6 @@ body {
   font-weight: bold;
   cursor: pointer;
   transition: var(--transition-normal);
-  transition: var(--transition-normal);
   box-shadow: var(--shadow-sm);
   display: flex;
   align-items: center;
@@ -196,7 +195,6 @@ body {
   cursor: pointer;
   font-weight: 500;
   transition: var(--transition-normal);
-  transition: var(--transition-normal);
   font-size: 0.9rem;
 }
 
@@ -235,7 +233,6 @@ body {
   border-radius: var(--radius-lg);
   cursor: pointer;
   font-weight: 500;
-  transition: var(--transition-normal);
   transition: var(--transition-normal);
   font-size: 0.9rem;
 }
@@ -282,7 +279,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-      flex-shrink: 0;
+  flex-shrink: 0;
   margin-left: var(--spacing-lg);
 }
 
@@ -290,8 +287,6 @@ body {
   width: 100%;
   height: 100%;
   -o-object-fit: cover;
-     object-fit: cover;
-     object-fit: cover;
      object-fit: cover;
   display: block;
 }
@@ -310,10 +305,8 @@ body {
   border-radius: var(--radius-lg);
   margin-bottom: var(--spacing-xl);
   overflow: hidden;
-  border: 1px solid var(--border-primary);
   cursor: pointer;
   border: 2px solid transparent;
-  transition: border-color 0.2s ease;
   transition: border-color 0.2s ease;
 }
 
@@ -336,7 +329,6 @@ body {
   background: var(--color-secondary);
   z-index: 10;
   transition: left 0.1s ease;
-  transition: left 0.1s ease;
 }
 
 /* Transport Controls */
@@ -355,7 +347,6 @@ body {
   border-radius: var(--radius-lg);
   cursor: pointer;
   font-weight: 600;
-  transition: var(--transition-normal);
   transition: var(--transition-normal);
   min-width: 50px;
 }
@@ -381,7 +372,7 @@ body {
 /* EQ Section */
 .eq-section {
   display: flex;
-      justify-content: space-around;
+  justify-content: space-around;
   margin-bottom: var(--spacing-xl);
   background: var(--bg-secondary);
   padding: var(--spacing-lg);
@@ -445,7 +436,6 @@ body {
   font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
-  transition: var(--transition-normal);
   transition: var(--transition-normal);
   box-shadow: none;
 }
@@ -567,7 +557,6 @@ body {
   padding: var(--spacing-md);
   cursor: pointer;
   transition: var(--transition-normal);
-  transition: var(--transition-normal);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -601,7 +590,6 @@ body {
   padding: 2px 6px;
   cursor: pointer;
   transition: var(--transition-normal);
-  transition: var(--transition-normal);
   color: var(--text-secondary);
   font-size: 0.7rem;
   font-weight: 500;
@@ -622,7 +610,7 @@ body {
 
 .bpm-display {
   display: flex;
-      justify-content: space-around;
+  justify-content: space-around;
   margin-bottom: var(--spacing-lg);
 }
 
@@ -652,7 +640,6 @@ body {
   cursor: pointer;
   font-weight: 500;
   margin: 0 var(--spacing-xs);
-  transition: var(--transition-normal);
   transition: var(--transition-normal);
   font-size: 0.8rem;
 }
@@ -710,7 +697,7 @@ body {
 /* Vertical VU Meters */
 .vu-meters-vertical {
   display: flex;
-      justify-content: space-around;
+  justify-content: space-around;
   align-items: flex-start;
   margin: var(--spacing-xl) 0;
   height: 200px;
@@ -728,7 +715,6 @@ body {
   font-weight: 600;
   color: var(--text-secondary);
   writing-mode: horizontal-tb;
-          writing-mode: horizontal-tb;
 }
 
 .vu-bars-vertical {
@@ -744,7 +730,6 @@ body {
   width: 4px;
   background: var(--border-primary);
   border-radius: 2px;
-  transition: var(--transition-fast);
   transition: var(--transition-fast);
 }
 
@@ -768,7 +753,7 @@ body {
 /* Volume Controls Vertical */
 .volume-controls-vertical {
   display: flex;
-      justify-content: space-around;
+  justify-content: space-around;
   align-items: flex-start;
   margin: var(--spacing-xl) 0;
   padding: var(--spacing-lg);
@@ -789,15 +774,11 @@ body {
   font-weight: 600;
   color: var(--text-secondary);
   writing-mode: horizontal-tb;
-          writing-mode: horizontal-tb;
   font-size: 0.9rem;
 }
 
 .volume-slider-vertical {
-  writing-mode: bt-lr;
-          writing-mode: bt-lr; /* IE */
   writing-mode: vertical-lr;
-          writing-mode: vertical-lr; /* Standard */
   -webkit-appearance: slider-vertical;
      -moz-appearance: slider-vertical;
           appearance: slider-vertical;
@@ -875,7 +856,6 @@ body {
 
 .vinyl-record.spinning {
   animation: spin 1.8s linear infinite;
-          animation: spin 1.8s linear infinite;
 }
 
 .vinyl-center {
@@ -973,7 +953,6 @@ body {
   cursor: pointer;
   font-weight: 500;
   transition: var(--transition-normal);
-  transition: var(--transition-normal);
   font-size: 0.8rem;
   background: linear-gradient(45deg, #00b894, #00a085);
   padding: var(--spacing-xs) var(--spacing-sm);
@@ -985,10 +964,7 @@ body {
 }
 
 .loop-slider-vertical {
-  writing-mode: bt-lr;
-          writing-mode: bt-lr; /* IE */
   writing-mode: vertical-lr;
-          writing-mode: vertical-lr; /* Standard */
   -webkit-appearance: slider-vertical;
      -moz-appearance: slider-vertical;
           appearance: slider-vertical;
@@ -1029,10 +1005,7 @@ body {
 }
 
 .pitch-slider-vertical {
-  writing-mode: bt-lr;
-          writing-mode: bt-lr; /* IE */
   writing-mode: vertical-lr;
-          writing-mode: vertical-lr; /* Standard */
   -webkit-appearance: slider-vertical;
      -moz-appearance: slider-vertical;
           appearance: slider-vertical;
@@ -1098,7 +1071,6 @@ body {
   font-weight: 600;
   cursor: pointer;
   transition: var(--transition-normal);
-  transition: var(--transition-normal);
   margin: var(--spacing-xs) 0;
   display: flex;
   align-items: center;
@@ -1140,8 +1112,6 @@ input[type="range"]::-webkit-slider-thumb {
   cursor: pointer;
   -webkit-transition: var(--transition-normal);
   transition: var(--transition-normal);
-  transition: var(--transition-normal);
-  transition: var(--transition-normal);
 }
 
 /* Professional fader hover effects */
@@ -1175,7 +1145,6 @@ input[type="range"]::-moz-range-thumb {
 /* Horizontal Fader - Professional styling for horizontal sliders */
 .horizontal-fader::-webkit-slider-thumb {
   background: linear-gradient(to right, #1a1a1a 0%, #1a1a1a 45%, #ffffff 47%, #ffffff 53%, #1a1a1a 55%, #1a1a1a 100%);
-  background: linear-gradient(to right, #1a1a1a 0%, #1a1a1a 45%, #ffffff 47%, #ffffff 53%, #1a1a1a 55%, #1a1a1a 100%);
   border-radius: 3px;
   width: 24px;
   height: 18px;
@@ -1185,7 +1154,6 @@ input[type="range"]::-moz-range-thumb {
 
 /* Vertical Fader - Professional styling for vertical sliders */
 .vertical-fader::-webkit-slider-thumb {
-  background: linear-gradient(to bottom, #1a1a1a 0%, #1a1a1a 45%, #ffffff 47%, #ffffff 53%, #1a1a1a 55%, #1a1a1a 100%);
   background: linear-gradient(to bottom, #1a1a1a 0%, #1a1a1a 45%, #ffffff 47%, #ffffff 53%, #1a1a1a 55%, #1a1a1a 100%);
   border-radius: 3px;
   width: 18px;
@@ -1238,8 +1206,7 @@ input[type="range"]::-moz-range-thumb {
 .eq-slider,
 .volume-slider-vertical,
 .pitch-slider-vertical {
-  writing-mode: bt-lr;
-          writing-mode: bt-lr;
+  writing-mode: vertical-lr;
   -webkit-appearance: slider-vertical;
      -moz-appearance: slider-vertical;
           appearance: slider-vertical;
@@ -1341,10 +1308,8 @@ input[type="range"]::-moz-range-thumb {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to right, transparent, rgba(78, 205, 196, 0.3), transparent);
   background: linear-gradient(90deg, transparent, rgba(78, 205, 196, 0.3), transparent);
   animation: loading 1.5s infinite;
-          animation: loading 1.5s infinite;
 }
 
 @keyframes loading {
@@ -1379,7 +1344,6 @@ input[type="range"]::-moz-range-thumb {
   cursor: pointer;
   font-weight: 500;
   transition: var(--transition-normal);
-  transition: var(--transition-normal);
   font-size: 0.9rem;
 }
 
@@ -1405,7 +1369,6 @@ input[type="range"]::-moz-range-thumb {
   border-radius: var(--radius-sm);
   cursor: pointer;
   font-weight: 500;
-  transition: var(--transition-normal);
   transition: var(--transition-normal);
   font-size: 0.9rem;
   width: 30px;
@@ -1433,7 +1396,6 @@ input[type="range"]::-moz-range-thumb {
   cursor: pointer;
   font-weight: 500;
   transition: var(--transition-normal);
-  transition: var(--transition-normal);
   font-size: 0.9rem;
   background: linear-gradient(45deg, #ff9ff3, #f368e0);
   padding: var(--spacing-sm) 12px;
@@ -1452,20 +1414,6 @@ input[type="range"]::-moz-range-thumb {
   box-shadow: 0 0 15px rgba(255, 159, 243, 0.6);
 }
 
-/* Clickable waveform */
-.waveform-container {
-  position: relative;
-  cursor: pointer;
-  border: 2px solid transparent;
-  border-radius: 8px;
-  transition: border-color 0.2s ease;
-  transition: border-color 0.2s ease;
-}
-
-.waveform-container:hover {
-  border-color: #4ecdc4;
-}
-
 /* Beat Matching Waveforms */
 .beat-matching-waveforms {
   display: flex;
@@ -1482,7 +1430,6 @@ input[type="range"]::-moz-range-thumb {
   overflow: hidden;
   border: 1px solid var(--border-secondary);
   cursor: pointer;
-  transition: border-color 0.2s ease;
   transition: border-color 0.2s ease;
 }
 
@@ -1563,7 +1510,6 @@ input[type="range"]::-moz-range-thumb {
   border: 2px solid var(--border-primary);
   cursor: pointer;
   transition: var(--transition-normal);
-  transition: var(--transition-normal);
 }
 
 .beat-waveform-wrapper:hover {
@@ -1600,7 +1546,6 @@ input[type="range"]::-moz-range-thumb {
   overflow: hidden;
   border: 2px solid var(--border-primary);
   cursor: pointer;
-  transition: var(--transition-normal);
   transition: var(--transition-normal);
   margin-bottom: var(--spacing-lg);
 }
@@ -1653,7 +1598,6 @@ input[type="range"]::-moz-range-thumb {
   background-color: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(5px);
   animation: modalFadeIn 0.3s ease;
-          animation: modalFadeIn 0.3s ease;
 }
 
 .modal.show {
@@ -1682,7 +1626,6 @@ input[type="range"]::-moz-range-thumb {
   overflow-y: auto;
   position: relative;
   animation: modalSlideIn 0.3s ease;
-          animation: modalSlideIn 0.3s ease;
 }
 
 @keyframes modalSlideIn {
@@ -1731,7 +1674,6 @@ input[type="range"]::-moz-range-thumb {
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-full);
-  transition: var(--transition-normal);
   transition: var(--transition-normal);
 }
 
