@@ -533,15 +533,15 @@ body {
   background: var(--gradient-accent);
   border: none;
   border-radius: var(--radius-lg);
-  padding: var(--spacing-md);
+  padding: var(--spacing-sm);
   cursor: pointer;
   transition: var(--transition-normal);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  aspect-ratio: 1;
+  height: 75px;
+  width: 75px;
   color: white;
   font-weight: 500;
   border: 1px solid var(--border-primary);
@@ -559,13 +559,11 @@ body {
 }
 
 .sound-label {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
   text-align: center;
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 100%;
 }
 
 .sound-edit-btn {
