@@ -53,20 +53,17 @@
   --shadow-md: 0 4px 15px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.5);
   --shadow-primary: 0 0 15px rgba(78, 205, 196, 0.4);
-  --shadow-secondary: 0 0 15px rgba(255, 107, 107, 0.4);
-  
+
   /* Transitions */
   --transition-fast: all 0.1s ease;
   --transition-normal: all 0.2s ease;
-  
+
   /* Gradients */
   --gradient-primary: linear-gradient(45deg, var(--color-primary), var(--color-primary-dark));
   --gradient-secondary: linear-gradient(45deg, var(--color-secondary), var(--color-secondary-dark));
   --gradient-accent: linear-gradient(45deg, var(--color-accent-blue), var(--color-accent-purple));
   --gradient-surface: linear-gradient(145deg, var(--bg-tertiary), var(--bg-quaternary));
-  --gradient-header: linear-gradient(45deg, var(--color-secondary), var(--color-primary));
   --gradient-body: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
-  --gradient-danger: linear-gradient(135deg, #ff7675, #d63031);
 }
 
 * {
@@ -94,16 +91,14 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-xl) 0;
+  padding-bottom: var(--spacing-md);
   margin-bottom: var(--spacing-md);
 }
 
 .mixer-header h1 {
-  font-size: 2.5rem;
+  font-size: 3rem;
   font-weight: 700;
-  background: var(--gradient-header);
-  background-clip: text;
-  color: transparent;
+  color: var(--color-primary);
 }
 
 .header-controls {
@@ -417,6 +412,7 @@ body {
 .effect-slider {
   flex: 1;
   margin-left: var(--spacing-lg);
+  height: 4px;
 }
 
 /* Reset Button */
@@ -426,24 +422,21 @@ body {
 }
 
 .reset-btn {
-  background: transparent;
-  color: var(--text-primary);
-  border: 2px solid var(--border-primary);
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border-radius: var(--radius-md);
-  font-weight: 600;
-  font-size: 0.9rem;
+  background: var(--gradient-surface);
+  border: 1px solid var(--border-secondary);
+  color: white;
+  padding: 12px 16px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
+  font-weight: 600;
   transition: var(--transition-normal);
-  box-shadow: none;
+  min-width: 50px;
+  font-size: 0.9rem;
 }
 
 .reset-btn:hover {
-  background: var(--bg-secondary);
-  border-color: var(--color-accent);
-  color: var(--color-accent);
+  background: linear-gradient(145deg, var(--border-secondary), var(--border-primary));
   transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
 }
 
 .reset-btn:active {
@@ -494,7 +487,7 @@ body {
 .crossfader {
   width: 100%;
   margin-bottom: var(--spacing-md);
-  height: 8px;
+  height: 4px;
   border-radius: var(--spacing-xs);
   outline: none;
   appearance: none;
@@ -654,13 +647,6 @@ body {
 }
 
 /* VU Meters */
-.vu-meters {
-  display: flex;
-  justify-content: center;
-  gap: 40px;
-  margin-top: var(--spacing-xl);
-}
-
 .vu-meter {
   text-align: center;
 }
@@ -821,7 +807,7 @@ body {
   width: 200px;
   height: 200px;
   border-radius: var(--radius-full);
-  background: 
+  background:
   radial-gradient(circle at center, var(--bg-secondary) 20%, var(--border-primary) 21%, var(--bg-secondary) 22%, var(--border-primary) 23%, var(--bg-secondary) 24%, var(--border-primary) 25%),
   conic-gradient(from 0deg, var(--bg-secondary), var(--border-primary), var(--bg-secondary), var(--border-primary), var(--bg-secondary)),
   linear-gradient(45deg, var(--bg-tertiary), var(--bg-secondary));
@@ -871,7 +857,7 @@ body {
   width: 100%;
   height: 100%;
   border-radius: var(--radius-full);
-  background: 
+  background:
   radial-gradient(circle at center, transparent 30%, rgba(255, 255, 255, 0.02) 31%, transparent 32%),
   radial-gradient(circle at center, transparent 35%, rgba(255, 255, 255, 0.02) 36%, transparent 37%),
   radial-gradient(circle at center, transparent 40%, rgba(255, 255, 255, 0.02) 41%, transparent 42%),
@@ -892,6 +878,7 @@ body {
   width: 80px;
   height: 280px;
   justify-content: flex-start;
+  position: relative;
 }
 
 .pitch-control-vertical label {
@@ -955,11 +942,11 @@ body {
   writing-mode: vertical-lr;
   appearance: slider-vertical;
   width: 25px;
-  height: 140px !important;
+  height: 150px !important;
   background: linear-gradient(180deg, var(--color-accent-blue) 0%, var(--color-accent-purple) 100%);
   border-radius: 12px;
   outline: none;
-  margin: var(--spacing-md) 0;
+  margin: var(--spacing-sm) 0;
   border: 1px solid #8899ff;
 }
 
@@ -1005,36 +992,33 @@ body {
 
 /* Pitch Reset Button */
 .pitch-reset-btn {
-  background: var(--bg-surface);
-  border: 1px solid var(--color-accent-blue);
-  color: var(--color-accent-blue);
-  border-radius: var(--radius-sm);
-  width: 20px;
-  height: 20px;
-  font-size: 10px;
-  font-weight: 600;
+  background: white;
+  border: 1px solid white;
+  border-radius: var(--radius-full);
+  width: 10px;
+  height: 10px;
   cursor: pointer;
-  transition: var(--transition-normal);
-  margin: var(--spacing-xs) 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  position: absolute;
+  top: 50%;
+  left: calc(50% + 30px);
+  transform: translate(-50%, -50%);
+  z-index: 10;
 }
 
 .pitch-reset-btn:hover {
-  background: var(--color-accent-blue);
-  color: var(--text-primary);
-  transform: scale(1.05);
+  box-shadow: 0 0px 8px white;
 }
 
-.pitch-reset-btn:active {
-  transform: scale(0.95);
-}
 
 /* Unified Slider Styling Base - Applied to ALL range inputs */
 input[type="range"] {
   appearance: none;
-  background: transparent;
+  background: var(--bg-surface-lighter);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   outline: none;
 }
@@ -1080,6 +1064,21 @@ input[type="range"]::-moz-range-thumb {
   cursor: pointer;
 }
 
+/* Horizontal Fader Track Styling */
+.horizontal-fader::-webkit-slider-track {
+  background: var(--bg-surface-lighter);
+  height: 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+}
+
+.horizontal-fader::-moz-range-track {
+  background: var(--bg-surface-lighter);
+  height: 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+}
+
 /* Professional Fader Base Classes */
 
 /* Horizontal Fader - Professional styling for horizontal sliders */
@@ -1121,7 +1120,7 @@ input[type="range"]::-moz-range-thumb {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
 }
 
-/* Keep effect sliders with original circular design */
+
 .effect-slider::-webkit-slider-thumb {
   background: var(--gradient-primary);
   border-radius: var(--radius-full);
@@ -1143,11 +1142,10 @@ input[type="range"]::-moz-range-thumb {
 /* Vertical sliders - maintain larger size for easier manipulation */
 .eq-slider,
 .loop-slider-vertical,
-.volume-slider-vertical,
-.pitch-slider-vertical {
+.volume-slider-vertical {
   writing-mode: vertical-lr;
   appearance: slider-vertical;
-  width: 30px;
+  width: 20px;
   height: 100px;
   background: var(--bg-surface-lighter);
   border-radius: var(--radius-lg);
@@ -1156,22 +1154,10 @@ input[type="range"]::-moz-range-thumb {
 
 .eq-slider::-webkit-slider-track,
 .loop-slider-vertical::-webkit-slider-track,
-.volume-slider-vertical::-webkit-slider-track,
-.pitch-slider-vertical::-webkit-slider-track {
+.volume-slider-vertical::-webkit-slider-track {
   background: var(--bg-surface-lighter);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-lg);
-}
-
-/* Crossfader specific sizing */
-.crossfader {
-  height: 10px;
-}
-
-/* Responsive Design */
-.responsive-grid {
-  display: grid;
-  gap: var(--spacing-xl);
 }
 
 @media (max-width: 1200px) {
@@ -1337,7 +1323,15 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .cue-point-btn:hover, .set-cue-btn:hover {
+  transform: translateY(-1px);
+}
+
+.cue-point-btn:hover {
   box-shadow: 0 3px 12px rgba(255, 159, 243, 0.4);
+}
+
+.set-cue-btn:hover {
+  box-shadow: 0 3px 12px rgba(116, 185, 255, 0.4);
 }
 
 .cue-point-btn.active {
@@ -1557,6 +1551,7 @@ input[type="range"]::-moz-range-thumb {
   overflow-y: auto;
   position: relative;
   animation: modalSlideIn 0.3s ease;
+  scrollbar-width: none;
 }
 
 @keyframes modalSlideIn {
@@ -1582,12 +1577,9 @@ input[type="range"]::-moz-range-thumb {
 
 .modal-header h2 {
   margin: 0;
-  color: var(--text-primary);
+  color: var(--color-primary);
   font-size: 1.8rem;
   font-weight: 600;
-  background: var(--gradient-header);
-  background-clip: text;
-  color: transparent;
 }
 
 .modal-close {
