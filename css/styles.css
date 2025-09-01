@@ -150,6 +150,7 @@ body {
   font-weight: 600;
   font-size: 0.9rem;
   color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
 }
 
 /* Main Mixer Interface */
@@ -585,7 +586,6 @@ body {
   text-align: center;
   margin-top: var(--spacing-lg);
   padding-top: var(--spacing-lg);
-  border-top: 1px solid var(--border-light);
 }
 
 .sound-pad-volume-control label {
@@ -593,7 +593,7 @@ body {
   margin-bottom: var(--spacing-md);
   font-weight: 600;
   color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: 0.8rem;
 }
 
 .sound-pad-volume-fader {
@@ -734,6 +734,11 @@ body {
 }
 
 /* Volume Controls Vertical */
+.master-volume-slider {
+  height: 4px;
+  width: 150px;
+}
+
 .volume-controls-vertical {
   display: flex;
   justify-content: space-around;
