@@ -1551,14 +1551,7 @@ input[type="range"]::-moz-range-thumb {
   overflow-y: auto;
   position: relative;
   animation: modalSlideIn 0.3s ease;
-  /* Hide scrollbars */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
-}
-
-/* Hide scrollbars for webkit browsers */
-.modal-content::-webkit-scrollbar {
-  display: none;
+  scrollbar-width: none;
 }
 
 @keyframes modalSlideIn {
