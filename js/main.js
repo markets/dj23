@@ -26,6 +26,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const deckB = window.audioEngine.getDeck('B');
   if (deckA) deckA.setVolume(100);
   if (deckB) deckB.setVolume(0);
+  
+  // Initialize sound pad
+  window.soundPad = new SoundPad(window.audioEngine);
     
   console.log('✅ DJ23 - Ready to mix!');
     
