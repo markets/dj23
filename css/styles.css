@@ -53,20 +53,17 @@
   --shadow-md: 0 4px 15px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.5);
   --shadow-primary: 0 0 15px rgba(78, 205, 196, 0.4);
-  --shadow-secondary: 0 0 15px rgba(255, 107, 107, 0.4);
-  
+
   /* Transitions */
   --transition-fast: all 0.1s ease;
   --transition-normal: all 0.2s ease;
-  
+
   /* Gradients */
   --gradient-primary: linear-gradient(45deg, var(--color-primary), var(--color-primary-dark));
   --gradient-secondary: linear-gradient(45deg, var(--color-secondary), var(--color-secondary-dark));
   --gradient-accent: linear-gradient(45deg, var(--color-accent-blue), var(--color-accent-purple));
   --gradient-surface: linear-gradient(145deg, var(--bg-tertiary), var(--bg-quaternary));
-  --gradient-header: linear-gradient(45deg, var(--color-secondary), var(--color-primary));
   --gradient-body: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
-  --gradient-danger: linear-gradient(135deg, #ff7675, #d63031);
 }
 
 * {
@@ -94,16 +91,14 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-xl) 0;
+  padding-bottom: var(--spacing-md);
   margin-bottom: var(--spacing-md);
 }
 
 .mixer-header h1 {
-  font-size: 2.5rem;
+  font-size: 3rem;
   font-weight: 700;
-  background: var(--gradient-header);
-  background-clip: text;
-  color: transparent;
+  color: var(--color-primary);
 }
 
 .header-controls {
@@ -812,7 +807,7 @@ body {
   width: 200px;
   height: 200px;
   border-radius: var(--radius-full);
-  background: 
+  background:
   radial-gradient(circle at center, var(--bg-secondary) 20%, var(--border-primary) 21%, var(--bg-secondary) 22%, var(--border-primary) 23%, var(--bg-secondary) 24%, var(--border-primary) 25%),
   conic-gradient(from 0deg, var(--bg-secondary), var(--border-primary), var(--bg-secondary), var(--border-primary), var(--bg-secondary)),
   linear-gradient(45deg, var(--bg-tertiary), var(--bg-secondary));
@@ -862,7 +857,7 @@ body {
   width: 100%;
   height: 100%;
   border-radius: var(--radius-full);
-  background: 
+  background:
   radial-gradient(circle at center, transparent 30%, rgba(255, 255, 255, 0.02) 31%, transparent 32%),
   radial-gradient(circle at center, transparent 35%, rgba(255, 255, 255, 0.02) 36%, transparent 37%),
   radial-gradient(circle at center, transparent 40%, rgba(255, 255, 255, 0.02) 41%, transparent 42%),
@@ -997,35 +992,26 @@ body {
 
 /* Pitch Reset Button */
 .pitch-reset-btn {
-  background: var(--bg-surface);
-  border: 1px solid var(--color-accent-blue);
-  color: var(--color-accent-blue);
-  border-radius: var(--radius-sm);
-  width: 20px;
-  height: 20px;
-  font-size: 10px;
-  font-weight: 600;
+  background: white;
+  border: 1px solid white;
+  border-radius: var(--radius-full);
+  width: 10px;
+  height: 10px;
   cursor: pointer;
-  transition: var(--transition-normal);
   display: flex;
   align-items: center;
   justify-content: center;
   position: absolute;
   top: 50%;
-  left: calc(50% + 25px);
+  left: calc(50% + 30px);
   transform: translate(-50%, -50%);
   z-index: 10;
 }
 
 .pitch-reset-btn:hover {
-  background: var(--color-accent-blue);
-  color: var(--text-primary);
-  transform: scale(1.05);
+  box-shadow: 0 0px 8px white;
 }
 
-.pitch-reset-btn:active {
-  transform: scale(0.95);
-}
 
 /* Unified Slider Styling Base - Applied to ALL range inputs */
 input[type="range"] {
@@ -1590,12 +1576,9 @@ input[type="range"]::-moz-range-thumb {
 
 .modal-header h2 {
   margin: 0;
-  color: var(--text-primary);
+  color: var(--color-primary);
   font-size: 1.8rem;
   font-weight: 600;
-  background: var(--gradient-header);
-  background-clip: text;
-  color: transparent;
 }
 
 .modal-close {
