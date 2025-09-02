@@ -600,8 +600,8 @@ class Deck {
       energyValues.push(Math.sqrt(energy / hopSize));
     }
     
-    // Detect onset peaks (significant energy increases)
-    const onsets = this.detectOnsets(energyValues, hopSize, sampleRate);
+    // Enhanced onset detection with multi-band analysis for better Latin music support
+    const onsets = this.detectOnsetsMultiBand(audioData, hopSize, sampleRate);
     
     // Calculate tempo from onset intervals
     if (onsets.length < 4) {
@@ -614,9 +614,9 @@ class Deck {
       intervals.push(onsets[i] - onsets[i - 1]);
     }
     
-    // Remove outliers (intervals that are too short or too long)
+    // Remove outliers with expanded range for Latin music patterns
     const filteredIntervals = intervals.filter(interval => 
-      interval >= 0.2 && interval <= 2.0 // Between 30 BPM and 300 BPM
+      interval >= 0.15 && interval <= 2.5 // Between ~24 BPM and 400 BPM for better Latin music support
     );
     
     if (filteredIntervals.length === 0) {
@@ -626,11 +626,11 @@ class Deck {
     // Find the most common interval (tempo)
     const bpm = this.findMostLikelyTempo(filteredIntervals);
     
-    // Validate BPM range (typical electronic music range)
-    if (bpm < 60) return Math.round(bpm * 2);    // Double-time
-    if (bpm > 200) return Math.round(bpm / 2);   // Half-time
-    if (bpm < 80) return Math.round(bpm * 1.5);  // Adjust if too slow
+    // Enhanced BPM validation with better support for urbano latino ranges
+    if (bpm < 50) return Math.round(bpm * 2);     // Very slow - likely half-time detection
+    if (bpm > 250) return Math.round(bpm / 2);    // Very fast - likely double-time detection
     
+    // The findMostLikelyTempo method now handles genre-specific range validation
     return Math.round(bpm);
   }
 
@@ -662,6 +662,158 @@ class Deck {
     }
     
     return onsets;
+  }
+
+  detectOnsetsMultiBand(audioData, hopSize, sampleRate) {
+    // Multi-band onset detection for better Latin music percussion detection
+    const onsets = [];
+    
+    // Create frequency bands for analysis - improved approach
+    const bassOnsets = this.detectOnsetsInFrequencyBand(audioData, hopSize, sampleRate, 20, 200);    // Sub-bass/bass
+    const lowMidOnsets = this.detectOnsetsInFrequencyBand(audioData, hopSize, sampleRate, 200, 800);  // Low-mid (kick drum range)
+    const midOnsets = this.detectOnsetsInFrequencyBand(audioData, hopSize, sampleRate, 800, 3000);    // Mid frequencies (snare, vocals)
+    const highOnsets = this.detectOnsetsInFrequencyBand(audioData, hopSize, sampleRate, 3000, 8000);  // High frequencies (hi-hats, percussion)
+    
+    // Combine onsets with improved weighting for Latin music
+    const combinedOnsets = new Set();
+    
+    // Bass and low-mid are most important for Latin percussion patterns
+    bassOnsets.forEach(onset => combinedOnsets.add(onset));
+    lowMidOnsets.forEach(onset => combinedOnsets.add(onset));
+    
+    // Add mid and high onsets that complement bass patterns (within 100ms window)
+    midOnsets.concat(highOnsets).forEach(onset => {
+      const hasNearbyLowFreqOnset = Array.from(combinedOnsets).some(lowOnset => 
+        Math.abs(lowOnset - onset) <= 0.1  // 100ms window
+      );
+      // Also add standalone mid/high frequency onsets if they seem significant
+      if (hasNearbyLowFreqOnset || combinedOnsets.size < 3) {
+        combinedOnsets.add(onset);
+      }
+    });
+    
+    // Only fall back to original detection if we have very few onsets
+    if (combinedOnsets.size < 3) {
+      console.log('Multi-band detection found few onsets, falling back to energy-based detection');
+      const energyValues = [];
+      for (let i = 0; i < audioData.length - hopSize; i += hopSize) {
+        let energy = 0;
+        for (let j = 0; j < hopSize; j++) {
+          energy += audioData[i + j] * audioData[i + j];
+        }
+        energyValues.push(Math.sqrt(energy / hopSize));
+      }
+      return this.detectOnsets(energyValues, hopSize, sampleRate);
+    }
+    
+    return Array.from(combinedOnsets).sort((a, b) => a - b);
+  }
+
+  detectOnsetsInFrequencyBand(audioData, hopSize, sampleRate, lowFreq, highFreq) {
+    // Improved frequency band filtering for onset detection
+    const onsets = [];
+    const nyquist = sampleRate / 2;
+    
+    // Create filtered version of audio data for this frequency band
+    const filteredAudio = this.applyFrequencyBandFilter(audioData, sampleRate, lowFreq, highFreq);
+    
+    const bandEnergyValues = [];
+    
+    // Process audio in overlapping windows
+    for (let i = 0; i < filteredAudio.length - hopSize; i += hopSize) {
+      let bandEnergy = 0;
+      
+      for (let j = 0; j < hopSize; j++) {
+        const sample = filteredAudio[i + j];
+        bandEnergy += sample * sample;
+      }
+      
+      bandEnergyValues.push(Math.sqrt(bandEnergy / hopSize));
+    }
+    
+    if (bandEnergyValues.length === 0) return [];
+    
+    // Apply adaptive threshold based on signal characteristics
+    const meanEnergy = bandEnergyValues.reduce((sum, val) => sum + val, 0) / bandEnergyValues.length;
+    const variance = bandEnergyValues.reduce((sum, val) => sum + Math.pow(val - meanEnergy, 2), 0) / bandEnergyValues.length;
+    const stdDev = Math.sqrt(variance);
+    
+    // Adaptive threshold: more sensitive for bass frequencies (important for Latin music)
+    let adaptiveThreshold = 1.2;
+    if (lowFreq < 250) {
+      // Bass frequencies - more sensitive
+      adaptiveThreshold = Math.max(1.1, Math.min(1.5, 1.15 + (stdDev / meanEnergy) * 0.5));
+    } else if (lowFreq > 2000) {
+      // High frequencies - less sensitive
+      adaptiveThreshold = Math.max(1.3, Math.min(2.0, 1.4 + (stdDev / meanEnergy) * 0.8));
+    } else {
+      // Mid frequencies - moderate sensitivity
+      adaptiveThreshold = Math.max(1.2, Math.min(1.7, 1.25 + (stdDev / meanEnergy) * 0.6));
+    }
+    
+    // Apply moving average for smoothing
+    const smoothed = this.applyMovingAverage(bandEnergyValues, 2);
+    
+    // Calculate spectral flux (energy differences between frames)
+    const spectralFlux = [];
+    for (let i = 1; i < smoothed.length; i++) {
+      const diff = Math.max(0, smoothed[i] - smoothed[i - 1]);
+      spectralFlux.push(diff);
+    }
+    
+    // Find peaks with adaptive threshold
+    for (let i = 1; i < spectralFlux.length - 1; i++) {
+      const current = spectralFlux[i];
+      const previous = spectralFlux[i - 1];
+      const next = spectralFlux[i + 1];
+      
+      // Dynamic threshold based on signal energy
+      const energyThreshold = Math.max(meanEnergy * 0.05, 0.01);
+      
+      if (current > previous * adaptiveThreshold && 
+          current > next && 
+          current > energyThreshold) {
+        const timeInSeconds = ((i + 1) * hopSize) / sampleRate;
+        onsets.push(timeInSeconds);
+      }
+    }
+    
+    return onsets;
+  }
+
+  applyFrequencyBandFilter(audioData, sampleRate, lowFreq, highFreq) {
+    // Simple time-domain frequency band emphasis
+    // This is a simplified approach - in a real implementation, you'd use FFT
+    const filtered = new Float32Array(audioData.length);
+    const nyquist = sampleRate / 2;
+    
+    // Simple high-pass and low-pass filtering using difference equations
+    const lowCutoff = lowFreq / nyquist;
+    const highCutoff = Math.min(highFreq / nyquist, 1.0);
+    
+    // Simple one-pole filters
+    let lowPassState = 0;
+    let highPassState = 0;
+    
+    const lowPassCoeff = Math.exp(-2 * Math.PI * highCutoff);
+    const highPassCoeff = Math.exp(-2 * Math.PI * lowCutoff);
+    
+    for (let i = 0; i < audioData.length; i++) {
+      let sample = audioData[i];
+      
+      // High-pass filter (remove frequencies below lowFreq)
+      const highPassOutput = sample - highPassState;
+      highPassState = highPassState + highPassCoeff * (sample - highPassState);
+      sample = highPassOutput;
+      
+      // Low-pass filter (remove frequencies above highFreq)
+      lowPassState = lowPassState + (1 - lowPassCoeff) * (sample - lowPassState);
+      sample = lowPassState;
+      
+      filtered[i] = sample;
+    }
+    
+    return filtered;
   }
 
   applyMovingAverage(data, windowSize) {
@@ -710,13 +862,73 @@ class Deck {
       }
     });
     
-    // Also check for double-time and half-time patterns
-    const candidates = [mostLikelyBPM, mostLikelyBPM * 2, mostLikelyBPM / 2];
+    // Enhanced candidate selection for better Latin music support
+    const candidates = [
+      mostLikelyBPM, 
+      mostLikelyBPM * 2, 
+      mostLikelyBPM / 2, 
+      mostLikelyBPM * 1.5, 
+      mostLikelyBPM / 1.5,
+      mostLikelyBPM * 4,   // For very slow detections
+      mostLikelyBPM / 4    // For very fast detections
+    ];
     
-    // Return the candidate that makes most sense musically
-    for (const candidate of candidates) {
-      if (candidate >= 80 && candidate <= 180) {
-        return candidate;
+    // Sort candidates by how well they fit typical Latin music BPM ranges
+    const scoredCandidates = candidates.map(candidate => {
+      let score = 0;
+      
+      // Primary Latin urban music range (most common)
+      if (candidate >= 80 && candidate <= 110) {
+        score = 100; // Highest score for typical reggaeton/Latin trap range
+      }
+      // Secondary Latin ranges
+      else if (candidate >= 70 && candidate <= 120) {
+        score = 90;  // High score for extended Latin range
+      }
+      // Electronic/commercial Latin music
+      else if (candidate >= 120 && candidate <= 140) {
+        score = 80;  // Good score for faster electronic Latin
+      }
+      // General dance music range
+      else if (candidate >= 60 && candidate <= 180) {
+        score = 70;  // Moderate score for general dance music
+      }
+      // Outside typical ranges
+      else {
+        score = Math.max(0, 50 - Math.abs(candidate - 95)); // Lower score, distance from typical reggaeton BPM
+      }
+      
+      return { bpm: candidate, score: score };
+    });
+    
+    // Sort by score (highest first) and return the best candidate
+    scoredCandidates.sort((a, b) => b.score - a.score);
+    const bestCandidate = scoredCandidates[0];
+    
+    // Only use the best candidate if it has a reasonable score
+    if (bestCandidate.score >= 70) {
+      return bestCandidate.bpm;
+    }
+    
+    // If no candidate fits typical ranges, apply genre-specific adjustments
+    if (mostLikelyBPM < 70) {
+      // Too slow - likely half-time detection, try doubling
+      const doubled = mostLikelyBPM * 2;
+      if (doubled >= 70 && doubled <= 120) {
+        return doubled;
+      }
+      // Try 1.5x for complex time signatures
+      const adjusted = mostLikelyBPM * 1.5;
+      if (adjusted >= 70 && adjusted <= 120) {
+        return adjusted;
+      }
+    }
+    
+    if (mostLikelyBPM > 180) {
+      // Too fast - likely double-time detection
+      const halved = mostLikelyBPM / 2;
+      if (halved >= 70 && halved <= 120) {
+        return halved;
       }
     }
     
