@@ -139,12 +139,10 @@ class WaveformRenderer {
       this.ctx.font = 'bold 10px Inter';
       const textMetrics = this.ctx.measureText('CUE 1');
       
-      // Smart positioning: place text to the right, but if too close to edge, place to the left
+      // Simple positioning: always render text to the right
       const textOffset = 8;
       const textWidth = textMetrics.width + 4;
-      const textX = cue1Position + textOffset + textWidth > width 
-        ? cue1Position - textOffset - textWidth + 2 
-        : cue1Position + textOffset;
+      const textX = cue1Position + textOffset;
       const textY = 14;
       
       // Draw text background for better readability
@@ -172,12 +170,10 @@ class WaveformRenderer {
       this.ctx.font = 'bold 10px Inter';
       const textMetrics = this.ctx.measureText('CUE 2');
       
-      // Smart positioning: place text to the right, but if too close to edge, place to the left
+      // Simple positioning: always render text to the right
       const textOffset = 8;
       const textWidth = textMetrics.width + 4;
-      const textX = cue2Position + textOffset + textWidth > width 
-        ? cue2Position - textOffset - textWidth + 2 
-        : cue2Position + textOffset;
+      const textX = cue2Position + textOffset;
       const textY = 28;
       
       // Draw text background for better readability
