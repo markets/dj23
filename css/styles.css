@@ -12,8 +12,6 @@
   --color-secondary-dark: #ee5a52;
   --color-accent-blue: #667eea;
   --color-accent-purple: #764ba2;
-  --color-accent-yellow: #ffeaa7;
-  --color-accent-orange: #fdcb6e;
   
   /* Background Colors */
   --bg-primary: #0f0f0f;
@@ -54,7 +52,6 @@
   
   /* Shadows */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 15px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.5);
   --shadow-primary: 0 0 15px rgba(78, 205, 196, 0.4);
 
@@ -213,20 +210,7 @@ body {
   transform: translateY(0);
 }
 
-.btn-primary {
-  background: var(--gradient-accent);
-  color: white;
-  padding: var(--spacing-md) var(--spacing-xl);
-}
 
-.btn-primary:hover {
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-}
-
-.btn-secondary {
-  background: var(--gradient-secondary);
-  color: white;
-}
 
 .file-input {
   display: none;
@@ -1226,11 +1210,7 @@ input[type="range"]::-moz-range-thumb {
    BEAT MATCHING & WAVEFORMS
    ============================================================================ */
 
-.beat-matching-waveforms {
-  display: flex;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-xl);
-}
+
 
 .beat-waveform-container {
   position: relative;
@@ -1305,10 +1285,7 @@ input[type="range"]::-moz-range-thumb {
   letter-spacing: 1px;
 }
 
-.beat-waveforms-row {
-  display: flex;
-  gap: var(--spacing-lg);
-}
+
 
 .beat-waveform-wrapper {
   position: relative;
@@ -1387,23 +1364,7 @@ input[type="range"]::-moz-range-thumb {
    CONTROL BUTTONS & CUE POINTS
    ============================================================================ */
 
-.control-btn {
-  border: none;
-  color: white;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  font-weight: 500;
-  transition: var(--transition-normal);
-  font-size: 0.9rem;
-}
 
-.control-btn:hover {
-  transform: scale(1.05);
-}
-
-.control-btn:active {
-  transform: scale(0.95);
-}
 
 .pitch-bend-buttons {
   display: flex;
