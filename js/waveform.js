@@ -119,69 +119,48 @@ class WaveformRenderer {
     if (!deck || !deck.audioBuffer) return;
     
     const duration = deck.getDuration();
-    const cuePointColor = '#fff';
     
     // Draw CUE 1
     if (deck.cuePoints[1] !== null) {
-      const cue1Position = (deck.cuePoints[1] / duration) * width;
-      this.ctx.strokeStyle = cuePointColor;
-      this.ctx.lineWidth = 2;
-      this.ctx.setLineDash([]);
-      this.ctx.beginPath();
-      this.ctx.moveTo(cue1Position, 0);
-      this.ctx.lineTo(cue1Position, height);
-      this.ctx.stroke();
-      
-      // Improved text positioning with background for better readability
-      this.ctx.font = 'bold 10px Inter';
-      const textMetrics = this.ctx.measureText('CUE 1');
-      
-      // Simple positioning: always render text to the right
-      const textOffset = 8;
-      const textWidth = textMetrics.width + 4;
-      const textX = cue1Position + textOffset;
-      const textY = 14;
-      
-      // Draw text background for better readability
-      this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      this.ctx.fillRect(textX - 2, textY - 10, textWidth, 12);
-      
-      // Draw text
-      this.ctx.fillStyle = cuePointColor;
-      this.ctx.textAlign = 'left';
-      this.ctx.fillText('CUE 1', textX, textY);
+      this.drawSingleCuePoint(deck.cuePoints[1], duration, width, height, 'CUE 1', 14);
     }
     
     // Draw CUE 2
     if (deck.cuePoints[2] !== null) {
-      const cue2Position = (deck.cuePoints[2] / duration) * width;
-      this.ctx.strokeStyle = cuePointColor;
-      this.ctx.lineWidth = 2;
-      this.ctx.setLineDash([]);
-      this.ctx.beginPath();
-      this.ctx.moveTo(cue2Position, 0);
-      this.ctx.lineTo(cue2Position, height);
-      this.ctx.stroke();
-      
-      // Improved text positioning with background for better readability
-      this.ctx.font = 'bold 10px Inter';
-      const textMetrics = this.ctx.measureText('CUE 2');
-      
-      // Simple positioning: always render text to the right
-      const textOffset = 8;
-      const textWidth = textMetrics.width + 4;
-      const textX = cue2Position + textOffset;
-      const textY = 28;
-      
-      // Draw text background for better readability
-      this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      this.ctx.fillRect(textX - 2, textY - 10, textWidth, 12);
-      
-      // Draw text
-      this.ctx.fillStyle = cuePointColor;
-      this.ctx.textAlign = 'left';
-      this.ctx.fillText('CUE 2', textX, textY);
+      this.drawSingleCuePoint(deck.cuePoints[2], duration, width, height, 'CUE 2', 28);
     }
+  }
+
+  drawSingleCuePoint(cueTime, duration, width, height, label, textY) {
+    const cuePointColor = '#fff';
+    const cuePosition = (cueTime / duration) * width;
+    
+    // Draw cue line
+    this.ctx.strokeStyle = cuePointColor;
+    this.ctx.lineWidth = 2;
+    this.ctx.setLineDash([]);
+    this.ctx.beginPath();
+    this.ctx.moveTo(cuePosition, 0);
+    this.ctx.lineTo(cuePosition, height);
+    this.ctx.stroke();
+    
+    // Improved text positioning with background for better readability
+    this.ctx.font = 'bold 10px Inter';
+    const textMetrics = this.ctx.measureText(label);
+    
+    // Simple positioning: always render text to the right
+    const textOffset = 8;
+    const textWidth = textMetrics.width + 4;
+    const textX = cuePosition + textOffset;
+    
+    // Draw text background for better readability
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    this.ctx.fillRect(textX - 2, textY - 10, textWidth, 12);
+    
+    // Draw text
+    this.ctx.fillStyle = cuePointColor;
+    this.ctx.textAlign = 'left';
+    this.ctx.fillText(label, textX, textY);
   }
 
   renderEmpty() {
