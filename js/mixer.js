@@ -61,7 +61,7 @@ class MixerController {
       const targetBPM = target.getBPM();
             
       if (sourceBPM > 0 && targetBPM > 0) {
-        // 1. Match the BPM by adjusting pitch
+        // Match the BPM by adjusting pitch
         const pitchAdjustment = ((sourceBPM / targetBPM) - 1) * 100;
         target.setPitch(pitchAdjustment);
                 
@@ -71,19 +71,12 @@ class MixerController {
         pitchSlider.value = pitchAdjustment;
         pitchDisplay.textContent = `${pitchAdjustment.toFixed(1)}%`;
 
-        // 2. Match the beat timing
+        // Match the beat timing
         this.syncBeatTiming(source, target);
-        
-        // 3. Provide visual feedback
-        this.showSyncFeedback(sourceDeck, targetDeck, sourceBPM, pitchAdjustment);
         
         console.log(`Synced deck ${targetDeck} to deck ${sourceDeck}: BPM ${targetBPM} -> ${sourceBPM}, pitch: ${pitchAdjustment.toFixed(1)}%`);
       }
     }
-  }
-
-  showSyncFeedback(sourceDeck, targetDeck, sourceBPM, pitchAdjustment) {
-    // No visual feedback - per user request
   }
 
   syncBeatTiming(sourceDeck, targetDeck) {
