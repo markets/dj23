@@ -960,20 +960,19 @@ body {
 }
 
 .loop-btn {
-  border: none;
+  background: var(--gradient-surface);
+  border: 1px solid var(--border-secondary);
   color: white;
   border-radius: var(--radius-sm);
   cursor: pointer;
   font-weight: 500;
-  transition: var(--transition-normal);
   font-size: 0.8rem;
-  background: linear-gradient(45deg, var(--color-primary), var(--color-accent-blue));
   padding: var(--spacing-xs) var(--spacing-sm);
   width: 50px;
 }
 
 .loop-btn:hover {
-  box-shadow: 0 3px 12px rgba(0, 184, 148, 0.4);
+  background: linear-gradient(145deg, var(--border-secondary), var(--border-primary));
 }
 
 .loop-control .loop-length-value {
@@ -1022,21 +1021,19 @@ body {
 }
 
 .pitch-bend-btn {
-  background: var(--gradient-accent);
-  border: none;
+  background: var(--gradient-surface);
+  border: 1px solid var(--border-secondary);
   color: white;
   border-radius: var(--radius-sm);
   cursor: pointer;
   font-weight: 500;
-  transition: var(--transition-normal);
-  font-size: 0.9rem;
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 25px;
   font-weight: bold;
 }
 
 .pitch-bend-btn:hover {
-  box-shadow: var(--shadow-sm);
+  background: linear-gradient(145deg, var(--border-secondary), var(--border-primary));
 }
 
 .pitch-control #pitchDisplayA,
@@ -1044,12 +1041,6 @@ body {
   font-size: 0.9rem;
   color: var(--text-secondary);
   margin-top: var(--spacing-xs);
-}
-
-.pitch-bend-buttons .pitch-bend-btn {
-  width: 30px;
-  height: 20px;
-  font-size: 12px;
 }
 
 .pitch-reset-btn {
