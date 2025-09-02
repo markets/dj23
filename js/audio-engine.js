@@ -48,5 +48,4 @@ class AudioEngine {
   }
 }
 
-// Global audio engine instance
 window.audioEngine = new AudioEngine();

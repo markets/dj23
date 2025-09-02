@@ -13,7 +13,6 @@ class MixerController {
   }
 
   setupEventListeners() {
-    // Master volume
     const masterVolume = document.getElementById('masterVolume');
     masterVolume.addEventListener('input', (e) => {
       const value = parseInt(e.target.value);
@@ -21,18 +20,15 @@ class MixerController {
       e.target.nextElementSibling.textContent = `${value}%`;
     });
 
-    // Crossfader
     const crossfader = document.getElementById('crossfader');
     crossfader.addEventListener('input', (e) => {
       this.crossfaderValue = parseInt(e.target.value);
       this.updateCrossfader();
     });
 
-    // Initialize deck controllers
     this.deckControllers.A = new DeckController('A');
     this.deckControllers.B = new DeckController('B');
 
-    // Sync buttons
     document.getElementById('syncAB').addEventListener('click', () => {
       this.syncDecks('A', 'B');
     });
@@ -68,7 +64,6 @@ class MixerController {
         const pitchAdjustment = ((sourceBPM / targetBPM) - 1) * 100;
         target.setPitch(pitchAdjustment);
                 
-        // Update UI
         const pitchSlider = document.getElementById(`pitch${targetDeck}`);
         const pitchDisplay = document.getElementById(`pitchDisplay${targetDeck}`);
         pitchSlider.value = pitchAdjustment;
@@ -119,13 +114,11 @@ class MixerController {
       // Get master volume for VU meter scaling
       const masterVolume = window.audioEngine.getMasterVolume();
       
-      // Update deck VU meters
       ['A', 'B'].forEach(deckId => {
         const deck = window.audioEngine.getDeck(deckId);
         if (deck && deck.isPlaying) {
           const analyserData = deck.getAnalyserData();
           const average = analyserData.reduce((sum, value) => sum + value, 0) / analyserData.length;
-          // Apply master volume to VU meter display
           const scaledLevel = average * masterVolume;
           this.updateVUMeter(deckId, scaledLevel);
         } else {
@@ -133,7 +126,6 @@ class MixerController {
         }
       });
             
-      // Update master VU meter (simplified)
       const deckA = window.audioEngine.getDeck('A');
       const deckB = window.audioEngine.getDeck('B');
       let masterLevel = 0;
@@ -148,11 +140,9 @@ class MixerController {
         masterLevel += dataB.reduce((sum, value) => sum + value, 0) / dataB.length;
       }
       
-      // Apply master volume to master VU meter display
       const scaledMasterLevel = (masterLevel / 2) * masterVolume;
       this.updateVUMeter('master', scaledMasterLevel);
             
-      // Update track times for both decks
       if (this.deckControllers.A) this.deckControllers.A.updateTrackTime();
       if (this.deckControllers.B) this.deckControllers.B.updateTrackTime();
             
@@ -188,5 +178,4 @@ class MixerController {
   }
 }
 
-// Global mixer controller
 window.mixerController = new MixerController();

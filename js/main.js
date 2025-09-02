@@ -1,23 +1,17 @@
-// Initialize the DJ23 application
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('🎧 DJ23 - Initializing...');
     
-  // Initialize audio engine
   await window.audioEngine.initialize();
     
-  // Initialize waveform renderers
   window.waveformRenderers.A = new WaveformRenderer('waveformA', 'A');
   window.waveformRenderers.B = new WaveformRenderer('waveformB', 'B');
     
-  // Initialize beat matching waveform renderers
   window.beatWaveformRenderers.A = new ZoomedWaveformRenderer('beatWaveformA', 'A', 1);
   window.beatWaveformRenderers.B = new ZoomedWaveformRenderer('beatWaveformB', 'B', 1);
     
-  // Start waveform animations
   window.waveformRenderers.A.startAnimation();
   window.waveformRenderers.B.startAnimation();
   
-  // Start beat waveform animations
   window.beatWaveformRenderers.A.startAnimation();
   window.beatWaveformRenderers.B.startAnimation();
   
@@ -27,7 +21,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (deckA) deckA.setVolume(100);
   if (deckB) deckB.setVolume(0);
   
-  // Initialize sound pad
   window.soundPad = new SoundPad(window.audioEngine);
     
   console.log('✅ DJ23 - Ready to mix!');
@@ -39,11 +32,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }, { once: true });
 
-  // Initialize keyboard shortcuts controller
   window.keyboardShortcuts = new KeyboardShortcuts();
 });
 
-// Error handling
 window.addEventListener('error', (e) => {
   console.error('Application error:', e.error);
 });

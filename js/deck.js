@@ -44,15 +44,12 @@ class Deck {
   }
 
   setupAudioNodes() {
-    // Main gain node
     this.gainNode = this.audioContext.createGain();
     this.gainNode.gain.value = this.volume;
 
-    // Global gain node for EQ
     this.globalGainNode = this.audioContext.createGain();
-    this.globalGainNode.gain.value = 1.0; // 0dB by default
+    this.globalGainNode.gain.value = 1.0;
 
-    // EQ nodes
     this.eqNodes.high = this.audioContext.createBiquadFilter();
     this.eqNodes.high.type = 'highshelf';
     this.eqNodes.high.frequency.value = 8000;
@@ -66,7 +63,6 @@ class Deck {
     this.eqNodes.low.type = 'lowshelf';
     this.eqNodes.low.frequency.value = 200;
 
-    // Effect nodes
     this.effectNodes.filter = this.audioContext.createBiquadFilter();
     this.effectNodes.filter.type = 'lowpass';
     this.effectNodes.filter.frequency.value = 20000;
@@ -75,9 +71,7 @@ class Deck {
     this.effectNodes.reverbGain = this.audioContext.createGain();
     this.effectNodes.reverbGain.gain.value = 0;
 
-    // Initialize effects engine
     this.effectsEngine = new EffectsEngine(this.audioContext);
-    // Merge effects engine nodes with our effect nodes
     Object.assign(this.effectNodes, this.effectsEngine.getEffectNodes());
   }
 
@@ -85,7 +79,6 @@ class Deck {
     try {
       const arrayBuffer = await file.arrayBuffer();
       this.audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-      // Calculate and store the base BPM
       this.baseBPM = this.calculateBPM();
       return true;
     } catch (error) {
