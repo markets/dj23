@@ -571,9 +571,8 @@ class Deck {
       const audioData = this.audioBuffer.getChannelData(0);
       const sampleRate = this.audioBuffer.sampleRate;
       
-      // Analyze longer segment for better accuracy (up to 60 seconds or full track if shorter)
-      const analysisLength = Math.min(60 * sampleRate, audioData.length);
-      const analysisData = audioData.slice(0, analysisLength);
+      // Analyze the full track for maximum accuracy
+      const analysisData = audioData;
       
       // Detect BPM using onset detection and autocorrelation
       const bpm = this.detectBPMFromAudio(analysisData, sampleRate);
