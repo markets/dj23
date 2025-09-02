@@ -577,7 +577,7 @@ body {
   color: var(--text-secondary);
   font-size: 0.7rem;
   font-weight: 500;
-  min-height: var(--spacing-xl);
+  min-height: 20px;
 }
 
 .sound-edit-btn:hover {
@@ -967,7 +967,7 @@ body {
 .pitch-slider-vertical {
   writing-mode: vertical-lr;
   appearance: slider-vertical;
-  width: var(--spacing-2xl);
+  width: 25px;
   height: 150px !important;
   background: linear-gradient(180deg, var(--color-accent-blue) 0%, var(--color-accent-purple) 100%);
   border-radius: var(--radius-xl);
@@ -1011,8 +1011,8 @@ body {
 }
 
 .pitch-bend-buttons-vertical .pitch-bend-btn {
-  width: var(--spacing-3xl);
-  height: var(--spacing-xl);
+  width: 30px;
+  height: 20px;
   font-size: 12px;
 }
 
@@ -1355,8 +1355,8 @@ input[type="range"]::-moz-range-thumb {
   font-weight: 500;
   transition: var(--transition-normal);
   font-size: 0.9rem;
-  width: var(--spacing-3xl);
-  height: var(--spacing-3xl);
+  width: 30px;
+  height: 30px;
   font-weight: bold;
 }
 
