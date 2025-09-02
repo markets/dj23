@@ -631,25 +631,35 @@ body {
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--color-primary);
+  margin-right: var(--spacing-sm);
 }
 
-.bpm-indicator {
-  display: inline-block;
-  margin-left: var(--spacing-xs);
-  color: var(--color-secondary);
-  font-size: 0.8rem;
-  opacity: 0;
-  transition: opacity 0.3s ease;
+.tap-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-secondary);
+  color: var(--text-secondary);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition-fast);
 }
 
-.bpm-indicator.active {
-  opacity: 1;
-  animation: pulse 1.5s ease-in-out infinite;
+.tap-btn:hover {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border-color: var(--color-primary);
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 1; }
+.tap-btn:active {
+  transform: scale(0.95);
+}
+
+.tap-btn.active {
+  background: var(--color-primary);
+  color: var(--bg-primary);
+  border-color: var(--color-primary);
 }
 
 .sync-btn {

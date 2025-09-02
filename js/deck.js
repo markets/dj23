@@ -144,17 +144,14 @@ class Deck {
     return currentTime; // If no next beat found, return current time
   }
 
-  // Continuously refine BPM during playback
+  // Continuously refine BPM during playback (only for first 10 seconds)
   refineBPMDuringPlayback() {
     if (!this.isPlaying || !this.audioBuffer) return;
     
     const currentTime = this.getCurrentTime();
     
-    // Show indicator that BPM analysis is active
-    const indicator = document.getElementById(`bpmIndicator${this.deckId}`);
-    if (indicator) {
-      indicator.classList.add('active');
-    }
+    // Only refine BPM for the first 10 seconds of the track
+    if (currentTime > 10) return;
     
     // Only analyze every few seconds to avoid performance issues
     if (currentTime - this.lastBpmAnalysisTime >= this.bpmAnalysisInterval) {
@@ -198,13 +195,6 @@ class Deck {
             this.generateBeatMap(); // Regenerate beat map with new BPM
           }
         }
-        
-        // Hide indicator after analysis is complete
-        setTimeout(() => {
-          if (indicator) {
-            indicator.classList.remove('active');
-          }
-        }, 1000);
       }
     }
   }
@@ -748,6 +738,11 @@ class DeckController {
     this.deckId = deckId;
     this.isScratching = false;
     this.vinylElement = null;
+    
+    // TAP functionality
+    this.tapTimes = [];
+    this.tapTimeout = null;
+    
     this.setupEventListeners();
     
     // Initialize effects controller for this deck
@@ -898,6 +893,11 @@ class DeckController {
       if (deck) {
         deck.setCuePoint(2);
       }
+    });
+
+    // TAP button for manual BPM setting
+    document.getElementById(`tap${this.deckId}`).addEventListener('click', () => {
+      this.handleTap();
     });
 
     // Loop controls
@@ -1113,20 +1113,6 @@ class DeckController {
           const artist = tags.artist || '';
           const title = tags.title || '';
           const album = tags.album || '';
-          
-          // Check for BPM in metadata and update if found
-          if (tags.BPM || tags.bpm) {
-            const metadataBPM = parseInt(tags.BPM || tags.bpm);
-            if (metadataBPM > 0 && metadataBPM < 300) {
-              const deck = window.audioEngine.getDeck(this.deckId);
-              if (deck) {
-                deck.baseBPM = metadataBPM;
-                deck.generateBeatMap();
-                console.log(`Using BPM from metadata: ${metadataBPM} for deck ${this.deckId}`);
-                this.updateBPMDisplay();
-              }
-            }
-          }
           
           // Format display title
           if (artist && title) {
@@ -1391,5 +1377,54 @@ class DeckController {
     const adjustedBPM = Math.round(baseBPM * deck.playbackRate);
     
     document.getElementById(`bpm${this.deckId}`).textContent = adjustedBPM;
+  }
+
+  handleTap() {
+    const now = Date.now();
+    const deck = window.audioEngine.getDeck(this.deckId);
+    if (!deck) return;
+
+    // Add current time to tap history
+    this.tapTimes.push(now);
+    
+    // Keep only the last 8 taps and remove taps older than 3 seconds
+    this.tapTimes = this.tapTimes.filter(time => now - time <= 3000).slice(-8);
+    
+    // Provide visual feedback
+    const tapButton = document.getElementById(`tap${this.deckId}`);
+    tapButton.classList.add('active');
+    
+    // Clear previous timeout
+    if (this.tapTimeout) {
+      clearTimeout(this.tapTimeout);
+    }
+    
+    // Remove active class after 150ms
+    this.tapTimeout = setTimeout(() => {
+      tapButton.classList.remove('active');
+    }, 150);
+    
+    // Need at least 2 taps to calculate BPM
+    if (this.tapTimes.length < 2) return;
+    
+    // Calculate intervals between taps
+    const intervals = [];
+    for (let i = 1; i < this.tapTimes.length; i++) {
+      intervals.push(this.tapTimes[i] - this.tapTimes[i - 1]);
+    }
+    
+    // Calculate average interval in milliseconds
+    const avgInterval = intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
+    
+    // Convert to BPM (60000 ms = 1 minute)
+    const bpm = Math.round(60000 / avgInterval);
+    
+    // Validate BPM range
+    if (bpm >= 60 && bpm <= 200) {
+      deck.baseBPM = bpm;
+      deck.generateBeatMap();
+      this.updateBPMDisplay();
+      console.log(`Manual BPM set via TAP for deck ${this.deckId}: ${bpm} BPM`);
+    }
   }
 }

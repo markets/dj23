@@ -83,26 +83,7 @@ class MixerController {
   }
 
   showSyncFeedback(sourceDeck, targetDeck, sourceBPM, pitchAdjustment) {
-    // Briefly highlight the sync button to show action was successful
-    const syncButton = document.getElementById(`sync${sourceDeck}${targetDeck}`);
-    if (syncButton) {
-      syncButton.style.background = 'linear-gradient(135deg, #2ed573, #1e7e34)';
-      syncButton.textContent = '✓ SYNCED';
-      
-      setTimeout(() => {
-        syncButton.style.background = '';
-        syncButton.textContent = `SYNC ${sourceDeck}→${targetDeck}`;
-      }, 1500);
-    }
-    
-    // Update BPM displays to reflect the sync
-    const targetBpmElement = document.getElementById(`bpm${targetDeck}`);
-    if (targetBpmElement) {
-      targetBpmElement.style.color = '#2ed573';
-      setTimeout(() => {
-        targetBpmElement.style.color = '';
-      }, 2000);
-    }
+    // No visual feedback - per user request
   }
 
   syncBeatTiming(sourceDeck, targetDeck) {
