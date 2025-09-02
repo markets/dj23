@@ -126,7 +126,7 @@ body {
 
 .help-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+  box-shadow: var(--shadow-lg);
 }
 
 .help-button:active {
@@ -222,7 +222,7 @@ body {
 
 .load-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+  box-shadow: var(--shadow-lg);
 }
 
 /* ============================================================================
@@ -287,13 +287,13 @@ body {
 .waveform-container {
   position: relative;
   height: 60px;
-  background: #111;
+  background: var(--bg-primary);
   border-radius: var(--radius-lg);
   margin-bottom: var(--spacing-xl);
   overflow: hidden;
   cursor: pointer;
   border: 2px solid transparent;
-  transition: border-color 0.2s ease;
+  transition: var(--transition-normal);
 }
 
 .waveform-container:hover {
@@ -331,7 +331,7 @@ body {
   background: var(--gradient-surface);
   border: 1px solid var(--border-secondary);
   color: white;
-  padding: 12px 16px;
+  padding: var(--spacing-md) var(--spacing-lg);
   border-radius: var(--radius-lg);
   cursor: pointer;
   font-weight: 600;
@@ -353,7 +353,7 @@ body {
 }
 
 .cue-btn {
-  background: linear-gradient(45deg, #ff9a56, var(--color-secondary)) !important;
+  background: linear-gradient(45deg, var(--color-accent-blue), var(--color-secondary)) !important;
 }
 
 /* ============================================================================
@@ -425,7 +425,7 @@ body {
   background: var(--gradient-surface);
   border: 1px solid var(--border-secondary);
   color: white;
-  padding: 12px 16px;
+  padding: var(--spacing-md) var(--spacing-lg);
   border-radius: var(--radius-lg);
   cursor: pointer;
   font-weight: 600;
@@ -551,7 +551,7 @@ body {
 
 .sound-pad-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+  box-shadow: var(--shadow-lg);
 }
 
 .sound-pad-btn:active {
@@ -571,13 +571,13 @@ body {
   background: var(--bg-surface);
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-sm);
-  padding: 2px 6px;
+  padding: var(--spacing-xs);
   cursor: pointer;
   transition: var(--transition-normal);
   color: var(--text-secondary);
   font-size: 0.7rem;
   font-weight: 500;
-  min-height: 20px;
+  min-height: var(--spacing-xl);
 }
 
 .sound-edit-btn:hover {
@@ -648,7 +648,7 @@ body {
   background: var(--gradient-accent);
   border: none;
   color: white;
-  padding: var(--spacing-sm) 16px;
+  padding: var(--spacing-sm) var(--spacing-lg);
   border-radius: var(--spacing-sm);
   cursor: pointer;
   font-weight: 500;
@@ -659,7 +659,7 @@ body {
 
 .sync-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 3px 10px rgba(102, 126, 234, 0.4);
+  box-shadow: var(--shadow-sm);
 }
 
 /* ============================================================================
@@ -678,7 +678,7 @@ body {
 
 .vu-bars {
   display: flex;
-  gap: 2px;
+  gap: var(--spacing-xs);
   height: 60px;
   align-items: flex-end;
 }
@@ -708,7 +708,7 @@ body {
 .vu-bars-vertical {
   display: flex;
   flex-direction: column-reverse;
-  gap: 2px;
+  gap: var(--spacing-xs);
   width: 20px;
   height: 150px;
   align-items: center;
@@ -753,7 +753,7 @@ body {
   margin: var(--spacing-xl) 0;
   padding: var(--spacing-lg);
   background: var(--bg-overlay);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   backdrop-filter: blur(10px);
 }
 
@@ -781,7 +781,7 @@ body {
   border-radius: var(--radius-lg);
   outline: none;
   margin-bottom: var(--spacing-md);
-  border: 1px solid #ff8888;
+  border: 1px solid var(--color-secondary);
   transform: rotate(180deg);
 }
 
@@ -789,7 +789,7 @@ body {
   appearance: none;
   width: 24px;
   height: 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: var(--text-primary);
   cursor: pointer;
   box-shadow: var(--shadow-sm);
@@ -798,7 +798,7 @@ body {
 .volume-slider-vertical::-moz-range-thumb {
   width: 24px;
   height: 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: var(--text-primary);
   cursor: pointer;
   border: none;
@@ -870,7 +870,7 @@ body {
   transform: translate(-50%, -50%);
   width: 14px;
   height: 14px;
-  background: #000;
+  background: var(--bg-primary);
   border-radius: var(--radius-full);
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8);
 }
@@ -949,7 +949,7 @@ body {
   font-weight: 500;
   transition: var(--transition-normal);
   font-size: 0.8rem;
-  background: linear-gradient(45deg, #00b894, #00a085);
+  background: linear-gradient(45deg, var(--color-primary), var(--color-accent-blue));
   padding: var(--spacing-xs) var(--spacing-sm);
   width: 50px;
 }
@@ -967,13 +967,13 @@ body {
 .pitch-slider-vertical {
   writing-mode: vertical-lr;
   appearance: slider-vertical;
-  width: 25px;
+  width: var(--spacing-2xl);
   height: 150px !important;
   background: linear-gradient(180deg, var(--color-accent-blue) 0%, var(--color-accent-purple) 100%);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   outline: none;
   margin: var(--spacing-sm) 0;
-  border: 1px solid #8899ff;
+  border: 1px solid var(--border-light);
 }
 
 .pitch-slider-vertical::-webkit-slider-thumb {
@@ -1011,8 +1011,8 @@ body {
 }
 
 .pitch-bend-buttons-vertical .pitch-bend-btn {
-  width: 30px;
-  height: 20px;
+  width: var(--spacing-3xl);
+  height: var(--spacing-xl);
   font-size: 12px;
 }
 
@@ -1194,12 +1194,12 @@ input[type="range"]::-moz-range-thumb {
   position: relative;
   flex: 1;
   height: 60px;
-  background: #0a0a0a;
+  background: var(--bg-primary);
   border-radius: var(--radius-md);
   overflow: hidden;
   border: 1px solid var(--border-secondary);
   cursor: pointer;
-  transition: border-color 0.2s ease;
+  transition: var(--transition-normal);
 }
 
 .beat-waveform-container:hover {
@@ -1267,7 +1267,7 @@ input[type="range"]::-moz-range-thumb {
   position: relative;
   flex: 1;
   height: 100px;
-  background: #0a0a0a;
+  background: var(--bg-primary);
   border-radius: var(--radius-lg);
   overflow: hidden;
   border: 2px solid var(--border-primary);
@@ -1289,7 +1289,7 @@ input[type="range"]::-moz-range-thumb {
   font-weight: 600;
   z-index: 2;
   background: rgba(0, 0, 0, 0.8);
-  padding: 2px 6px;
+  padding: var(--spacing-xs);
   border-radius: var(--radius-sm);
 }
 
@@ -1303,7 +1303,7 @@ input[type="range"]::-moz-range-thumb {
   position: relative;
   width: 100%;
   height: 100px;
-  background: #0a0a0a;
+  background: var(--bg-primary);
   border-radius: var(--radius-lg);
   overflow: hidden;
   border: 2px solid var(--border-primary);
@@ -1355,13 +1355,13 @@ input[type="range"]::-moz-range-thumb {
   font-weight: 500;
   transition: var(--transition-normal);
   font-size: 0.9rem;
-  width: 30px;
-  height: 30px;
+  width: var(--spacing-3xl);
+  height: var(--spacing-3xl);
   font-weight: bold;
 }
 
 .pitch-bend-btn:hover {
-  box-shadow: 0 3px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: var(--shadow-sm);
 }
 
 .cue-points {
