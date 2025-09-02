@@ -407,7 +407,6 @@ class ZoomedWaveformRenderer {
   updateZoomWindow() {
     const deck = window.audioEngine.getDeck(this.deckId);
     if (!deck || !deck.audioBuffer) {
-      // When no track is loaded, center the window
       this.offsetSeconds = this.zoomLevel / 2;
       return;
     }
@@ -415,12 +414,10 @@ class ZoomedWaveformRenderer {
     const currentTime = deck.getCurrentTime();
     const duration = deck.getDuration();
     
-    // Center the current time under the red line, but allow negative offset
-    // so the waveform can start rendering in the middle of the container
+    // Center current time under the red line
     this.offsetSeconds = currentTime - this.zoomLevel / 2;
     
-    // Don't clamp to 0 immediately - allow negative offset for initial centering
-    // Only ensure we don't go beyond track duration on the right side
+    // Clamp to track duration bounds
     if (this.offsetSeconds + this.zoomLevel > duration) {
       this.offsetSeconds = Math.max(0, duration - this.zoomLevel);
     }
@@ -444,14 +441,11 @@ class ZoomedWaveformRenderer {
         
     this.ctx.clearRect(0, 0, width, height);
         
-    // Calculate which part of the waveform to show, handling negative offset
     const totalSamples = this.waveformData.length;
     
-    // Calculate the effective window based on offset (which can be negative)
     const windowStart = this.offsetSeconds;
     const windowEnd = this.offsetSeconds + this.zoomLevel;
     
-    // Map the window to sample indices
     const startRatio = Math.max(0, windowStart) / duration;
     const endRatio = Math.min(1, windowEnd / duration);
     
@@ -461,12 +455,10 @@ class ZoomedWaveformRenderer {
     
     if (visibleSamples <= 0) return;
 
-    // Calculate how many pixels each second represents
     const pixelsPerSecond = width / this.zoomLevel;
     const barWidth = pixelsPerSecond / (totalSamples / duration);
     const centerY = height / 2;
 
-    // Calculate the offset for drawing (where to start drawing on the canvas)
     const drawOffsetPixels = windowStart < 0 ? -windowStart * pixelsPerSecond : 0;
 
     // Draw waveform with higher detail
@@ -478,11 +470,8 @@ class ZoomedWaveformRenderer {
       const barHeight = this.waveformData[sampleIndex] * centerY * 0.9;
       const x = drawOffsetPixels + i * barWidth;
       
-      // Only draw if within canvas bounds
       if (x >= 0 && x < width) {
-        // Draw positive part
         this.ctx.fillRect(x, centerY - barHeight, barWidth - 0.5, barHeight);
-        // Draw negative part
         this.ctx.fillRect(x, centerY, barWidth - 0.5, barHeight);
       }
     }
@@ -493,7 +482,6 @@ class ZoomedWaveformRenderer {
       if (currentTime >= Math.max(0, this.offsetSeconds) && 
           currentTime <= this.offsetSeconds + this.zoomLevel) {
         
-        // Calculate the position of the current time within the visible window
         const pixelsPerSecond = width / this.zoomLevel;
         const currentTimePosition = (currentTime - this.offsetSeconds) * pixelsPerSecond;
         
@@ -515,7 +503,7 @@ class ZoomedWaveformRenderer {
     // Draw beat markers (every second)
     this.drawBeatMarkers(width, height, duration);
     
-    // Draw red playhead line always in the center
+    // Draw red playhead line in center
     const playheadX = width / 2;
     
     this.ctx.strokeStyle = '#ff4757';
@@ -525,7 +513,6 @@ class ZoomedWaveformRenderer {
     this.ctx.lineTo(playheadX, height);
     this.ctx.stroke();
     
-    // Update playhead position
     this.updatePlayhead();
   }
 
@@ -563,7 +550,7 @@ class ZoomedWaveformRenderer {
     this.ctx.lineTo(width, height / 2);
     this.ctx.stroke();
         
-    // Draw red playhead line in the center when no track is loaded
+    // Draw red playhead line in center
     this.ctx.strokeStyle = '#ff4757';
     this.ctx.lineWidth = 2;
     this.ctx.beginPath();
@@ -583,11 +570,9 @@ class ZoomedWaveformRenderer {
     const playhead = document.getElementById(`beatPlayhead${this.deckId}`);
         
     if (deck && deck.getDuration() > 0) {
-      // Always keep the red line in the center - the waveform moves underneath
       playhead.style.left = '50%';
       playhead.style.opacity = deck.isPlaying ? '1' : '0.7';
     } else {
-      // When no track is loaded, keep playhead centered
       playhead.style.left = '50%';
       playhead.style.opacity = '0.3';
     }
