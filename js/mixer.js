@@ -61,13 +61,64 @@ class MixerController {
       const targetBPM = target.getBPM();
             
       if (sourceBPM > 0 && targetBPM > 0) {
+        // Match the BPM by adjusting pitch
         const pitchAdjustment = ((sourceBPM / targetBPM) - 1) * 100;
         target.setPitch(pitchAdjustment);
                 
+        // Update UI to reflect pitch change
         const pitchSlider = document.getElementById(`pitch${targetDeck}`);
         const pitchDisplay = document.getElementById(`pitchDisplay${targetDeck}`);
         pitchSlider.value = pitchAdjustment;
         pitchDisplay.textContent = `${pitchAdjustment.toFixed(1)}%`;
+
+        // Match the beat timing
+        this.syncBeatTiming(source, target);
+        
+        console.log(`Synced deck ${targetDeck} to deck ${sourceDeck}: BPM ${targetBPM} -> ${sourceBPM}, pitch: ${pitchAdjustment.toFixed(1)}%`);
+      }
+    }
+  }
+
+  syncBeatTiming(sourceDeck, targetDeck) {
+    // Get current playback positions
+    const sourceTime = sourceDeck.getCurrentTime();
+    const targetTime = targetDeck.getCurrentTime();
+    
+    // Find the nearest beats for both decks
+    const sourceNearestBeat = sourceDeck.findNearestBeat(sourceTime);
+    const targetNearestBeat = targetDeck.findNearestBeat(targetTime);
+    
+    // Calculate how far each deck is from its nearest beat
+    const sourceToNearestBeat = sourceTime - sourceNearestBeat;
+    const targetToNearestBeat = targetTime - targetNearestBeat;
+    
+    // Calculate beat phase difference
+    const beatPhaseDifference = sourceToNearestBeat - targetToNearestBeat;
+    
+    // If the phase difference is significant, adjust target deck position
+    if (Math.abs(beatPhaseDifference) > 0.05) { // 50ms tolerance
+      // Calculate the adjustment needed
+      let adjustment = beatPhaseDifference;
+      
+      // Determine if we should sync to current beat or next beat
+      const sourceBeatInterval = 60 / sourceDeck.getBPM();
+      
+      // If adjustment is more than half a beat, sync to the next beat instead
+      if (Math.abs(adjustment) > sourceBeatInterval / 2) {
+        if (adjustment > 0) {
+          adjustment -= sourceBeatInterval;
+        } else {
+          adjustment += sourceBeatInterval;
+        }
+      }
+      
+      // Apply the timing adjustment
+      const newTargetTime = targetTime + adjustment;
+      
+      // Ensure we don't seek to negative time or beyond track duration
+      if (newTargetTime >= 0 && newTargetTime < targetDeck.getDuration()) {
+        targetDeck.seek(newTargetTime);
+        console.log(`Beat sync: adjusted deck ${targetDeck.deckId} by ${adjustment.toFixed(3)}s for beat alignment`);
       }
     }
   }

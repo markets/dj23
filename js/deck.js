@@ -19,6 +19,16 @@ class Deck {
 
     // Store original BPM for pitch-adjusted calculations
     this.baseBPM = 120; // Default BPM, will be updated when track loads
+    
+    // Beat tracking properties
+    this.beatPositions = []; // Array of beat positions in seconds
+    this.lastBeatTime = 0;   // Time of the last detected beat
+    this.beatInterval = 0.5; // Current beat interval in seconds (will be calculated)
+    
+    // Continuous BPM analysis
+    this.bpmAnalysisHistory = []; // Store BPM readings over time
+    this.lastBpmAnalysisTime = 0;
+    this.bpmAnalysisInterval = 5; // Analyze BPM every 5 seconds during playback
 
     // Scratching properties
     this.isScratching = false;
@@ -80,10 +90,112 @@ class Deck {
       const arrayBuffer = await file.arrayBuffer();
       this.audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
       this.baseBPM = this.calculateBPM();
+      this.generateBeatMap();
       return true;
     } catch (error) {
       console.error('Error loading audio file:', error);
       return false;
+    }
+  }
+
+  generateBeatMap() {
+    if (!this.audioBuffer || this.baseBPM <= 0) return;
+    
+    // Calculate beat interval from BPM
+    this.beatInterval = 60 / this.baseBPM;
+    
+    // Generate beat positions throughout the track
+    this.beatPositions = [];
+    const duration = this.audioBuffer.duration;
+    
+    // Start from the first beat (we assume it starts on beat 1)
+    for (let time = 0; time < duration; time += this.beatInterval) {
+      this.beatPositions.push(time);
+    }
+    
+    console.log(`Generated ${this.beatPositions.length} beats for ${duration.toFixed(2)}s track at ${this.baseBPM} BPM`);
+  }
+
+  // Find the nearest beat position to the current time
+  findNearestBeat(currentTime) {
+    if (this.beatPositions.length === 0) return currentTime;
+    
+    let nearestBeat = this.beatPositions[0];
+    let minDistance = Math.abs(currentTime - nearestBeat);
+    
+    for (const beatTime of this.beatPositions) {
+      const distance = Math.abs(currentTime - beatTime);
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearestBeat = beatTime;
+      }
+    }
+    
+    return nearestBeat;
+  }
+
+  // Get the next beat after current time
+  getNextBeat(currentTime) {
+    for (const beatTime of this.beatPositions) {
+      if (beatTime > currentTime) {
+        return beatTime;
+      }
+    }
+    return currentTime; // If no next beat found, return current time
+  }
+
+  // Continuously refine BPM during playback (only for first 10 seconds)
+  refineBPMDuringPlayback() {
+    if (!this.isPlaying || !this.audioBuffer) return;
+    
+    const currentTime = this.getCurrentTime();
+    
+    // Only refine BPM for the first 10 seconds of the track
+    if (currentTime > 10) return;
+    
+    // Only analyze every few seconds to avoid performance issues
+    if (currentTime - this.lastBpmAnalysisTime >= this.bpmAnalysisInterval) {
+      this.lastBpmAnalysisTime = currentTime;
+      
+      // Analyze a small window around current position
+      const analysisWindow = 10; // 10 seconds
+      const startTime = Math.max(0, currentTime - analysisWindow / 2);
+      const endTime = Math.min(this.audioBuffer.duration, currentTime + analysisWindow / 2);
+      
+      const sampleRate = this.audioBuffer.sampleRate;
+      const startSample = Math.floor(startTime * sampleRate);
+      const endSample = Math.floor(endTime * sampleRate);
+      
+      const audioData = this.audioBuffer.getChannelData(0);
+      const windowData = audioData.slice(startSample, endSample);
+      
+      if (windowData.length > sampleRate) { // Need at least 1 second of data
+        const refinedBPM = this.detectBPMFromAudio(windowData, sampleRate);
+        
+        // Add to history
+        this.bpmAnalysisHistory.push({
+          time: currentTime,
+          bpm: refinedBPM
+        });
+        
+        // Keep only recent history (last 1 minute)
+        this.bpmAnalysisHistory = this.bpmAnalysisHistory.filter(
+          entry => currentTime - entry.time <= 60
+        );
+        
+        // Update BPM if we have enough data and there's a consistent change
+        if (this.bpmAnalysisHistory.length >= 3) {
+          const recentBPMs = this.bpmAnalysisHistory.slice(-3).map(entry => entry.bpm);
+          const avgRecentBPM = recentBPMs.reduce((sum, bpm) => sum + bpm, 0) / recentBPMs.length;
+          
+          // If the recent average differs significantly from current baseBPM, update it
+          if (Math.abs(avgRecentBPM - this.baseBPM) > 2) {
+            console.log(`Refining BPM for deck ${this.deckId}: ${this.baseBPM} -> ${avgRecentBPM.toFixed(1)}`);
+            this.baseBPM = avgRecentBPM;
+            this.generateBeatMap(); // Regenerate beat map with new BPM
+          }
+        }
+      }
     }
   }
 
@@ -447,9 +559,163 @@ class Deck {
   }
 
   calculateBPM() {
-    // Simplified BPM detection - in a real implementation, you'd use more sophisticated analysis
     if (!this.audioBuffer) return 120;
-    return Math.floor(120 + Math.random() * 60); // Placeholder
+    
+    try {
+      // Get audio data from the buffer
+      const audioData = this.audioBuffer.getChannelData(0);
+      const sampleRate = this.audioBuffer.sampleRate;
+      
+      // Analyze only first 30 seconds for performance (or full track if shorter)
+      const analysisLength = Math.min(30 * sampleRate, audioData.length);
+      const analysisData = audioData.slice(0, analysisLength);
+      
+      // Detect BPM using onset detection and autocorrelation
+      const bpm = this.detectBPMFromAudio(analysisData, sampleRate);
+      
+      console.log(`Detected BPM: ${bpm} for deck ${this.deckId}`);
+      return bpm;
+    } catch (error) {
+      console.error('BPM detection failed:', error);
+      return 120; // Default fallback
+    }
+  }
+
+  detectBPMFromAudio(audioData, sampleRate) {
+    // Calculate energy levels to detect beats
+    const hopSize = 512;
+    const energyValues = [];
+    
+    // Calculate RMS energy for each frame
+    for (let i = 0; i < audioData.length - hopSize; i += hopSize) {
+      let energy = 0;
+      for (let j = 0; j < hopSize; j++) {
+        energy += audioData[i + j] * audioData[i + j];
+      }
+      energyValues.push(Math.sqrt(energy / hopSize));
+    }
+    
+    // Detect onset peaks (significant energy increases)
+    const onsets = this.detectOnsets(energyValues, hopSize, sampleRate);
+    
+    // Calculate tempo from onset intervals
+    if (onsets.length < 4) {
+      return 120; // Not enough data, return default
+    }
+    
+    // Calculate intervals between consecutive onsets
+    const intervals = [];
+    for (let i = 1; i < onsets.length; i++) {
+      intervals.push(onsets[i] - onsets[i - 1]);
+    }
+    
+    // Remove outliers (intervals that are too short or too long)
+    const filteredIntervals = intervals.filter(interval => 
+      interval >= 0.2 && interval <= 2.0 // Between 30 BPM and 300 BPM
+    );
+    
+    if (filteredIntervals.length === 0) {
+      return 120;
+    }
+    
+    // Find the most common interval (tempo)
+    const bpm = this.findMostLikelyTempo(filteredIntervals);
+    
+    // Validate BPM range (typical electronic music range)
+    if (bpm < 60) return Math.round(bpm * 2);    // Double-time
+    if (bpm > 200) return Math.round(bpm / 2);   // Half-time
+    if (bpm < 80) return Math.round(bpm * 1.5);  // Adjust if too slow
+    
+    return Math.round(bpm);
+  }
+
+  detectOnsets(energyValues, hopSize, sampleRate) {
+    const onsets = [];
+    const threshold = 1.2; // Lower threshold for better sensitivity
+    
+    // Apply moving average for smoothing
+    const smoothed = this.applyMovingAverage(energyValues, 2); // Smaller window
+    
+    // Calculate spectral flux (energy differences between frames)
+    const spectralFlux = [];
+    for (let i = 1; i < smoothed.length; i++) {
+      const diff = Math.max(0, smoothed[i] - smoothed[i - 1]);
+      spectralFlux.push(diff);
+    }
+    
+    // Find peaks in spectral flux
+    for (let i = 1; i < spectralFlux.length - 1; i++) {
+      const current = spectralFlux[i];
+      const previous = spectralFlux[i - 1];
+      const next = spectralFlux[i + 1];
+      
+      // Detect peaks that are significantly higher than neighbors
+      if (current > previous * threshold && current > next && current > 0.01) {
+        const timeInSeconds = ((i + 1) * hopSize) / sampleRate;
+        onsets.push(timeInSeconds);
+      }
+    }
+    
+    return onsets;
+  }
+
+  applyMovingAverage(data, windowSize) {
+    const result = [];
+    for (let i = 0; i < data.length; i++) {
+      let sum = 0;
+      let count = 0;
+      for (let j = Math.max(0, i - windowSize); j <= Math.min(data.length - 1, i + windowSize); j++) {
+        sum += data[j];
+        count++;
+      }
+      result.push(sum / count);
+    }
+    return result;
+  }
+
+  findMostLikelyTempo(intervals) {
+    if (intervals.length === 0) return 120;
+    
+    // Convert intervals to BPM
+    const bpmValues = intervals.map(interval => 60 / interval);
+    
+    // Create histogram of BPM values
+    const histogram = {};
+    const tolerance = 3; // Smaller tolerance for more precision
+    
+    bpmValues.forEach(bpm => {
+      // Round to nearest tolerance value for grouping
+      const roundedBpm = Math.round(bpm / tolerance) * tolerance;
+      if (!histogram[roundedBpm]) {
+        histogram[roundedBpm] = [];
+      }
+      histogram[roundedBpm].push(bpm);
+    });
+    
+    // Find the group with most occurrences
+    let maxCount = 0;
+    let mostLikelyBPM = 120;
+    
+    Object.keys(histogram).forEach(key => {
+      const group = histogram[key];
+      if (group.length > maxCount) {
+        maxCount = group.length;
+        // Average the BPM values in the winning group
+        mostLikelyBPM = group.reduce((sum, bpm) => sum + bpm, 0) / group.length;
+      }
+    });
+    
+    // Also check for double-time and half-time patterns
+    const candidates = [mostLikelyBPM, mostLikelyBPM * 2, mostLikelyBPM / 2];
+    
+    // Return the candidate that makes most sense musically
+    for (const candidate of candidates) {
+      if (candidate >= 80 && candidate <= 180) {
+        return candidate;
+      }
+    }
+    
+    return mostLikelyBPM;
   }
 
   getAnalyserData() {
@@ -472,6 +738,11 @@ class DeckController {
     this.deckId = deckId;
     this.isScratching = false;
     this.vinylElement = null;
+    
+    // TAP functionality
+    this.tapTimes = [];
+    this.tapTimeout = null;
+    
     this.setupEventListeners();
     
     // Initialize effects controller for this deck
@@ -622,6 +893,11 @@ class DeckController {
       if (deck) {
         deck.setCuePoint(2);
       }
+    });
+
+    // TAP button for manual BPM setting
+    document.getElementById(`tap${this.deckId}`).addEventListener('click', () => {
+      this.handleTap();
     });
 
     // Loop controls
@@ -1039,6 +1315,12 @@ class DeckController {
     
     trackTimeElement.textContent = `${this.formatTime(currentTime)} / ${this.formatTime(duration)}`;
     
+    // Continuously refine BPM during playback
+    if (deck.isPlaying) {
+      deck.refineBPMDuringPlayback();
+      this.updateBPMDisplay(); // Update display in case BPM was refined
+    }
+    
     // Auto-stop when track reaches end (only if playing and not looping)
     if (deck.isPlaying && !deck.isLooping && duration > 0 && currentTime >= duration) {
       console.log(`Deck ${this.deckId}: Auto-stopping at track end (${currentTime.toFixed(2)}s / ${duration.toFixed(2)}s)`);
@@ -1095,5 +1377,54 @@ class DeckController {
     const adjustedBPM = Math.round(baseBPM * deck.playbackRate);
     
     document.getElementById(`bpm${this.deckId}`).textContent = adjustedBPM;
+  }
+
+  handleTap() {
+    const now = Date.now();
+    const deck = window.audioEngine.getDeck(this.deckId);
+    if (!deck) return;
+
+    // Add current time to tap history
+    this.tapTimes.push(now);
+    
+    // Keep only the last 8 taps and remove taps older than 3 seconds
+    this.tapTimes = this.tapTimes.filter(time => now - time <= 3000).slice(-8);
+    
+    // Provide visual feedback
+    const tapButton = document.getElementById(`tap${this.deckId}`);
+    tapButton.classList.add('active');
+    
+    // Clear previous timeout
+    if (this.tapTimeout) {
+      clearTimeout(this.tapTimeout);
+    }
+    
+    // Remove active class after 150ms
+    this.tapTimeout = setTimeout(() => {
+      tapButton.classList.remove('active');
+    }, 150);
+    
+    // Need at least 2 taps to calculate BPM
+    if (this.tapTimes.length < 2) return;
+    
+    // Calculate intervals between taps
+    const intervals = [];
+    for (let i = 1; i < this.tapTimes.length; i++) {
+      intervals.push(this.tapTimes[i] - this.tapTimes[i - 1]);
+    }
+    
+    // Calculate average interval in milliseconds
+    const avgInterval = intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
+    
+    // Convert to BPM (60000 ms = 1 minute)
+    const bpm = Math.round(60000 / avgInterval);
+    
+    // Validate BPM range
+    if (bpm >= 60 && bpm <= 200) {
+      deck.baseBPM = bpm;
+      deck.generateBeatMap();
+      this.updateBPMDisplay();
+      console.log(`Manual BPM set via TAP for deck ${this.deckId}: ${bpm} BPM`);
+    }
   }
 }
