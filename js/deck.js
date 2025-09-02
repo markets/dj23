@@ -144,21 +144,21 @@ class Deck {
     return currentTime; // If no next beat found, return current time
   }
 
-  // Continuously refine BPM during playback (only for first 10 seconds)
+  // Continuously refine BPM during playback (extended analysis for better accuracy)
   refineBPMDuringPlayback() {
     if (!this.isPlaying || !this.audioBuffer) return;
     
     const currentTime = this.getCurrentTime();
     
-    // Only refine BPM for the first 10 seconds of the track
-    if (currentTime > 10) return;
+    // Extend refinement analysis to first 30 seconds of the track for better accuracy
+    if (currentTime > 30) return;
     
-    // Only analyze every few seconds to avoid performance issues
-    if (currentTime - this.lastBpmAnalysisTime >= this.bpmAnalysisInterval) {
+    // Analyze every 3 seconds for more frequent updates
+    if (currentTime - this.lastBpmAnalysisTime >= 3) {
       this.lastBpmAnalysisTime = currentTime;
       
-      // Analyze a small window around current position
-      const analysisWindow = 10; // 10 seconds
+      // Analyze a larger window around current position for better accuracy
+      const analysisWindow = 20; // 20 seconds for more data
       const startTime = Math.max(0, currentTime - analysisWindow / 2);
       const endTime = Math.min(this.audioBuffer.duration, currentTime + analysisWindow / 2);
       
@@ -169,7 +169,7 @@ class Deck {
       const audioData = this.audioBuffer.getChannelData(0);
       const windowData = audioData.slice(startSample, endSample);
       
-      if (windowData.length > sampleRate) { // Need at least 1 second of data
+      if (windowData.length > sampleRate * 2) { // Need at least 2 seconds of data
         const refinedBPM = this.detectBPMFromAudio(windowData, sampleRate);
         
         // Add to history
@@ -178,9 +178,9 @@ class Deck {
           bpm: refinedBPM
         });
         
-        // Keep only recent history (last 1 minute)
+        // Keep only recent history (last 2 minutes)
         this.bpmAnalysisHistory = this.bpmAnalysisHistory.filter(
-          entry => currentTime - entry.time <= 60
+          entry => currentTime - entry.time <= 120
         );
         
         // Update BPM if we have enough data and there's a consistent change
@@ -188,8 +188,8 @@ class Deck {
           const recentBPMs = this.bpmAnalysisHistory.slice(-3).map(entry => entry.bpm);
           const avgRecentBPM = recentBPMs.reduce((sum, bpm) => sum + bpm, 0) / recentBPMs.length;
           
-          // If the recent average differs significantly from current baseBPM, update it
-          if (Math.abs(avgRecentBPM - this.baseBPM) > 2) {
+          // More conservative threshold for BPM updates (3 BPM difference)
+          if (Math.abs(avgRecentBPM - this.baseBPM) > 3) {
             console.log(`Refining BPM for deck ${this.deckId}: ${this.baseBPM} -> ${avgRecentBPM.toFixed(1)}`);
             this.baseBPM = avgRecentBPM;
             this.generateBeatMap(); // Regenerate beat map with new BPM
@@ -571,8 +571,8 @@ class Deck {
       const audioData = this.audioBuffer.getChannelData(0);
       const sampleRate = this.audioBuffer.sampleRate;
       
-      // Analyze only first 30 seconds for performance (or full track if shorter)
-      const analysisLength = Math.min(30 * sampleRate, audioData.length);
+      // Analyze longer segment for better accuracy (up to 60 seconds or full track if shorter)
+      const analysisLength = Math.min(60 * sampleRate, audioData.length);
       const analysisData = audioData.slice(0, analysisLength);
       
       // Detect BPM using onset detection and autocorrelation
@@ -600,11 +600,11 @@ class Deck {
       energyValues.push(Math.sqrt(energy / hopSize));
     }
     
-    // Enhanced onset detection with multi-band analysis for better Latin music support
+    // Enhanced onset detection with conservative multi-band analysis
     const onsets = this.detectOnsetsMultiBand(audioData, hopSize, sampleRate);
     
     // Calculate tempo from onset intervals
-    if (onsets.length < 4) {
+    if (onsets.length < 6) { // Require more onsets for reliability
       return 120; // Not enough data, return default
     }
     
@@ -614,32 +614,57 @@ class Deck {
       intervals.push(onsets[i] - onsets[i - 1]);
     }
     
-    // Remove outliers with expanded range for Latin music patterns
+    // Remove outliers with conservative range filtering
     const filteredIntervals = intervals.filter(interval => 
-      interval >= 0.15 && interval <= 2.5 // Between ~24 BPM and 400 BPM for better Latin music support
+      interval >= 0.2 && interval <= 2.0 // Between ~30 BPM and 300 BPM - more conservative range
     );
     
     if (filteredIntervals.length === 0) {
       return 120;
     }
     
-    // Find the most common interval (tempo)
+    // Find the most common interval (tempo) with improved validation
     const bpm = this.findMostLikelyTempo(filteredIntervals);
     
-    // Enhanced BPM validation with better support for urbano latino ranges
-    if (bpm < 50) return Math.round(bpm * 2);     // Very slow - likely half-time detection
-    if (bpm > 250) return Math.round(bpm / 2);    // Very fast - likely double-time detection
+    // Enhanced BPM validation with better double-time/half-time detection
+    let validatedBPM = bpm;
     
-    // The findMostLikelyTempo method now handles genre-specific range validation
-    return Math.round(bpm);
+    // Conservative validation to prevent over-detection
+    if (bpm < 60) {
+      // Very slow - likely half-time or quarter-time detection
+      if (bpm * 2 >= 80 && bpm * 2 <= 180) {
+        validatedBPM = bpm * 2;
+      } else if (bpm * 4 >= 80 && bpm * 4 <= 180) {
+        validatedBPM = bpm * 4;
+      }
+    } else if (bpm > 200) {
+      // Very fast - likely double-time or higher detection
+      if (bpm / 2 >= 80 && bpm / 2 <= 180) {
+        validatedBPM = bpm / 2;
+      } else if (bpm / 4 >= 80 && bpm / 4 <= 180) {
+        validatedBPM = bpm / 4;
+      }
+    }
+    
+    // Additional validation: check for common double-time patterns
+    if (validatedBPM > 160 && validatedBPM / 2 >= 80) {
+      // If we have a fast BPM, consider if half-time makes more musical sense
+      const halfTime = validatedBPM / 2;
+      if (halfTime >= 80 && halfTime <= 140) {
+        validatedBPM = halfTime;
+      }
+    }
+    
+    console.log(`Detected BPM: ${bpm.toFixed(1)} -> Validated: ${validatedBPM.toFixed(1)} for deck ${this.deckId || 'unknown'}`);
+    return Math.round(validatedBPM);
   }
 
   detectOnsets(energyValues, hopSize, sampleRate) {
     const onsets = [];
-    const threshold = 1.2; // Lower threshold for better sensitivity
+    const threshold = 1.5; // Higher threshold for more conservative detection
     
-    // Apply moving average for smoothing
-    const smoothed = this.applyMovingAverage(energyValues, 2); // Smaller window
+    // Apply moving average with larger window for more stability
+    const smoothed = this.applyMovingAverage(energyValues, 3); // Larger window
     
     // Calculate spectral flux (energy differences between frames)
     const spectralFlux = [];
@@ -648,14 +673,25 @@ class Deck {
       spectralFlux.push(diff);
     }
     
-    // Find peaks in spectral flux
-    for (let i = 1; i < spectralFlux.length - 1; i++) {
+    // Calculate mean and standard deviation for adaptive thresholding
+    const meanFlux = spectralFlux.reduce((sum, val) => sum + val, 0) / spectralFlux.length;
+    const stdFlux = Math.sqrt(spectralFlux.reduce((sum, val) => sum + Math.pow(val - meanFlux, 2), 0) / spectralFlux.length);
+    
+    // Find peaks in spectral flux with more conservative approach
+    for (let i = 2; i < spectralFlux.length - 2; i++) { // Skip more edge cases
       const current = spectralFlux[i];
       const previous = spectralFlux[i - 1];
       const next = spectralFlux[i + 1];
       
-      // Detect peaks that are significantly higher than neighbors
-      if (current > previous * threshold && current > next && current > 0.01) {
+      // Dynamic threshold based on signal characteristics
+      const dynamicThreshold = Math.max(meanFlux + stdFlux * 0.5, 0.02); // Higher threshold
+      
+      // Detect peaks that are significantly higher than neighbors and above dynamic threshold
+      if (current > previous * threshold && 
+          current > next * 1.2 && 
+          current > dynamicThreshold &&
+          current > spectralFlux[i - 2] && // Check wider neighborhood
+          current > spectralFlux[i + 2]) {
         const timeInSeconds = ((i + 1) * hopSize) / sampleRate;
         onsets.push(timeInSeconds);
       }
@@ -665,35 +701,44 @@ class Deck {
   }
 
   detectOnsetsMultiBand(audioData, hopSize, sampleRate) {
-    // Multi-band onset detection for better Latin music percussion detection
+    // Improved multi-band onset detection with conservative approach
     const onsets = [];
     
-    // Create frequency bands for analysis - improved approach
-    const bassOnsets = this.detectOnsetsInFrequencyBand(audioData, hopSize, sampleRate, 20, 200);    // Sub-bass/bass
-    const lowMidOnsets = this.detectOnsetsInFrequencyBand(audioData, hopSize, sampleRate, 200, 800);  // Low-mid (kick drum range)
-    const midOnsets = this.detectOnsetsInFrequencyBand(audioData, hopSize, sampleRate, 800, 3000);    // Mid frequencies (snare, vocals)
-    const highOnsets = this.detectOnsetsInFrequencyBand(audioData, hopSize, sampleRate, 3000, 8000);  // High frequencies (hi-hats, percussion)
+    // Create frequency bands for analysis - focused on main rhythm elements
+    const bassOnsets = this.detectOnsetsInFrequencyBand(audioData, hopSize, sampleRate, 20, 250);    // Bass/kick drum range
+    const midOnsets = this.detectOnsetsInFrequencyBand(audioData, hopSize, sampleRate, 250, 2000);   // Snare, mid percussion
+    const highOnsets = this.detectOnsetsInFrequencyBand(audioData, hopSize, sampleRate, 2000, 8000); // Hi-hats, cymbals
     
-    // Combine onsets with improved weighting for Latin music
+    // Combine onsets with conservative approach to avoid over-detection
     const combinedOnsets = new Set();
     
-    // Bass and low-mid are most important for Latin percussion patterns
+    // Prioritize bass onsets as they typically represent the main beat
     bassOnsets.forEach(onset => combinedOnsets.add(onset));
-    lowMidOnsets.forEach(onset => combinedOnsets.add(onset));
     
-    // Add mid and high onsets that complement bass patterns (within 100ms window)
-    midOnsets.concat(highOnsets).forEach(onset => {
-      const hasNearbyLowFreqOnset = Array.from(combinedOnsets).some(lowOnset => 
-        Math.abs(lowOnset - onset) <= 0.1  // 100ms window
+    // Add mid-frequency onsets that complement bass patterns (within 150ms window)
+    // This helps capture snare hits that define the beat
+    midOnsets.forEach(onset => {
+      const hasNearbyBassOnset = Array.from(combinedOnsets).some(bassOnset => 
+        Math.abs(bassOnset - onset) <= 0.15  // 150ms window
       );
-      // Also add standalone mid/high frequency onsets if they seem significant
-      if (hasNearbyLowFreqOnset || combinedOnsets.size < 3) {
+      if (hasNearbyBassOnset || combinedOnsets.size < 2) {
         combinedOnsets.add(onset);
       }
     });
     
-    // Only fall back to original detection if we have very few onsets
-    if (combinedOnsets.size < 3) {
+    // Only add high-frequency onsets if they're very close to existing onsets
+    // This prevents hi-hat patterns from confusing the main beat detection
+    highOnsets.forEach(onset => {
+      const hasNearbyLowOnset = Array.from(combinedOnsets).some(lowOnset => 
+        Math.abs(lowOnset - onset) <= 0.1  // 100ms window - tighter for high freq
+      );
+      if (hasNearbyLowOnset && combinedOnsets.size < 5) {
+        combinedOnsets.add(onset);
+      }
+    });
+    
+    // If multi-band detection finds very few onsets, fall back to energy-based detection
+    if (combinedOnsets.size < 4) {
       console.log('Multi-band detection found few onsets, falling back to energy-based detection');
       const energyValues = [];
       for (let i = 0; i < audioData.length - hopSize; i += hopSize) {
@@ -706,11 +751,21 @@ class Deck {
       return this.detectOnsets(energyValues, hopSize, sampleRate);
     }
     
-    return Array.from(combinedOnsets).sort((a, b) => a - b);
+    // Filter onsets to remove too-close detections (minimum 100ms apart)
+    const filteredOnsets = Array.from(combinedOnsets).sort((a, b) => a - b);
+    const finalOnsets = [filteredOnsets[0]];
+    
+    for (let i = 1; i < filteredOnsets.length; i++) {
+      if (filteredOnsets[i] - finalOnsets[finalOnsets.length - 1] >= 0.1) {
+        finalOnsets.push(filteredOnsets[i]);
+      }
+    }
+    
+    return finalOnsets;
   }
 
   detectOnsetsInFrequencyBand(audioData, hopSize, sampleRate, lowFreq, highFreq) {
-    // Improved frequency band filtering for onset detection
+    // Conservative frequency band onset detection to avoid over-detection
     const onsets = [];
     const nyquist = sampleRate / 2;
     
@@ -733,26 +788,26 @@ class Deck {
     
     if (bandEnergyValues.length === 0) return [];
     
-    // Apply adaptive threshold based on signal characteristics
+    // Apply conservative adaptive threshold
     const meanEnergy = bandEnergyValues.reduce((sum, val) => sum + val, 0) / bandEnergyValues.length;
     const variance = bandEnergyValues.reduce((sum, val) => sum + Math.pow(val - meanEnergy, 2), 0) / bandEnergyValues.length;
     const stdDev = Math.sqrt(variance);
     
-    // Adaptive threshold: more sensitive for bass frequencies (important for Latin music)
-    let adaptiveThreshold = 1.2;
-    if (lowFreq < 250) {
-      // Bass frequencies - more sensitive
-      adaptiveThreshold = Math.max(1.1, Math.min(1.5, 1.15 + (stdDev / meanEnergy) * 0.5));
-    } else if (lowFreq > 2000) {
-      // High frequencies - less sensitive
-      adaptiveThreshold = Math.max(1.3, Math.min(2.0, 1.4 + (stdDev / meanEnergy) * 0.8));
+    // More conservative thresholds to focus on main beats
+    let adaptiveThreshold = 1.4; // Higher base threshold
+    if (lowFreq < 300) {
+      // Bass frequencies - moderately sensitive for kick drums
+      adaptiveThreshold = Math.max(1.3, Math.min(1.8, 1.4 + (stdDev / meanEnergy) * 0.4));
+    } else if (lowFreq > 1500) {
+      // High frequencies - much less sensitive to avoid hi-hat over-detection
+      adaptiveThreshold = Math.max(1.6, Math.min(2.5, 1.8 + (stdDev / meanEnergy) * 1.0));
     } else {
-      // Mid frequencies - moderate sensitivity
-      adaptiveThreshold = Math.max(1.2, Math.min(1.7, 1.25 + (stdDev / meanEnergy) * 0.6));
+      // Mid frequencies - moderate sensitivity for snare drums
+      adaptiveThreshold = Math.max(1.4, Math.min(2.0, 1.5 + (stdDev / meanEnergy) * 0.6));
     }
     
-    // Apply moving average for smoothing
-    const smoothed = this.applyMovingAverage(bandEnergyValues, 2);
+    // Apply moving average with larger window for more stability
+    const smoothed = this.applyMovingAverage(bandEnergyValues, 3); // Larger window
     
     // Calculate spectral flux (energy differences between frames)
     const spectralFlux = [];
@@ -761,18 +816,21 @@ class Deck {
       spectralFlux.push(diff);
     }
     
-    // Find peaks with adaptive threshold
-    for (let i = 1; i < spectralFlux.length - 1; i++) {
+    // Find peaks with conservative thresholds
+    for (let i = 2; i < spectralFlux.length - 2; i++) { // Skip more edge cases
       const current = spectralFlux[i];
       const previous = spectralFlux[i - 1];
       const next = spectralFlux[i + 1];
       
-      // Dynamic threshold based on signal energy
-      const energyThreshold = Math.max(meanEnergy * 0.05, 0.01);
+      // Higher energy threshold to avoid weak onsets
+      const energyThreshold = Math.max(meanEnergy * 0.1, 0.02); // Higher threshold
       
+      // Require current peak to be clearly above neighbors
       if (current > previous * adaptiveThreshold && 
-          current > next && 
-          current > energyThreshold) {
+          current > next * 1.2 && // Extra check for peak clarity
+          current > energyThreshold &&
+          current > spectralFlux[i - 2] && // Check wider neighborhood
+          current > spectralFlux[i + 2]) {
         const timeInSeconds = ((i + 1) * hopSize) / sampleRate;
         onsets.push(timeInSeconds);
       }
@@ -862,7 +920,7 @@ class Deck {
       }
     });
     
-    // Enhanced candidate selection for better Latin music support
+    // Balanced candidate selection for all DJ genres
     const candidates = [
       mostLikelyBPM, 
       mostLikelyBPM * 2, 
@@ -873,29 +931,41 @@ class Deck {
       mostLikelyBPM / 4    // For very fast detections
     ];
     
-    // Sort candidates by how well they fit typical Latin music BPM ranges
+    // Genre-balanced scoring system for DJ music
     const scoredCandidates = candidates.map(candidate => {
       let score = 0;
       
-      // Primary Latin urban music range (most common)
-      if (candidate >= 80 && candidate <= 110) {
-        score = 100; // Highest score for typical reggaeton/Latin trap range
+      // Electronic & Dance music (120-140 BPM) - Most common for DJs
+      if (candidate >= 120 && candidate <= 140) {
+        score = 100; // Highest score for house, techno, EDM
       }
-      // Secondary Latin ranges
-      else if (candidate >= 70 && candidate <= 120) {
-        score = 90;  // High score for extended Latin range
+      // Commercial & Mainstream (100-130 BPM) - Pop, commercial dance
+      else if (candidate >= 100 && candidate <= 130) {
+        score = 95;  // Very high score for commercial tracks
       }
-      // Electronic/commercial Latin music
-      else if (candidate >= 120 && candidate <= 140) {
-        score = 80;  // Good score for faster electronic Latin
+      // Urban (80-110 BPM) - Hip-hop, R&B, Latin urban
+      else if (candidate >= 80 && candidate <= 110) {
+        score = 90;  // High score for urban/hip-hop
       }
-      // General dance music range
-      else if (candidate >= 60 && candidate <= 180) {
-        score = 70;  // Moderate score for general dance music
+      // Alternative & Underground (90-150 BPM) - Indie, alternative dance
+      else if (candidate >= 90 && candidate <= 150) {
+        score = 85;  // Good score for alternative genres
       }
-      // Outside typical ranges
-      else {
-        score = Math.max(0, 50 - Math.abs(candidate - 95)); // Lower score, distance from typical reggaeton BPM
+      // Extended dance range (140-180 BPM) - Drum & bass, fast electronic
+      else if (candidate >= 140 && candidate <= 180) {
+        score = 80;  // Good score for faster electronic
+      }
+      // Slower genres (70-90 BPM) - Downtempo, slow jams
+      else if (candidate >= 70 && candidate <= 90) {
+        score = 75;  // Moderate score for slower tracks
+      }
+      // Very fast (180+ BPM) - Likely double-time detection
+      else if (candidate >= 180) {
+        score = Math.max(0, 60 - (candidate - 180) / 10); // Penalty for very fast
+      }
+      // Very slow (under 70 BPM) - Likely half-time detection
+      else if (candidate < 70) {
+        score = Math.max(0, 60 - (70 - candidate) / 5); // Penalty for very slow
       }
       
       return { bpm: candidate, score: score };
@@ -905,30 +975,29 @@ class Deck {
     scoredCandidates.sort((a, b) => b.score - a.score);
     const bestCandidate = scoredCandidates[0];
     
-    // Only use the best candidate if it has a reasonable score
-    if (bestCandidate.score >= 70) {
+    // Use the best candidate if it has a reasonable score
+    if (bestCandidate.score >= 75) {
       return bestCandidate.bpm;
     }
     
-    // If no candidate fits typical ranges, apply genre-specific adjustments
-    if (mostLikelyBPM < 70) {
-      // Too slow - likely half-time detection, try doubling
-      const doubled = mostLikelyBPM * 2;
-      if (doubled >= 70 && doubled <= 120) {
-        return doubled;
-      }
-      // Try 1.5x for complex time signatures
-      const adjusted = mostLikelyBPM * 1.5;
-      if (adjusted >= 70 && adjusted <= 120) {
-        return adjusted;
+    // If no candidate fits typical ranges, apply conservative adjustments
+    if (mostLikelyBPM < 60) {
+      // Very slow - likely half-time or quarter-time detection
+      for (const multiplier of [2, 4, 3, 1.5]) {
+        const adjusted = mostLikelyBPM * multiplier;
+        if (adjusted >= 80 && adjusted <= 180) {
+          return adjusted;
+        }
       }
     }
     
-    if (mostLikelyBPM > 180) {
-      // Too fast - likely double-time detection
-      const halved = mostLikelyBPM / 2;
-      if (halved >= 70 && halved <= 120) {
-        return halved;
+    if (mostLikelyBPM > 200) {
+      // Very fast - likely double-time or higher detection
+      for (const divisor of [2, 4, 3, 1.5]) {
+        const adjusted = mostLikelyBPM / divisor;
+        if (adjusted >= 80 && adjusted <= 180) {
+          return adjusted;
+        }
       }
     }
     
