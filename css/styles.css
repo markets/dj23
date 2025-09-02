@@ -16,8 +16,7 @@
   --bg-tertiary: #2a2a2a;
   --bg-quaternary: #1e1e1e;
   --bg-surface: #333;
-  --bg-surface-light: #444;
-  --bg-surface-lighter: #555;
+  --bg-surface-light: #555;
   --bg-overlay: rgba(255, 255, 255, 0.05);
   
   /* Text Colors */
@@ -58,7 +57,6 @@
 
   /* Gradients */
   --gradient-primary: linear-gradient(45deg, var(--color-primary), #44a08d);
-  --gradient-secondary: linear-gradient(45deg, var(--color-secondary), #ee5a52);
   --gradient-accent: linear-gradient(45deg, var(--color-accent-blue), var(--color-accent-purple));
   --gradient-surface: linear-gradient(145deg, var(--bg-tertiary), var(--bg-quaternary));
   --gradient-body: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
@@ -275,12 +273,6 @@ body {
   display: block;
 }
 
-.track-cover:empty::before {
-  content: "♪";
-  color: var(--text-muted);
-  font-size: 1.2rem;
-}
-
 /* ============================================================================
    WAVEFORM
    ============================================================================ */
@@ -473,7 +465,6 @@ body {
   min-width: 250px;
 }
 
-/* Crossfader */
 .crossfader-section {
   text-align: center;
   margin-bottom: var(--spacing-3xl);
@@ -502,7 +493,6 @@ body {
   color: var(--text-muted);
 }
 
-/* Sound Pad */
 .sound-pad-section {
   text-align: center;
   margin-bottom: var(--spacing-3xl);
@@ -615,7 +605,6 @@ body {
   font-weight: 500;
 }
 
-/* BPM Section */
 .bpm-section {
   text-align: center;
   margin-bottom: var(--spacing-3xl);
@@ -683,7 +672,7 @@ body {
   align-items: flex-end;
 }
 
-.vu-meters-vertical {
+.vu-meters {
   display: flex;
   justify-content: space-around;
   align-items: flex-start;
@@ -691,21 +680,21 @@ body {
   height: 200px;
 }
 
-.vu-meter-vertical {
+.vu-meter {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
 }
 
-.vu-meter-vertical label {
+.vu-meter label {
   margin-bottom: var(--spacing-md);
   font-weight: 600;
   color: var(--text-secondary);
   writing-mode: horizontal-tb;
 }
 
-.vu-bars-vertical {
+.vu-bars {
   display: flex;
   flex-direction: column-reverse;
   gap: var(--spacing-xs);
@@ -721,7 +710,7 @@ body {
   transition: var(--transition-fast);
 }
 
-.vu-bars-vertical .vu-bar {
+.vu-bars .vu-bar {
   width: 16px;
   height: 4px;
 }
@@ -739,14 +728,14 @@ body {
 }
 
 /* ============================================================================
-   VOLUME CONTROLS VERTICAL
+   VOLUME CONTROLS
    ============================================================================ */
 .master-volume-slider {
   height: 4px;
   width: 150px;
 }
 
-.volume-controls-vertical {
+.volume-controls {
   display: flex;
   justify-content: space-around;
   align-items: flex-start;
@@ -757,14 +746,14 @@ body {
   backdrop-filter: blur(10px);
 }
 
-.volume-control-vertical {
+.volume-control {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
 }
 
-.volume-control-vertical label {
+.volume-control label {
   margin-bottom: var(--spacing-md);
   font-weight: 600;
   color: var(--text-secondary);
@@ -772,7 +761,7 @@ body {
   font-size: 0.9rem;
 }
 
-.volume-slider-vertical {
+.volume-slider {
   writing-mode: vertical-lr;
   appearance: slider-vertical;
   width: 20px;
@@ -785,7 +774,7 @@ body {
   transform: rotate(180deg);
 }
 
-.volume-slider-vertical::-webkit-slider-thumb {
+.volume-slider::-webkit-slider-thumb {
   appearance: none;
   width: 24px;
   height: 12px;
@@ -795,7 +784,7 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
-.volume-slider-vertical::-moz-range-thumb {
+.volume-slider::-moz-range-thumb {
   width: 24px;
   height: 12px;
   border-radius: var(--radius-md);
@@ -805,7 +794,7 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
-.volume-control-vertical .volume-display {
+.volume-control .volume-display {
   font-size: 0.8rem;
   color: var(--text-muted);
   margin-top: var(--spacing-xs);
@@ -897,7 +886,7 @@ body {
 /* ============================================================================
    PITCH & LOOP CONTROLS
    ============================================================================ */
-.pitch-control-vertical {
+.pitch-control {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -908,7 +897,7 @@ body {
   position: relative;
 }
 
-.pitch-control-vertical label {
+.pitch-control label {
   margin-bottom: var(--spacing-md);
   font-weight: 600;
   color: var(--text-secondary);
@@ -916,7 +905,7 @@ body {
   line-height: 20px;
 }
 
-.loop-control-vertical {
+.loop-control {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -926,7 +915,7 @@ body {
   justify-content: flex-start;
 }
 
-.loop-control-vertical label {
+.loop-control label {
   margin-bottom: var(--spacing-md);
   font-weight: 600;
   color: var(--text-secondary);
@@ -934,14 +923,14 @@ body {
   line-height: 20px;
 }
 
-.loop-buttons-vertical {
+.loop-buttons {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
   margin-bottom: var(--spacing-sm);
 }
 
-.loop-btn-vertical {
+.loop-btn {
   border: none;
   color: white;
   border-radius: var(--radius-sm);
@@ -954,17 +943,17 @@ body {
   width: 50px;
 }
 
-.loop-btn-vertical:hover {
+.loop-btn:hover {
   box-shadow: 0 3px 12px rgba(0, 184, 148, 0.4);
 }
 
-.loop-control-vertical .loop-length-value {
+.loop-control .loop-length-value {
   font-size: 0.9rem;
   color: var(--text-secondary);
   margin-top: var(--spacing-xs);
 }
 
-.pitch-slider-vertical {
+.pitch-slider {
   writing-mode: vertical-lr;
   appearance: slider-vertical;
   width: 25px;
@@ -976,7 +965,7 @@ body {
   border: 1px solid var(--border-light);
 }
 
-.pitch-slider-vertical::-webkit-slider-thumb {
+.pitch-slider::-webkit-slider-thumb {
   appearance: none;
   width: 30px;
   height: 15px;
@@ -986,7 +975,7 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-.pitch-slider-vertical::-moz-range-thumb {
+.pitch-slider::-moz-range-thumb {
   width: 30px;
   height: 15px;
   border-radius: var(--radius-sm);
@@ -996,21 +985,39 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-.pitch-bend-buttons-vertical {
+.pitch-bend-buttons {
   display: flex;
   flex-direction: row;
   gap: var(--spacing-sm);
   margin-bottom: var(--spacing-sm);
 }
 
-.pitch-control-vertical #pitchDisplayA,
-.pitch-control-vertical #pitchDisplayB {
+.pitch-bend-btn {
+  background: var(--gradient-accent);
+  border: none;
+  color: white;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: 500;
+  transition: var(--transition-normal);
+  font-size: 0.9rem;
+  width: 30px;
+  height: 30px;
+  font-weight: bold;
+}
+
+.pitch-bend-btn:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.pitch-control #pitchDisplayA,
+.pitch-control #pitchDisplayB {
   font-size: 0.9rem;
   color: var(--text-secondary);
   margin-top: var(--spacing-xs);
 }
 
-.pitch-bend-buttons-vertical .pitch-bend-btn {
+.pitch-bend-buttons .pitch-bend-btn {
   width: 30px;
   height: 20px;
   font-size: 12px;
@@ -1040,75 +1047,64 @@ body {
 /* ============================================================================
    SLIDER STYLING
    ============================================================================ */
-/* Unified Slider Styling Base - Applied to ALL range inputs */
 input[type="range"] {
   appearance: none;
-  background: var(--bg-surface-lighter);
+  background: var(--bg-surface-light);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-sm);
   cursor: pointer;
   outline: none;
 }
 
-/* Unified track styling for all horizontal sliders */
 input[type="range"]::-webkit-slider-track {
-  background: var(--bg-surface-lighter);
+  background: var(--bg-surface-light);
   height: 8px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-light);
 }
 
-/* Base thumb styling for all sliders */
 input[type="range"]::-webkit-slider-thumb {
   appearance: none;
   cursor: pointer;
   transition: var(--transition-normal);
 }
 
-/* Professional fader hover effects */
 .horizontal-fader::-webkit-slider-thumb:hover,
 .vertical-fader::-webkit-slider-thumb:hover {
   transform: scale(1.05);
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.2);
 }
 
-/* Effect slider hover effects (keep original) */
 .effect-slider::-webkit-slider-thumb:hover {
   transform: scale(1.1);
   box-shadow: 0 3px 12px rgba(78, 205, 196, 0.4);
 }
 
-/* Firefox unified styling */
 input[type="range"]::-moz-range-track {
-  background: var(--bg-surface-lighter);
+  background: var(--bg-surface-light);
   height: 8px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-light);
 }
 
-/* Base Firefox thumb styling */
 input[type="range"]::-moz-range-thumb {
   cursor: pointer;
 }
 
-/* Horizontal Fader Track Styling */
 .horizontal-fader::-webkit-slider-track {
-  background: var(--bg-surface-lighter);
+  background: var(--bg-surface-light);
   height: 8px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-light);
 }
 
 .horizontal-fader::-moz-range-track {
-  background: var(--bg-surface-lighter);
+  background: var(--bg-surface-light);
   height: 8px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-light);
 }
 
-/* Professional Fader Base Classes */
-
-/* Horizontal Fader - Professional styling for horizontal sliders */
 .horizontal-fader::-webkit-slider-thumb {
   background: linear-gradient(to right, var(--bg-secondary) 0%, var(--bg-secondary) 45%, #ffffff 47%, #ffffff 53%, var(--bg-secondary) 55%, var(--bg-secondary) 100%);
   border-radius: 3px;
@@ -1118,7 +1114,6 @@ input[type="range"]::-moz-range-thumb {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
 }
 
-/* Vertical Fader - Professional styling for vertical sliders */
 .vertical-fader::-webkit-slider-thumb {
   background: linear-gradient(to bottom, var(--bg-secondary) 0%, var(--bg-secondary) 45%, #ffffff 47%, #ffffff 53%, var(--bg-secondary) 55%, var(--bg-secondary) 100%);
   border-radius: 3px;
@@ -1128,7 +1123,6 @@ input[type="range"]::-moz-range-thumb {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
 }
 
-/* Firefox professional fader styling */
 .horizontal-fader::-moz-range-thumb {
   background: linear-gradient(to right, var(--bg-secondary) 0%, var(--bg-secondary) 45%, #ffffff 47%, #ffffff 53%, var(--bg-secondary) 55%, var(--bg-secondary) 100%);
   border-radius: 3px;
@@ -1165,23 +1159,22 @@ input[type="range"]::-moz-range-thumb {
   box-shadow: var(--shadow-sm);
 }
 
-/* Vertical sliders - maintain larger size for easier manipulation */
 .eq-slider,
-.loop-slider-vertical,
-.volume-slider-vertical {
+.loop-slider,
+.volume-slider {
   writing-mode: vertical-lr;
   appearance: slider-vertical;
   width: 20px;
   height: 100px;
-  background: var(--bg-surface-lighter);
+  background: var(--bg-surface-light);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-light);
 }
 
 .eq-slider::-webkit-slider-track,
-.loop-slider-vertical::-webkit-slider-track,
-.volume-slider-vertical::-webkit-slider-track {
-  background: var(--bg-surface-lighter);
+.loop-slider::-webkit-slider-track,
+.volume-slider::-webkit-slider-track {
+  background: var(--bg-surface-light);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-lg);
 }
@@ -1189,7 +1182,6 @@ input[type="range"]::-moz-range-thumb {
 /* ============================================================================
    BEAT MATCHING & WAVEFORMS
    ============================================================================ */
-
 .beat-waveform-container {
   position: relative;
   flex: 1;
@@ -1280,19 +1272,6 @@ input[type="range"]::-moz-range-thumb {
   box-shadow: 0 4px 15px rgba(78, 205, 196, 0.2);
 }
 
-.beat-waveform-wrapper .deck-label {
-  position: absolute;
-  top: var(--spacing-xs);
-  left: var(--spacing-sm);
-  font-size: 0.8rem;
-  color: var(--text-primary);
-  font-weight: 600;
-  z-index: 2;
-  background: rgba(0, 0, 0, 0.8);
-  padding: var(--spacing-xs);
-  border-radius: var(--radius-sm);
-}
-
 .beat-waveform-global {
   width: 100%;
   height: 100%;
@@ -1337,33 +1316,8 @@ input[type="range"]::-moz-range-thumb {
 }
 
 /* ============================================================================
-   CONTROL BUTTONS & CUE POINTS
+   CUE POINTS
    ============================================================================ */
-
-.pitch-bend-buttons {
-  display: flex;
-  gap: var(--spacing-xs);
-  margin-bottom: var(--spacing-md);
-}
-
-.pitch-bend-btn {
-  background: var(--gradient-accent);
-  border: none;
-  color: white;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  font-weight: 500;
-  transition: var(--transition-normal);
-  font-size: 0.9rem;
-  width: 30px;
-  height: 30px;
-  font-weight: bold;
-}
-
-.pitch-bend-btn:hover {
-  box-shadow: var(--shadow-sm);
-}
-
 .cue-points {
   display: flex;
   flex-wrap: wrap;
