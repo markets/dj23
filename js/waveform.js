@@ -279,7 +279,7 @@ class ZoomedWaveformRenderer {
         const windowDuration = Math.min(this.zoomLevel, deck.getDuration() - this.offsetSeconds);
         const timePerPixel = windowDuration / rect.width;
         const timeOffset = deltaX * timePerPixel;
-        const newTime = Math.max(0, Math.min(deck.getDuration(), deck.getCurrentTime() + timeOffset));
+        const newTime = Math.max(0, Math.min(deck.getDuration(), deck.getCurrentTime() - timeOffset));
         
         // Seek to new position for full record control
         deck.seek(newTime);
@@ -347,7 +347,7 @@ class ZoomedWaveformRenderer {
         const windowDuration = Math.min(this.zoomLevel, deck.getDuration() - this.offsetSeconds);
         const timePerPixel = windowDuration / rect.width;
         const timeOffset = deltaX * timePerPixel;
-        const newTime = Math.max(0, Math.min(deck.getDuration(), deck.getCurrentTime() + timeOffset));
+        const newTime = Math.max(0, Math.min(deck.getDuration(), deck.getCurrentTime() - timeOffset));
         
         // Seek to new position for full record control
         deck.seek(newTime);
