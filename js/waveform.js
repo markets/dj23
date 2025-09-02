@@ -279,7 +279,7 @@ class ZoomedWaveformRenderer {
         const windowDuration = Math.min(this.zoomLevel, deck.getDuration() - this.offsetSeconds);
         const timePerPixel = windowDuration / rect.width;
         const timeOffset = deltaX * timePerPixel;
-        const newTime = Math.max(0, Math.min(deck.getDuration(), deck.getCurrentTime() + timeOffset));
+        const newTime = Math.max(0, Math.min(deck.getDuration(), deck.getCurrentTime() - timeOffset));
         
         // Seek to new position for full record control
         deck.seek(newTime);
@@ -347,7 +347,7 @@ class ZoomedWaveformRenderer {
         const windowDuration = Math.min(this.zoomLevel, deck.getDuration() - this.offsetSeconds);
         const timePerPixel = windowDuration / rect.width;
         const timeOffset = deltaX * timePerPixel;
-        const newTime = Math.max(0, Math.min(deck.getDuration(), deck.getCurrentTime() + timeOffset));
+        const newTime = Math.max(0, Math.min(deck.getDuration(), deck.getCurrentTime() - timeOffset));
         
         // Seek to new position for full record control
         deck.seek(newTime);
@@ -407,20 +407,20 @@ class ZoomedWaveformRenderer {
   updateZoomWindow() {
     const deck = window.audioEngine.getDeck(this.deckId);
     if (!deck || !deck.audioBuffer) {
-      // When no track is loaded, keep offset at 0 to show middle line only
-      this.offsetSeconds = 0;
+      this.offsetSeconds = this.zoomLevel / 2;
       return;
     }
 
     const currentTime = deck.getCurrentTime();
     const duration = deck.getDuration();
     
-    // For top waveforms: always center the current position so red line stays in middle
-    // This makes the waveform move on X-axis while the playhead stays centered
-    this.offsetSeconds = Math.max(0, currentTime - this.zoomLevel / 2);
+    // Center current time under the red line
+    this.offsetSeconds = currentTime - this.zoomLevel / 2;
     
-    // Ensure we don't go beyond track duration
-    this.offsetSeconds = Math.min(this.offsetSeconds, Math.max(0, duration - this.zoomLevel));
+    // Clamp to track duration bounds
+    if (this.offsetSeconds + this.zoomLevel > duration) {
+      this.offsetSeconds = Math.max(0, duration - this.zoomLevel);
+    }
   }
 
   render() {
@@ -437,13 +437,17 @@ class ZoomedWaveformRenderer {
     const width = this.canvas.clientWidth;
     const height = this.canvas.clientHeight;
     const duration = deck.getDuration();
+    const currentTime = deck.getCurrentTime();
         
     this.ctx.clearRect(0, 0, width, height);
         
-    // Calculate which part of the waveform to show
     const totalSamples = this.waveformData.length;
-    const startRatio = this.offsetSeconds / duration;
-    const endRatio = Math.min(1, (this.offsetSeconds + this.zoomLevel) / duration);
+    
+    const windowStart = this.offsetSeconds;
+    const windowEnd = this.offsetSeconds + this.zoomLevel;
+    
+    const startRatio = Math.max(0, windowStart) / duration;
+    const endRatio = Math.min(1, windowEnd / duration);
     
     const startSample = Math.floor(startRatio * totalSamples);
     const endSample = Math.floor(endRatio * totalSamples);
@@ -451,8 +455,11 @@ class ZoomedWaveformRenderer {
     
     if (visibleSamples <= 0) return;
 
-    const barWidth = width / visibleSamples;
+    const pixelsPerSecond = width / this.zoomLevel;
+    const barWidth = pixelsPerSecond / (totalSamples / duration);
     const centerY = height / 2;
+
+    const drawOffsetPixels = windowStart < 0 ? -windowStart * pixelsPerSecond : 0;
 
     // Draw waveform with higher detail
     this.ctx.fillStyle = '#444';
@@ -461,25 +468,27 @@ class ZoomedWaveformRenderer {
       if (sampleIndex >= this.waveformData.length) break;
       
       const barHeight = this.waveformData[sampleIndex] * centerY * 0.9;
-      const x = i * barWidth;
-            
-      // Draw positive part
-      this.ctx.fillRect(x, centerY - barHeight, barWidth - 0.5, barHeight);
-      // Draw negative part
-      this.ctx.fillRect(x, centerY, barWidth - 0.5, barHeight);
+      const x = drawOffsetPixels + i * barWidth;
+      
+      if (x >= 0 && x < width) {
+        this.ctx.fillRect(x, centerY - barHeight, barWidth - 0.5, barHeight);
+        this.ctx.fillRect(x, centerY, barWidth - 0.5, barHeight);
+      }
     }
 
     // Draw played portion in zoom window
     if (deck.isPlaying) {
       const currentTime = deck.getCurrentTime();
-      if (currentTime >= this.offsetSeconds && currentTime <= this.offsetSeconds + this.zoomLevel) {
-        const progressInWindow = (currentTime - this.offsetSeconds) / Math.min(this.zoomLevel, duration - this.offsetSeconds);
-        const playedWidth = width * progressInWindow;
-            
+      if (currentTime >= Math.max(0, this.offsetSeconds) && 
+          currentTime <= this.offsetSeconds + this.zoomLevel) {
+        
+        const pixelsPerSecond = width / this.zoomLevel;
+        const currentTimePosition = (currentTime - this.offsetSeconds) * pixelsPerSecond;
+        
         this.ctx.fillStyle = '#4ecdc4';
         for (let i = 0; i < visibleSamples; i++) {
-          const x = i * barWidth;
-          if (x > playedWidth) break;
+          const x = drawOffsetPixels + i * barWidth;
+          if (x > currentTimePosition || x < 0 || x >= width) continue;
           
           const sampleIndex = startSample + i;
           if (sampleIndex >= this.waveformData.length) break;
@@ -494,15 +503,16 @@ class ZoomedWaveformRenderer {
     // Draw beat markers (every second)
     this.drawBeatMarkers(width, height, duration);
     
-    // Draw red playhead line always in the center for beat view
+    // Draw red playhead line in center
+    const playheadX = width / 2;
+    
     this.ctx.strokeStyle = '#ff4757';
     this.ctx.lineWidth = 2;
     this.ctx.beginPath();
-    this.ctx.moveTo(width / 2, 0);
-    this.ctx.lineTo(width / 2, height);
+    this.ctx.moveTo(playheadX, 0);
+    this.ctx.lineTo(playheadX, height);
     this.ctx.stroke();
     
-    // Update playhead position
     this.updatePlayhead();
   }
 
@@ -540,7 +550,7 @@ class ZoomedWaveformRenderer {
     this.ctx.lineTo(width, height / 2);
     this.ctx.stroke();
         
-    // Draw red playhead line in the center (50%) for beat view
+    // Draw red playhead line in center
     this.ctx.strokeStyle = '#ff4757';
     this.ctx.lineWidth = 2;
     this.ctx.beginPath();
@@ -560,8 +570,6 @@ class ZoomedWaveformRenderer {
     const playhead = document.getElementById(`beatPlayhead${this.deckId}`);
         
     if (deck && deck.getDuration() > 0) {
-      // Always keep the red line in the middle for top waveforms
-      // The waveform moves on X-axis instead of the playhead moving
       playhead.style.left = '50%';
       playhead.style.opacity = deck.isPlaying ? '1' : '0.7';
     } else {
