@@ -415,12 +415,15 @@ class ZoomedWaveformRenderer {
     const currentTime = deck.getCurrentTime();
     const duration = deck.getDuration();
     
-    // Always center the current time under the red line (which stays in middle)
-    // This makes the waveform start centered and move underneath the fixed center line
-    this.offsetSeconds = Math.max(0, currentTime - this.zoomLevel / 2);
+    // Center the current time under the red line, but allow negative offset
+    // so the waveform can start rendering in the middle of the container
+    this.offsetSeconds = currentTime - this.zoomLevel / 2;
     
-    // Ensure we don't go beyond track duration
-    this.offsetSeconds = Math.min(this.offsetSeconds, Math.max(0, duration - this.zoomLevel));
+    // Don't clamp to 0 immediately - allow negative offset for initial centering
+    // Only ensure we don't go beyond track duration on the right side
+    if (this.offsetSeconds + this.zoomLevel > duration) {
+      this.offsetSeconds = Math.max(0, duration - this.zoomLevel);
+    }
   }
 
   render() {
@@ -441,10 +444,16 @@ class ZoomedWaveformRenderer {
         
     this.ctx.clearRect(0, 0, width, height);
         
-    // Calculate which part of the waveform to show
+    // Calculate which part of the waveform to show, handling negative offset
     const totalSamples = this.waveformData.length;
-    const startRatio = this.offsetSeconds / duration;
-    const endRatio = Math.min(1, (this.offsetSeconds + this.zoomLevel) / duration);
+    
+    // Calculate the effective window based on offset (which can be negative)
+    const windowStart = this.offsetSeconds;
+    const windowEnd = this.offsetSeconds + this.zoomLevel;
+    
+    // Map the window to sample indices
+    const startRatio = Math.max(0, windowStart) / duration;
+    const endRatio = Math.min(1, windowEnd / duration);
     
     const startSample = Math.floor(startRatio * totalSamples);
     const endSample = Math.floor(endRatio * totalSamples);
@@ -452,8 +461,13 @@ class ZoomedWaveformRenderer {
     
     if (visibleSamples <= 0) return;
 
-    const barWidth = width / visibleSamples;
+    // Calculate how many pixels each second represents
+    const pixelsPerSecond = width / this.zoomLevel;
+    const barWidth = pixelsPerSecond / (totalSamples / duration);
     const centerY = height / 2;
+
+    // Calculate the offset for drawing (where to start drawing on the canvas)
+    const drawOffsetPixels = windowStart < 0 ? -windowStart * pixelsPerSecond : 0;
 
     // Draw waveform with higher detail
     this.ctx.fillStyle = '#444';
@@ -462,25 +476,31 @@ class ZoomedWaveformRenderer {
       if (sampleIndex >= this.waveformData.length) break;
       
       const barHeight = this.waveformData[sampleIndex] * centerY * 0.9;
-      const x = i * barWidth;
-            
-      // Draw positive part
-      this.ctx.fillRect(x, centerY - barHeight, barWidth - 0.5, barHeight);
-      // Draw negative part
-      this.ctx.fillRect(x, centerY, barWidth - 0.5, barHeight);
+      const x = drawOffsetPixels + i * barWidth;
+      
+      // Only draw if within canvas bounds
+      if (x >= 0 && x < width) {
+        // Draw positive part
+        this.ctx.fillRect(x, centerY - barHeight, barWidth - 0.5, barHeight);
+        // Draw negative part
+        this.ctx.fillRect(x, centerY, barWidth - 0.5, barHeight);
+      }
     }
 
     // Draw played portion in zoom window
     if (deck.isPlaying) {
       const currentTime = deck.getCurrentTime();
-      if (currentTime >= this.offsetSeconds && currentTime <= this.offsetSeconds + this.zoomLevel) {
-        const progressInWindow = (currentTime - this.offsetSeconds) / Math.min(this.zoomLevel, duration - this.offsetSeconds);
-        const playedWidth = width * progressInWindow;
-            
+      if (currentTime >= Math.max(0, this.offsetSeconds) && 
+          currentTime <= this.offsetSeconds + this.zoomLevel) {
+        
+        // Calculate the position of the current time within the visible window
+        const pixelsPerSecond = width / this.zoomLevel;
+        const currentTimePosition = (currentTime - this.offsetSeconds) * pixelsPerSecond;
+        
         this.ctx.fillStyle = '#4ecdc4';
         for (let i = 0; i < visibleSamples; i++) {
-          const x = i * barWidth;
-          if (x > playedWidth) break;
+          const x = drawOffsetPixels + i * barWidth;
+          if (x > currentTimePosition || x < 0 || x >= width) continue;
           
           const sampleIndex = startSample + i;
           if (sampleIndex >= this.waveformData.length) break;
