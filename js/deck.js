@@ -1342,10 +1342,6 @@ class DeckController {
     return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }
 
-  resetDeckState() {
-
-  }
-
   resetFilters() {
     const deck = window.audioEngine.getDeck(this.deckId);
     if (!deck) return;
