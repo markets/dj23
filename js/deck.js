@@ -1229,6 +1229,8 @@ class DeckController {
       }
       if (window.beatWaveformRenderers && window.beatWaveformRenderers[this.deckId]) {
         window.beatWaveformRenderers[this.deckId].startAnimation();
+        // Force immediate render to ensure waveform starts with correct positioning
+        window.beatWaveformRenderers[this.deckId].render();
       }
     }
   }
