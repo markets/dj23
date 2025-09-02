@@ -388,15 +388,12 @@ class Deck {
     console.log(`Deck ${this.deckId}: Seek completed - current time: ${this.getCurrentTime().toFixed(2)}s`);
   }
 
-  // Reset deck state when loading new track
-  resetDeckState() {
-    // Reset cue points only
+  // CUE point methods
+  resetCuePoints() {
     this.cuePoints = { 1: null, 2: null };
-    
     console.log(`Deck ${this.deckId}: CUE points reset`);
   }
 
-  // CUE point methods
   setCuePoint(cueNumber) {
     if (cueNumber === 1 || cueNumber === 2) {
       this.cuePoints[cueNumber] = this.getCurrentTime();
@@ -1083,8 +1080,8 @@ class DeckController {
     const success = await deck.loadFile(file);
         
     if (success) {
-      // Reset deck state (cues, EQ, effects) when loading new track
-      this.resetDeckState();
+      // Reset cues
+      deck.resetCuePoints();
       
       // Extract metadata and update track display
       await this.extractAndDisplayMetadata(file);
@@ -1346,13 +1343,7 @@ class DeckController {
   }
 
   resetDeckState() {
-    const deck = window.audioEngine.getDeck(this.deckId);
-    if (!deck) return;
 
-    // Reset deck internal state (CUE points only)
-    deck.resetDeckState();
-
-    console.log(`Deck ${this.deckId}: CUE points reset`);
   }
 
   resetFilters() {
