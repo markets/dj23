@@ -41,6 +41,7 @@ class Deck {
 
     // CUE points
     this.cuePoints = { 1: null, 2: null };
+    this.isCueActive = false; // Track if CUE is currently being held/active
 
     // Loop points
     this.loopStart = null;
@@ -438,6 +439,54 @@ class Deck {
     }
   }
 
+  // New CUE mode methods for press-and-hold behavior
+  startCueMode() {
+    if (!this.audioBuffer) return;
+    
+    // Store current state
+    const wasPlaying = this.isPlaying;
+    
+    // If not playing, go to cue point and start playing
+    if (!this.isPlaying) {
+      // Find the most recently set cue point
+      let lastCueTime = null;
+      for (let i = 1; i <= 2; i++) {
+        if (this.cuePoints[i] !== null) {
+          lastCueTime = this.cuePoints[i];
+        }
+      }
+      // Go to last cue point or beginning
+      const cueTime = lastCueTime !== null ? lastCueTime : 0;
+      this.seek(cueTime);
+    }
+    
+    // Start playing and mark as cue active
+    this.isCueActive = true;
+    this.play();
+    console.log(`Deck ${this.deckId}: CUE mode started`);
+  }
+
+  stopCueMode() {
+    if (!this.isCueActive) return;
+    
+    // Stop playing and return to cue point
+    this.pause();
+    
+    // Find the most recently set cue point
+    let lastCueTime = null;
+    for (let i = 1; i <= 2; i++) {
+      if (this.cuePoints[i] !== null) {
+        lastCueTime = this.cuePoints[i];
+      }
+    }
+    // Return to last cue point or beginning
+    const cueTime = lastCueTime !== null ? lastCueTime : 0;
+    this.seek(cueTime);
+    
+    this.isCueActive = false;
+    console.log(`Deck ${this.deckId}: CUE mode stopped`);
+  }
+
   // Loop methods
   setLoopIn() {
     this.loopStart = this.getCurrentTime();
@@ -777,8 +826,59 @@ class DeckController {
       this.stop();
     });
 
-    document.getElementById(`cue${this.deckId}`).addEventListener('click', () => {
-      this.cue();
+    document.getElementById(`cue${this.deckId}`).addEventListener('mousedown', (e) => {
+      e.preventDefault(); // Prevent default drag behavior
+      const deck = window.audioEngine.getDeck(this.deckId);
+      if (deck) {
+        deck.startCueMode();
+        this.updateCueState(true);
+      }
+    });
+
+    document.getElementById(`cue${this.deckId}`).addEventListener('mouseup', () => {
+      const deck = window.audioEngine.getDeck(this.deckId);
+      if (deck) {
+        deck.stopCueMode();
+        this.updateCueState(false);
+      }
+    });
+
+    // Handle mouse leave to stop cue mode if user drags out of button
+    document.getElementById(`cue${this.deckId}`).addEventListener('mouseleave', () => {
+      const deck = window.audioEngine.getDeck(this.deckId);
+      if (deck && deck.isCueActive) {
+        deck.stopCueMode();
+        this.updateCueState(false);
+      }
+    });
+
+    // Touch events for mobile support
+    document.getElementById(`cue${this.deckId}`).addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      const deck = window.audioEngine.getDeck(this.deckId);
+      if (deck) {
+        deck.startCueMode();
+        this.updateCueState(true);
+      }
+    });
+
+    document.getElementById(`cue${this.deckId}`).addEventListener('touchend', (e) => {
+      e.preventDefault();
+      const deck = window.audioEngine.getDeck(this.deckId);
+      if (deck) {
+        deck.stopCueMode();
+        this.updateCueState(false);
+      }
+    });
+
+    // Also handle touchcancel
+    document.getElementById(`cue${this.deckId}`).addEventListener('touchcancel', (e) => {
+      e.preventDefault();
+      const deck = window.audioEngine.getDeck(this.deckId);
+      if (deck && deck.isCueActive) {
+        deck.stopCueMode();
+        this.updateCueState(false);
+      }
     });
 
     // Vinyl scratching
@@ -1283,13 +1383,6 @@ class DeckController {
     }
   }
 
-  cue() {
-    const deck = window.audioEngine.getDeck(this.deckId);
-    if (deck) {
-      deck.cue();
-    }
-  }
-
   updatePlayingState(isPlaying) {
     const deckElement = document.getElementById(`deck${this.deckId}`);
     const playButton = document.getElementById(`play${this.deckId}`);
@@ -1310,6 +1403,16 @@ class DeckController {
       pauseButton.classList.add('active');
     } else {
       pauseButton.classList.remove('active');
+    }
+  }
+
+  updateCueState(isCueActive) {
+    const cueButton = document.getElementById(`cue${this.deckId}`);
+    
+    if (isCueActive) {
+      cueButton.classList.add('active');
+    } else {
+      cueButton.classList.remove('active');
     }
   }
 

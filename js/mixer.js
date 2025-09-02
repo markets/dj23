@@ -224,7 +224,11 @@ class MixerController {
 
   cueDeck(deckId) {
     if (this.deckControllers[deckId]) {
-      this.deckControllers[deckId].cue();
+      // For keyboard shortcuts, use the original cue behavior (one-shot)
+      const deck = window.audioEngine.getDeck(deckId);
+      if (deck) {
+        deck.cue();
+      }
     }
   }
 }

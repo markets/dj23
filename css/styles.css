@@ -1393,6 +1393,11 @@ input[type="range"]::-moz-range-thumb {
   box-shadow: var(--shadow-primary) !important;
 }
 
+.cue-btn.active {
+  background: var(--gradient-primary) !important;
+  box-shadow: var(--shadow-primary) !important;
+}
+
 .loading {
   position: relative;
   overflow: hidden;
