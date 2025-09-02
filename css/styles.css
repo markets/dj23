@@ -985,12 +985,12 @@ body {
 .pitch-slider {
   writing-mode: vertical-lr;
   appearance: slider-vertical;
-  width: 25px;
-  height: 150px !important;
+  width: 20px;
+  height: 165px !important;
   background: linear-gradient(180deg, var(--color-accent-blue) 0%, var(--color-accent-purple) 100%);
   border-radius: var(--radius-xl);
   outline: none;
-  margin: var(--spacing-sm) 0;
+  margin: var(--spacing-xs) 0;
   border: 1px solid var(--border-light);
 }
 
@@ -1064,8 +1064,7 @@ body {
   justify-content: center;
   position: absolute;
   top: 50%;
-  left: calc(50% + 30px);
-  transform: translate(-50%, -50%);
+  left: calc(50% + 20px);
   z-index: 10;
 }
 
@@ -1198,6 +1197,7 @@ input[type="range"]::-moz-range-thumb {
   background: var(--bg-surface-light);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-light);
+  margin: var(--spacing-xs) 0;
 }
 
 .eq-slider::-webkit-slider-track,
