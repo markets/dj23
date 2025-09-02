@@ -388,6 +388,27 @@ class Deck {
     console.log(`Deck ${this.deckId}: Seek completed - current time: ${this.getCurrentTime().toFixed(2)}s`);
   }
 
+  // Reset deck state when loading new track
+  resetDeckState() {
+    // Reset cue points
+    this.cuePoints = { 1: null, 2: null };
+    
+    // Reset EQ to default values (0 dB)
+    const eqBands = ['high', 'mid', 'low', 'gain'];
+    eqBands.forEach(band => {
+      this.setEQ(band, 0);
+    });
+    
+    // Reset effects to default values
+    this.setFilter(50); // Default filter position
+    this.setReverb(0);
+    this.setDelay(0);
+    this.setPhaser(0);
+    this.setFlanger(0);
+    
+    console.log(`Deck ${this.deckId}: Deck state reset (cues, EQ, effects)`);
+  }
+
   // CUE point methods
   setCuePoint(cueNumber) {
     if (cueNumber === 1 || cueNumber === 2) {
@@ -1075,6 +1096,9 @@ class DeckController {
     const success = await deck.loadFile(file);
         
     if (success) {
+      // Reset deck state (cues, EQ, effects) when loading new track
+      this.resetDeckState();
+      
       // Extract metadata and update track display
       await this.extractAndDisplayMetadata(file);
       this.updateTrackTime();
@@ -1332,6 +1356,51 @@ class DeckController {
     const minutes = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  resetDeckState() {
+    const deck = window.audioEngine.getDeck(this.deckId);
+    if (!deck) return;
+
+    // Reset deck internal state
+    deck.resetDeckState();
+
+    // Reset UI elements - EQ sliders
+    const eqBands = [
+      { id: 'high', defaultValue: 0 },
+      { id: 'mid', defaultValue: 0 },
+      { id: 'low', defaultValue: 0 },
+      { id: 'gain', defaultValue: 0 }
+    ];
+
+    eqBands.forEach(eq => {
+      const slider = document.getElementById(`${eq.id}${this.deckId}`);
+      const valueDisplay = slider?.parentElement?.querySelector('.eq-value');
+      if (slider) {
+        slider.value = eq.defaultValue;
+        if (valueDisplay) {
+          valueDisplay.textContent = eq.defaultValue;
+        }
+      }
+    });
+
+    // Reset UI elements - Effects sliders  
+    const effects = [
+      { id: 'filter', defaultValue: 50 },
+      { id: 'reverb', defaultValue: 0 },
+      { id: 'delay', defaultValue: 0 },
+      { id: 'phaser', defaultValue: 0 },
+      { id: 'flanger', defaultValue: 0 }
+    ];
+
+    effects.forEach(effect => {
+      const slider = document.getElementById(`${effect.id}${this.deckId}`);
+      if (slider) {
+        slider.value = effect.defaultValue;
+      }
+    });
+
+    console.log(`Deck ${this.deckId}: All controls reset to default values`);
   }
 
   resetFilters() {
