@@ -17,36 +17,27 @@ class Deck {
     this.playbackRate = 1;
     this.volume = 0.75;
 
-    // Store original BPM for pitch-adjusted calculations
-    this.baseBPM = 120; // Default BPM, will be updated when track loads
+    this.baseBPM = 120;
+    this.beatPositions = [];
+    this.lastBeatTime = 0;
+    this.beatInterval = 0.5;
     
-    // Beat tracking properties
-    this.beatPositions = []; // Array of beat positions in seconds
-    this.lastBeatTime = 0;   // Time of the last detected beat
-    this.beatInterval = 0.5; // Current beat interval in seconds (will be calculated)
-    
-    // Continuous BPM analysis
-    this.bpmAnalysisHistory = []; // Store BPM readings over time
+    this.bpmAnalysisHistory = [];
     this.lastBpmAnalysisTime = 0;
-    this.bpmAnalysisInterval = 5; // Analyze BPM every 5 seconds during playback
 
-    // Scratching properties
     this.isScratching = false;
     this.originalPlaybackRate = 1;
     this.wasPlayingBeforeScratch = false;
 
-    // Pitch bend properties
     this.isPitchBending = false;
     this.originalPitchBeforeBend = undefined;
 
-    // CUE points
     this.cuePoints = { 1: null, 2: null };
 
-    // Loop points
     this.loopStart = null;
     this.loopEnd = null;
-    this.originalLoopEnd = null; // Store the original loop end point
-    this.loopLengthPercentage = 100; // Current loop length as percentage
+    this.originalLoopEnd = null;
+    this.loopLengthPercentage = 100;
     this.isLooping = false;
     this.loopCheckInterval = null;
 
@@ -101,14 +92,10 @@ class Deck {
   generateBeatMap() {
     if (!this.audioBuffer || this.baseBPM <= 0) return;
     
-    // Calculate beat interval from BPM
     this.beatInterval = 60 / this.baseBPM;
-    
-    // Generate beat positions throughout the track
     this.beatPositions = [];
     const duration = this.audioBuffer.duration;
     
-    // Start from the first beat (we assume it starts on beat 1)
     for (let time = 0; time < duration; time += this.beatInterval) {
       this.beatPositions.push(time);
     }
@@ -116,7 +103,6 @@ class Deck {
     console.log(`Generated ${this.beatPositions.length} beats for ${duration.toFixed(2)}s track at ${this.baseBPM} BPM`);
   }
 
-  // Find the nearest beat position to the current time
   findNearestBeat(currentTime) {
     if (this.beatPositions.length === 0) return currentTime;
     
@@ -134,31 +120,25 @@ class Deck {
     return nearestBeat;
   }
 
-  // Get the next beat after current time
   getNextBeat(currentTime) {
     for (const beatTime of this.beatPositions) {
       if (beatTime > currentTime) {
         return beatTime;
       }
     }
-    return currentTime; // If no next beat found, return current time
+    return currentTime;
   }
 
-  // Continuously refine BPM during playback (extended analysis for better accuracy)
   refineBPMDuringPlayback() {
     if (!this.isPlaying || !this.audioBuffer) return;
     
     const currentTime = this.getCurrentTime();
-    
-    // Extend refinement analysis to first 30 seconds of the track for better accuracy
     if (currentTime > 30) return;
     
-    // Analyze every 3 seconds for more frequent updates
     if (currentTime - this.lastBpmAnalysisTime >= 3) {
       this.lastBpmAnalysisTime = currentTime;
       
-      // Analyze a larger window around current position for better accuracy
-      const analysisWindow = 20; // 20 seconds for more data
+      const analysisWindow = 20;
       const startTime = Math.max(0, currentTime - analysisWindow / 2);
       const endTime = Math.min(this.audioBuffer.duration, currentTime + analysisWindow / 2);
       
@@ -169,30 +149,26 @@ class Deck {
       const audioData = this.audioBuffer.getChannelData(0);
       const windowData = audioData.slice(startSample, endSample);
       
-      if (windowData.length > sampleRate * 2) { // Need at least 2 seconds of data
+      if (windowData.length > sampleRate * 2) {
         const refinedBPM = this.detectBPMFromAudio(windowData, sampleRate);
         
-        // Add to history
         this.bpmAnalysisHistory.push({
           time: currentTime,
           bpm: refinedBPM
         });
         
-        // Keep only recent history (last 2 minutes)
         this.bpmAnalysisHistory = this.bpmAnalysisHistory.filter(
           entry => currentTime - entry.time <= 120
         );
         
-        // Update BPM if we have enough data and there's a consistent change
         if (this.bpmAnalysisHistory.length >= 3) {
           const recentBPMs = this.bpmAnalysisHistory.slice(-3).map(entry => entry.bpm);
           const avgRecentBPM = recentBPMs.reduce((sum, bpm) => sum + bpm, 0) / recentBPMs.length;
           
-          // More conservative threshold for BPM updates (3 BPM difference)
           if (Math.abs(avgRecentBPM - this.baseBPM) > 3) {
             console.log(`Refining BPM for deck ${this.deckId}: ${this.baseBPM} -> ${avgRecentBPM.toFixed(1)}`);
             this.baseBPM = avgRecentBPM;
-            this.generateBeatMap(); // Regenerate beat map with new BPM
+            this.generateBeatMap();
           }
         }
       }
@@ -567,31 +543,24 @@ class Deck {
     if (!this.audioBuffer) return 120;
     
     try {
-      // Get audio data from the buffer
       const audioData = this.audioBuffer.getChannelData(0);
       const sampleRate = this.audioBuffer.sampleRate;
-      
-      // Analyze longer segment for better accuracy (up to 60 seconds or full track if shorter)
       const analysisLength = Math.min(60 * sampleRate, audioData.length);
       const analysisData = audioData.slice(0, analysisLength);
       
-      // Detect BPM using onset detection and autocorrelation
       const bpm = this.detectBPMFromAudio(analysisData, sampleRate);
-      
       console.log(`Detected BPM: ${bpm} for deck ${this.deckId}`);
       return bpm;
     } catch (error) {
       console.error('BPM detection failed:', error);
-      return 120; // Default fallback
+      return 120;
     }
   }
 
   detectBPMFromAudio(audioData, sampleRate) {
-    // Calculate energy levels to detect beats
     const hopSize = 512;
     const energyValues = [];
     
-    // Calculate RMS energy for each frame
     for (let i = 0; i < audioData.length - hopSize; i += hopSize) {
       let energy = 0;
       for (let j = 0; j < hopSize; j++) {
@@ -600,87 +569,53 @@ class Deck {
       energyValues.push(Math.sqrt(energy / hopSize));
     }
     
-    // Simplified onset detection using energy-based approach
     const onsets = this.detectOnsets(energyValues, hopSize, sampleRate);
     
-    // Calculate tempo from onset intervals
-    if (onsets.length < 4) {
-      return 120; // Not enough data, return default
-    }
+    if (onsets.length < 4) return 120;
     
-    // Calculate intervals between consecutive onsets
     const intervals = [];
     for (let i = 1; i < onsets.length; i++) {
       intervals.push(onsets[i] - onsets[i - 1]);
     }
     
-    // Remove outliers - expand range slightly for better genre coverage
     const filteredIntervals = intervals.filter(interval => 
-      interval >= 0.2 && interval <= 2.0 // Between 30 BPM and 300 BPM
+      interval >= 0.2 && interval <= 2.0
     );
     
-    if (filteredIntervals.length === 0) {
-      return 120;
-    }
+    if (filteredIntervals.length === 0) return 120;
     
-    // Find the most common interval (tempo)
     const bpm = this.findMostLikelyTempo(filteredIntervals);
     
-    // Improved BPM validation for better genre support
-    let validatedBPM = bpm;
+    // Simple BPM validation
+    if (bpm < 60) return Math.round(bpm * 2);
+    if (bpm > 200) return Math.round(bpm / 2);
+    if (bpm > 160 && bpm / 2 >= 80 && bpm / 2 <= 140) return Math.round(bpm / 2);
     
-    // Handle extreme cases
-    if (bpm < 60) {
-      validatedBPM = bpm * 2; // Likely half-time detection
-    } else if (bpm > 200) {
-      validatedBPM = bpm / 2; // Likely double-time detection
-    }
-    
-    // Additional check for common double-time patterns in faster genres
-    if (validatedBPM > 160 && validatedBPM / 2 >= 80) {
-      const halfTime = validatedBPM / 2;
-      if (halfTime >= 80 && halfTime <= 140) {
-        validatedBPM = halfTime;
-      }
-    }
-    
-    console.log(`Detected BPM: ${bpm.toFixed(1)} -> Validated: ${validatedBPM.toFixed(1)} for deck ${this.deckId || 'unknown'}`);
-    return Math.round(validatedBPM);
+    return Math.round(bpm);
   }
 
   detectOnsets(energyValues, hopSize, sampleRate) {
     const onsets = [];
-    const threshold = 1.3; // Balanced threshold for good sensitivity across genres
+    const threshold = 1.3;
     
-    // Apply moving average for smoothing
     const smoothed = this.applyMovingAverage(energyValues, 2);
     
-    // Calculate spectral flux (energy differences between frames)
     const spectralFlux = [];
     for (let i = 1; i < smoothed.length; i++) {
-      const diff = Math.max(0, smoothed[i] - smoothed[i - 1]);
-      spectralFlux.push(diff);
+      spectralFlux.push(Math.max(0, smoothed[i] - smoothed[i - 1]));
     }
     
-    // Calculate adaptive threshold based on signal characteristics
     const meanFlux = spectralFlux.reduce((sum, val) => sum + val, 0) / spectralFlux.length;
-    const stdFlux = Math.sqrt(spectralFlux.reduce((sum, val) => sum + Math.pow(val - meanFlux, 2), 0) / spectralFlux.length);
     
-    // Find peaks in spectral flux
     for (let i = 1; i < spectralFlux.length - 1; i++) {
       const current = spectralFlux[i];
       const previous = spectralFlux[i - 1];
       const next = spectralFlux[i + 1];
       
-      // Dynamic threshold that adapts to signal characteristics
-      const dynamicThreshold = Math.max(meanFlux + stdFlux * 0.5, 0.01);
-      
-      // Detect peaks that are significantly higher than neighbors
       if (current > previous * threshold && 
           current > next && 
-          current > dynamicThreshold) {
-        const timeInSeconds = ((i + 1) * hopSize) / sampleRate;
-        onsets.push(timeInSeconds);
+          current > meanFlux * 0.8) {
+        onsets.push(((i + 1) * hopSize) / sampleRate);
       }
     }
     
@@ -704,15 +639,11 @@ class Deck {
   findMostLikelyTempo(intervals) {
     if (intervals.length === 0) return 120;
     
-    // Convert intervals to BPM
     const bpmValues = intervals.map(interval => 60 / interval);
-    
-    // Create histogram of BPM values with genre-aware grouping
     const histogram = {};
-    const tolerance = 4; // Slightly larger tolerance for better grouping
+    const tolerance = 4;
     
     bpmValues.forEach(bpm => {
-      // Round to nearest tolerance value for grouping
       const roundedBpm = Math.round(bpm / tolerance) * tolerance;
       if (!histogram[roundedBpm]) {
         histogram[roundedBpm] = [];
@@ -720,26 +651,17 @@ class Deck {
       histogram[roundedBpm].push(bpm);
     });
     
-    // Find the group with most occurrences, with genre preference scoring
     let maxScore = 0;
     let mostLikelyBPM = 120;
     
     Object.keys(histogram).forEach(key => {
       const group = histogram[key];
       const avgBpm = group.reduce((sum, bpm) => sum + bpm, 0) / group.length;
-      
-      // Base score from frequency
       let score = group.length;
       
-      // Apply genre preference multipliers for better DJ music support
-      if (avgBpm >= 120 && avgBpm <= 140) {
-        score *= 1.3; // Electronic & Dance music boost
-      } else if (avgBpm >= 100 && avgBpm <= 130) {
-        score *= 1.2; // Commercial & Mainstream boost  
-      } else if (avgBpm >= 80 && avgBpm <= 110) {
-        score *= 1.1; // Urban music boost
-      } else if (avgBpm >= 90 && avgBpm <= 150) {
-        score *= 1.05; // Alternative music slight boost
+      // Simple DJ music preference
+      if (avgBpm >= 80 && avgBpm <= 140) {
+        score *= 1.2;
       }
       
       if (score > maxScore) {
@@ -748,10 +670,7 @@ class Deck {
       }
     });
     
-    // Check for common double/half-time patterns
     const candidates = [mostLikelyBPM, mostLikelyBPM * 2, mostLikelyBPM / 2];
-    
-    // Return the candidate that makes most sense musically
     for (const candidate of candidates) {
       if (candidate >= 70 && candidate <= 180) {
         return candidate;
