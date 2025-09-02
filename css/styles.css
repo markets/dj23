@@ -344,10 +344,6 @@ body {
   background: var(--gradient-primary);
 }
 
-.cue-btn {
-  background: linear-gradient(45deg, var(--color-accent-blue), var(--color-secondary)) !important;
-}
-
 /* ============================================================================
    EQ SECTION
    ============================================================================ */
@@ -663,7 +659,7 @@ body {
 }
 
 .sync-btn {
-  background: var(--gradient-accent);
+  background: linear-gradient(45deg, var(--color-accent-blue), var(--color-secondary)) !important;
   border: none;
   color: white;
   padding: var(--spacing-sm) var(--spacing-lg);
@@ -1409,7 +1405,7 @@ input[type="range"]::-moz-range-thumb {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-primary) 30%, transparent), transparent);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, #fff 30%, transparent), transparent);
   animation: loading 1.5s infinite;
 }
 

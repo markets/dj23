@@ -119,16 +119,13 @@ class WaveformRenderer {
     if (!deck || !deck.audioBuffer) return;
     
     const duration = deck.getDuration();
-    
-    // Use unified color for both cue points - subtle gray that works with dark theme
-    const cueLineColor = '#ccc';
-    const cueTextColor = '#fff';
+    const cuePointColor = '#fff';
     
     // Draw CUE 1
     if (deck.cuePoints[1] !== null) {
       const cue1Position = (deck.cuePoints[1] / duration) * width;
-      this.ctx.strokeStyle = cueLineColor;
-      this.ctx.lineWidth = 3;
+      this.ctx.strokeStyle = cuePointColor;
+      this.ctx.lineWidth = 2;
       this.ctx.setLineDash([]);
       this.ctx.beginPath();
       this.ctx.moveTo(cue1Position, 0);
@@ -150,7 +147,7 @@ class WaveformRenderer {
       this.ctx.fillRect(textX - 2, textY - 10, textWidth, 12);
       
       // Draw text
-      this.ctx.fillStyle = cueTextColor;
+      this.ctx.fillStyle = cuePointColor;
       this.ctx.textAlign = 'left';
       this.ctx.fillText('CUE 1', textX, textY);
     }
@@ -158,8 +155,8 @@ class WaveformRenderer {
     // Draw CUE 2
     if (deck.cuePoints[2] !== null) {
       const cue2Position = (deck.cuePoints[2] / duration) * width;
-      this.ctx.strokeStyle = cueLineColor;
-      this.ctx.lineWidth = 3;
+      this.ctx.strokeStyle = cuePointColor;
+      this.ctx.lineWidth = 2;
       this.ctx.setLineDash([]);
       this.ctx.beginPath();
       this.ctx.moveTo(cue2Position, 0);
@@ -181,7 +178,7 @@ class WaveformRenderer {
       this.ctx.fillRect(textX - 2, textY - 10, textWidth, 12);
       
       // Draw text
-      this.ctx.fillStyle = cueTextColor;
+      this.ctx.fillStyle = cuePointColor;
       this.ctx.textAlign = 'left';
       this.ctx.fillText('CUE 2', textX, textY);
     }
