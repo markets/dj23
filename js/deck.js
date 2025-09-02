@@ -389,6 +389,11 @@ class Deck {
   }
 
   // CUE point methods
+  resetCuePoints() {
+    this.cuePoints = { 1: null, 2: null };
+    console.log(`Deck ${this.deckId}: CUE points reset`);
+  }
+
   setCuePoint(cueNumber) {
     if (cueNumber === 1 || cueNumber === 2) {
       this.cuePoints[cueNumber] = this.getCurrentTime();
@@ -1075,6 +1080,9 @@ class DeckController {
     const success = await deck.loadFile(file);
         
     if (success) {
+      // Reset cues
+      deck.resetCuePoints();
+      
       // Extract metadata and update track display
       await this.extractAndDisplayMetadata(file);
       this.updateTrackTime();
