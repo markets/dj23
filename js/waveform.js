@@ -120,10 +120,14 @@ class WaveformRenderer {
     
     const duration = deck.getDuration();
     
+    // Use unified color for both cue points - subtle gray that works with dark theme
+    const cueLineColor = '#ccc';
+    const cueTextColor = '#fff';
+    
     // Draw CUE 1
     if (deck.cuePoints[1] !== null) {
       const cue1Position = (deck.cuePoints[1] / duration) * width;
-      this.ctx.strokeStyle = '#ff6b6b';
+      this.ctx.strokeStyle = cueLineColor;
       this.ctx.lineWidth = 3;
       this.ctx.setLineDash([]);
       this.ctx.beginPath();
@@ -131,15 +135,32 @@ class WaveformRenderer {
       this.ctx.lineTo(cue1Position, height);
       this.ctx.stroke();
       
-      this.ctx.fillStyle = '#ff6b6b';
-      this.ctx.font = 'bold 12px Inter';
-      this.ctx.textAlign = 'center';
-      this.ctx.fillText('CUE 1', cue1Position, 15);
+      // Improved text positioning with background for better readability
+      this.ctx.font = 'bold 10px Inter';
+      const textMetrics = this.ctx.measureText('CUE 1');
+      
+      // Smart positioning: place text to the right, but if too close to edge, place to the left
+      const textOffset = 8;
+      const textWidth = textMetrics.width + 4;
+      const textX = cue1Position + textOffset + textWidth > width 
+        ? cue1Position - textOffset - textWidth + 2 
+        : cue1Position + textOffset;
+      const textY = 14;
+      
+      // Draw text background for better readability
+      this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      this.ctx.fillRect(textX - 2, textY - 10, textWidth, 12);
+      
+      // Draw text
+      this.ctx.fillStyle = cueTextColor;
+      this.ctx.textAlign = 'left';
+      this.ctx.fillText('CUE 1', textX, textY);
     }
     
+    // Draw CUE 2
     if (deck.cuePoints[2] !== null) {
       const cue2Position = (deck.cuePoints[2] / duration) * width;
-      this.ctx.strokeStyle = '#4ecdc4';
+      this.ctx.strokeStyle = cueLineColor;
       this.ctx.lineWidth = 3;
       this.ctx.setLineDash([]);
       this.ctx.beginPath();
@@ -147,10 +168,26 @@ class WaveformRenderer {
       this.ctx.lineTo(cue2Position, height);
       this.ctx.stroke();
       
-      this.ctx.fillStyle = '#4ecdc4';
-      this.ctx.font = 'bold 12px Inter';
-      this.ctx.textAlign = 'center';
-      this.ctx.fillText('CUE 2', cue2Position, 30);
+      // Improved text positioning with background for better readability
+      this.ctx.font = 'bold 10px Inter';
+      const textMetrics = this.ctx.measureText('CUE 2');
+      
+      // Smart positioning: place text to the right, but if too close to edge, place to the left
+      const textOffset = 8;
+      const textWidth = textMetrics.width + 4;
+      const textX = cue2Position + textOffset + textWidth > width 
+        ? cue2Position - textOffset - textWidth + 2 
+        : cue2Position + textOffset;
+      const textY = 28;
+      
+      // Draw text background for better readability
+      this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      this.ctx.fillRect(textX - 2, textY - 10, textWidth, 12);
+      
+      // Draw text
+      this.ctx.fillStyle = cueTextColor;
+      this.ctx.textAlign = 'left';
+      this.ctx.fillText('CUE 2', textX, textY);
     }
   }
 
