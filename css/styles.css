@@ -633,6 +633,25 @@ body {
   color: var(--color-primary);
 }
 
+.bpm-indicator {
+  display: inline-block;
+  margin-left: var(--spacing-xs);
+  color: var(--color-secondary);
+  font-size: 0.8rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.bpm-indicator.active {
+  opacity: 1;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
 .sync-btn {
   background: var(--gradient-accent);
   border: none;

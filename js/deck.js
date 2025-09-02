@@ -150,6 +150,12 @@ class Deck {
     
     const currentTime = this.getCurrentTime();
     
+    // Show indicator that BPM analysis is active
+    const indicator = document.getElementById(`bpmIndicator${this.deckId}`);
+    if (indicator) {
+      indicator.classList.add('active');
+    }
+    
     // Only analyze every few seconds to avoid performance issues
     if (currentTime - this.lastBpmAnalysisTime >= this.bpmAnalysisInterval) {
       this.lastBpmAnalysisTime = currentTime;
@@ -192,6 +198,13 @@ class Deck {
             this.generateBeatMap(); // Regenerate beat map with new BPM
           }
         }
+        
+        // Hide indicator after analysis is complete
+        setTimeout(() => {
+          if (indicator) {
+            indicator.classList.remove('active');
+          }
+        }, 1000);
       }
     }
   }
@@ -1100,6 +1113,20 @@ class DeckController {
           const artist = tags.artist || '';
           const title = tags.title || '';
           const album = tags.album || '';
+          
+          // Check for BPM in metadata and update if found
+          if (tags.BPM || tags.bpm) {
+            const metadataBPM = parseInt(tags.BPM || tags.bpm);
+            if (metadataBPM > 0 && metadataBPM < 300) {
+              const deck = window.audioEngine.getDeck(this.deckId);
+              if (deck) {
+                deck.baseBPM = metadataBPM;
+                deck.generateBeatMap();
+                console.log(`Using BPM from metadata: ${metadataBPM} for deck ${this.deckId}`);
+                this.updateBPMDisplay();
+              }
+            }
+          }
           
           // Format display title
           if (artist && title) {
