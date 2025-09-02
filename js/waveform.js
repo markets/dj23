@@ -407,23 +407,17 @@ class ZoomedWaveformRenderer {
   updateZoomWindow() {
     const deck = window.audioEngine.getDeck(this.deckId);
     if (!deck || !deck.audioBuffer) {
-      // When no track is loaded, keep offset at 0 to show middle line only
-      this.offsetSeconds = 0;
+      // When no track is loaded, center the window
+      this.offsetSeconds = this.zoomLevel / 2;
       return;
     }
 
     const currentTime = deck.getCurrentTime();
     const duration = deck.getDuration();
     
-    // For zoomed waveforms: position window to center current time on the red line
-    // When song starts (currentTime < zoomLevel/2), show from beginning so red line aligns with current time
-    if (currentTime < this.zoomLevel / 2) {
-      // At the start of the track, show from beginning and position red line at current time
-      this.offsetSeconds = 0;
-    } else {
-      // After initial period, center the current time so red line stays in middle
-      this.offsetSeconds = Math.max(0, currentTime - this.zoomLevel / 2);
-    }
+    // Always center the current time under the red line (which stays in middle)
+    // This makes the waveform start centered and move underneath the fixed center line
+    this.offsetSeconds = Math.max(0, currentTime - this.zoomLevel / 2);
     
     // Ensure we don't go beyond track duration
     this.offsetSeconds = Math.min(this.offsetSeconds, Math.max(0, duration - this.zoomLevel));
@@ -501,16 +495,8 @@ class ZoomedWaveformRenderer {
     // Draw beat markers (every second)
     this.drawBeatMarkers(width, height, duration);
     
-    // Draw red playhead line at the correct position for current time
-    let playheadX;
-    if (currentTime < this.zoomLevel / 2) {
-      // At start of track, position red line based on current time within the window
-      const progressInWindow = currentTime / Math.min(this.zoomLevel, duration);
-      playheadX = width * progressInWindow;
-    } else {
-      // After initial period, red line stays centered as window moves
-      playheadX = width / 2;
-    }
+    // Draw red playhead line always in the center
+    const playheadX = width / 2;
     
     this.ctx.strokeStyle = '#ff4757';
     this.ctx.lineWidth = 2;
@@ -557,12 +543,12 @@ class ZoomedWaveformRenderer {
     this.ctx.lineTo(width, height / 2);
     this.ctx.stroke();
         
-    // Draw red playhead line at the start position (0%) when no track is loaded
+    // Draw red playhead line in the center when no track is loaded
     this.ctx.strokeStyle = '#ff4757';
     this.ctx.lineWidth = 2;
     this.ctx.beginPath();
-    this.ctx.moveTo(0, 0);
-    this.ctx.lineTo(0, height);
+    this.ctx.moveTo(width / 2, 0);
+    this.ctx.lineTo(width / 2, height);
     this.ctx.stroke();
     
     // Draw text
@@ -577,24 +563,12 @@ class ZoomedWaveformRenderer {
     const playhead = document.getElementById(`beatPlayhead${this.deckId}`);
         
     if (deck && deck.getDuration() > 0) {
-      const currentTime = deck.getCurrentTime();
-      
-      // Position playhead based on the same logic as the red line in render()
-      let playheadPosition;
-      if (currentTime < this.zoomLevel / 2) {
-        // At start of track, position based on current time within the window
-        const progressInWindow = currentTime / Math.min(this.zoomLevel, deck.getDuration());
-        playheadPosition = progressInWindow * 100;
-      } else {
-        // After initial period, playhead stays centered as window moves
-        playheadPosition = 50;
-      }
-      
-      playhead.style.left = `${playheadPosition}%`;
+      // Always keep the red line in the center - the waveform moves underneath
+      playhead.style.left = '50%';
       playhead.style.opacity = deck.isPlaying ? '1' : '0.7';
     } else {
-      // When no track is loaded, position at the start
-      playhead.style.left = '0%';
+      // When no track is loaded, keep playhead centered
+      playhead.style.left = '50%';
       playhead.style.opacity = '0.3';
     }
   }
