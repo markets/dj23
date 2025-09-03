@@ -288,13 +288,16 @@ class ZoomedWaveformRenderer {
         const windowDuration = Math.min(this.zoomLevel, deck.getDuration() - this.offsetSeconds);
         const timePerPixel = windowDuration / rect.width;
         const timeOffset = deltaX * timePerPixel;
-        const newTime = Math.max(0, Math.min(deck.getDuration(), deck.getCurrentTime() - timeOffset));
+        const newTime = Math.max(0, Math.min(deck.getDuration(), deck.getCurrentTime() + timeOffset));
         
         // Seek to new position for full record control
         deck.seek(newTime);
         
-        // Also apply scratch effect for audio feedback
-        deck.scratch(scratchSpeed * 15); // Scale for audio scratching
+        // Apply scratch effect for audio feedback only when playing
+        // When paused, skip scratch effects to avoid audio source issues
+        if (deck.isPlaying) {
+          deck.scratch(scratchSpeed * 15); // Scale for audio scratching
+        }
       }
       
       lastX = currentX;
@@ -356,13 +359,16 @@ class ZoomedWaveformRenderer {
         const windowDuration = Math.min(this.zoomLevel, deck.getDuration() - this.offsetSeconds);
         const timePerPixel = windowDuration / rect.width;
         const timeOffset = deltaX * timePerPixel;
-        const newTime = Math.max(0, Math.min(deck.getDuration(), deck.getCurrentTime() - timeOffset));
+        const newTime = Math.max(0, Math.min(deck.getDuration(), deck.getCurrentTime() + timeOffset));
         
         // Seek to new position for full record control
         deck.seek(newTime);
         
-        // Also apply scratch effect for audio feedback
-        deck.scratch(scratchSpeed * 15);
+        // Apply scratch effect for audio feedback only when playing
+        // When paused, skip scratch effects to avoid audio source issues
+        if (deck.isPlaying) {
+          deck.scratch(scratchSpeed * 15);
+        }
       }
       
       lastX = currentX;
