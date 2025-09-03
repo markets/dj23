@@ -16,6 +16,59 @@ class KeyboardShortcuts {
     document.addEventListener('keyup', (e) => this.handleKeyUp(e));
   }
 
+  // Helper function for deck transport controls
+  controlDeck(deckId, action) {
+    const mixerController = window.mixerController;
+    if (!mixerController) return;
+
+    switch (action) {
+      case 'play':
+        mixerController.playDeck(deckId);
+        break;
+      case 'pause':
+        mixerController.pauseDeck(deckId);
+        break;
+      case 'stop':
+        mixerController.stopDeck(deckId);
+        break;
+    }
+  }
+
+  // Helper function for CUE press-and-hold behavior
+  handleCuePress(deckId, keyCode) {
+    if (this.cueKeysPressed.has(keyCode)) return; // Already pressed
+
+    this.cueKeysPressed.add(keyCode);
+    const deck = window.audioEngine.getDeck(deckId);
+    if (deck) {
+      deck.startCueMode();
+      const controller = window.mixerController.deckControllers[deckId];
+      if (controller) {
+        controller.updateCueState(true);
+      }
+    }
+  }
+
+  // Helper function for CUE release
+  handleCueRelease(deckId, keyCode) {
+    if (!this.cueKeysPressed.has(keyCode)) return; // Not pressed
+
+    this.cueKeysPressed.delete(keyCode);
+    const deck = window.audioEngine.getDeck(deckId);
+    if (deck) {
+      deck.stopCueMode();
+      const controller = window.mixerController.deckControllers[deckId];
+      if (controller) {
+        controller.updateCueState(false);
+      }
+    }
+  }
+
+  // Helper function for button clicks
+  clickButton(buttonId) {
+    document.getElementById(buttonId)?.click();
+  }
+
   setupModal() {
     const modal = document.getElementById('keyboardShortcutsModal');
     if (modal) {
@@ -71,152 +124,69 @@ class KeyboardShortcuts {
   }
 
   handleCtrlCombinations(e) {
-    switch (e.code) {
-      case 'KeyS':
-        document.getElementById('syncAB')?.click();
-        break;
-      case 'KeyD':
-        document.getElementById('syncBA')?.click();
-        break;
-      case 'KeyO':
-        document.getElementById('fileInputA')?.click();
-        break;
-      case 'KeyP':
-        document.getElementById('fileInputB')?.click();
-        break;
-    }
+    const ctrlActions = {
+      'KeyS': () => this.clickButton('syncAB'),
+      'KeyD': () => this.clickButton('syncBA'),
+      'KeyO': () => this.clickButton('fileInputA'),
+      'KeyP': () => this.clickButton('fileInputB')
+    };
+
+    const action = ctrlActions[e.code];
+    if (action) action();
   }
 
   handleRegularShortcuts(e) {
-    switch (e.code) {
-      case 'Space':
-        // Toggle play/pause for active deck (default to A if none active)
-        window.mixerController?.playDeck('A');
-        break;
+    // Define keyboard mappings for easier maintenance
+    const shortcuts = {
+      // General controls
+      'Space': () => this.controlDeck('A', 'play'),
       
       // Deck A Controls
-      case 'KeyQ':
-        window.mixerController?.playDeck('A');
-        break;
-      case 'KeyW':
-        window.mixerController?.pauseDeck('A');
-        break;
-      case 'KeyE':
-        window.mixerController?.stopDeck('A');
-        break;
-      case 'KeyR':
-        // CUE Deck A - press and hold behavior
-        if (!this.cueKeysPressed.has('KeyR')) {
-          this.cueKeysPressed.add('KeyR');
-          const deck = window.audioEngine.getDeck('A');
-          if (deck) {
-            deck.startCueMode();
-            const controller = window.mixerController.deckControllers['A'];
-            if (controller) {
-              controller.updateCueState(true);
-            }
-          }
-        }
-        break;
+      'KeyQ': () => this.controlDeck('A', 'play'),
+      'KeyW': () => this.controlDeck('A', 'pause'),
+      'KeyE': () => this.controlDeck('A', 'stop'),
+      'KeyR': () => this.handleCuePress('A', 'KeyR'),
       
       // Deck B Controls
-      case 'KeyA':
-        window.mixerController?.playDeck('B');
-        break;
-      case 'KeyS':
-        window.mixerController?.pauseDeck('B');
-        break;
-      case 'KeyD':
-        window.mixerController?.stopDeck('B');
-        break;
-      case 'KeyF':
-        // CUE Deck B - press and hold behavior
-        if (!this.cueKeysPressed.has('KeyF')) {
-          this.cueKeysPressed.add('KeyF');
-          const deck = window.audioEngine.getDeck('B');
-          if (deck) {
-            deck.startCueMode();
-            const controller = window.mixerController.deckControllers['B'];
-            if (controller) {
-              controller.updateCueState(true);
-            }
-          }
-        }
-        break;
+      'KeyA': () => this.controlDeck('B', 'play'),
+      'KeyS': () => this.controlDeck('B', 'pause'),
+      'KeyD': () => this.controlDeck('B', 'stop'),
+      'KeyF': () => this.handleCuePress('B', 'KeyF'),
       
       // Cue Points
-      case 'Digit1':
-        this.handleCuePoint(e, 'A', 1);
-        break;
-      case 'Digit2':
-        this.handleCuePoint(e, 'A', 2);
-        break;
-      case 'Digit3':
-        this.handleCuePoint(e, 'B', 1);
-        break;
-      case 'Digit4':
-        this.handleCuePoint(e, 'B', 2);
-        break;
+      'Digit1': () => this.handleCuePoint(e, 'A', 1),
+      'Digit2': () => this.handleCuePoint(e, 'A', 2),
+      'Digit3': () => this.handleCuePoint(e, 'B', 1),
+      'Digit4': () => this.handleCuePoint(e, 'B', 2),
       
-      // Loop Controls - Deck A
-      case 'KeyT':
-        document.getElementById('loopInA')?.click();
-        break;
-      case 'KeyY':
-        document.getElementById('loopOutA')?.click();
-        break;
-      case 'KeyU':
-        document.getElementById('loopToggleA')?.click();
-        break;
+      // Loop Controls
+      'KeyT': () => this.clickButton('loopInA'),
+      'KeyY': () => this.clickButton('loopOutA'),
+      'KeyU': () => this.clickButton('loopToggleA'),
+      'KeyG': () => this.clickButton('loopInB'),
+      'KeyH': () => this.clickButton('loopOutB'),
+      'KeyJ': () => this.clickButton('loopToggleB'),
       
-      // Loop Controls - Deck B
-      case 'KeyG':
-        document.getElementById('loopInB')?.click();
-        break;
-      case 'KeyH':
-        document.getElementById('loopOutB')?.click();
-        break;
-      case 'KeyJ':
-        document.getElementById('loopToggleB')?.click();
-        break;
-      
-      // Pitch Bend - Deck A
-      case 'Equal': // + key
-        document.getElementById('pitchBendPlusA')?.click();
-        break;
-      case 'Minus': // - key
-        document.getElementById('pitchBendMinusA')?.click();
-        break;
-      
-      // Pitch Bend - Deck B
-      case 'BracketRight': // ] key
-        document.getElementById('pitchBendPlusB')?.click();
-        break;
-      case 'BracketLeft': // [ key
-        document.getElementById('pitchBendMinusB')?.click();
-        break;
+      // Pitch Bend
+      'Equal': () => this.clickButton('pitchBendPlusA'),
+      'Minus': () => this.clickButton('pitchBendMinusA'),
+      'BracketRight': () => this.clickButton('pitchBendPlusB'),
+      'BracketLeft': () => this.clickButton('pitchBendMinusB'),
       
       // Crossfader and Master Volume
-      case 'ArrowLeft':
-        this.adjustCrossfader(-5);
-        break;
-      case 'ArrowRight':
-        this.adjustCrossfader(5);
-        break;
-      case 'ArrowUp':
-        this.adjustMasterVolume(5);
-        break;
-      case 'ArrowDown':
-        this.adjustMasterVolume(-5);
-        break;
+      'ArrowLeft': () => this.adjustCrossfader(-5),
+      'ArrowRight': () => this.adjustCrossfader(5),
+      'ArrowUp': () => this.adjustMasterVolume(5),
+      'ArrowDown': () => this.adjustMasterVolume(-5),
       
       // Show shortcuts modal
-      case 'Slash':
-        if (e.shiftKey) { // ? key (Shift + /)
-          this.showModal();
-        }
-        break;
-    }
+      'Slash': () => {
+        if (e.shiftKey) this.showModal();
+      }
+    };
+
+    const action = shortcuts[e.code];
+    if (action) action();
   }
 
   handleCuePoint(e, deck, cueNumber) {
@@ -271,33 +241,14 @@ class KeyboardShortcuts {
 
   handleKeyUp(e) {
     // Handle CUE key releases for press-and-hold behavior
-    switch (e.code) {
-      case 'KeyR':
-        if (this.cueKeysPressed.has('KeyR')) {
-          this.cueKeysPressed.delete('KeyR');
-          const deck = window.audioEngine.getDeck('A');
-          if (deck) {
-            deck.stopCueMode();
-            const controller = window.mixerController.deckControllers['A'];
-            if (controller) {
-              controller.updateCueState(false);
-            }
-          }
-        }
-        break;
-      case 'KeyF':
-        if (this.cueKeysPressed.has('KeyF')) {
-          this.cueKeysPressed.delete('KeyF');
-          const deck = window.audioEngine.getDeck('B');
-          if (deck) {
-            deck.stopCueMode();
-            const controller = window.mixerController.deckControllers['B'];
-            if (controller) {
-              controller.updateCueState(false);
-            }
-          }
-        }
-        break;
+    const cueKeyMappings = {
+      'KeyR': 'A',
+      'KeyF': 'B'
+    };
+
+    const deckId = cueKeyMappings[e.code];
+    if (deckId) {
+      this.handleCueRelease(deckId, e.code);
     }
   }
 }
