@@ -323,12 +323,13 @@ body {
   background: var(--gradient-surface);
   border: 1px solid var(--border-secondary);
   color: white;
-  padding: var(--spacing-md) var(--spacing-lg);
-  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-full);
   cursor: pointer;
   font-weight: 600;
   transition: var(--transition-normal);
-  min-width: 50px;
+  width: 60px;
+  height: 60px;
 }
 
 .transport-controls button:hover {
@@ -832,7 +833,6 @@ body {
   display: flex;
   gap: var(--spacing-xl);
   align-items: center;
-  margin-bottom: var(--spacing-xl);
   justify-content: center;
 }
 
@@ -1050,7 +1050,7 @@ body {
   align-items: center;
   justify-content: center;
   position: absolute;
-  top: 50%;
+  top: 52%;
   left: calc(50% + 20px);
   z-index: 10;
 }
@@ -1343,36 +1343,20 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .cue-point-btn, .set-cue-btn {
-  border: none;
+  background: var(--gradient-surface);
+  border: 1px solid var(--border-secondary);
   color: white;
   border-radius: var(--radius-sm);
   cursor: pointer;
   font-weight: 500;
   transition: var(--transition-normal);
-  font-size: 0.9rem;
-  background: linear-gradient(45deg, #ff9ff3, #f368e0);
-  padding: var(--spacing-sm) 12px;
-}
-
-.set-cue-btn {
-  background: linear-gradient(45deg, #74b9ff, #0984e3);
+  font-size: 0.8rem;
+  padding: 8px 10px;
 }
 
 .cue-point-btn:hover, .set-cue-btn:hover {
+  background: linear-gradient(145deg, var(--border-secondary), var(--border-primary));
   transform: translateY(-1px);
-}
-
-.cue-point-btn:hover {
-  box-shadow: 0 3px 12px rgba(255, 159, 243, 0.4);
-}
-
-.set-cue-btn:hover {
-  box-shadow: 0 3px 12px rgba(116, 185, 255, 0.4);
-}
-
-.cue-point-btn.active {
-  background: linear-gradient(45deg, #fd79a8, #e84393);
-  box-shadow: 0 0 15px rgba(255, 159, 243, 0.6);
 }
 
 /* ============================================================================
