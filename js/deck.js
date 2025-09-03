@@ -409,55 +409,24 @@ class Deck {
     }
   }
 
-  // Main CUE function - returns to last cue point or beginning
-  cue() {
-    // If playing, pause and return to last cue point
-    if (this.isPlaying) {
-      this.pause();
-      // Find the most recently set cue point
-      let lastCueTime = null;
-      for (let i = 1; i <= 2; i++) {
-        if (this.cuePoints[i] !== null) {
-          lastCueTime = this.cuePoints[i];
-        }
+  // Helper method to find the most recently set cue point
+  getLastCueTime() {
+    let lastCueTime = null;
+    for (let i = 1; i <= 2; i++) {
+      if (this.cuePoints[i] !== null) {
+        lastCueTime = this.cuePoints[i];
       }
-      // Go to last cue point or beginning
-      const cueTime = lastCueTime !== null ? lastCueTime : 0;
-      this.seek(cueTime);
-      console.log(`Deck ${this.deckId}: CUE - returned to ${cueTime}s`);
-    } else {
-      // If paused, just go to beginning or last cue point
-      let lastCueTime = null;
-      for (let i = 1; i <= 2; i++) {
-        if (this.cuePoints[i] !== null) {
-          lastCueTime = this.cuePoints[i];
-        }
-      }
-      const cueTime = lastCueTime !== null ? lastCueTime : 0;
-      this.seek(cueTime);
-      console.log(`Deck ${this.deckId}: CUE - moved to ${cueTime}s`);
     }
+    return lastCueTime !== null ? lastCueTime : 0;
   }
 
-  // New CUE mode methods for press-and-hold behavior
+  // CUE mode methods for press-and-hold behavior
   startCueMode() {
     if (!this.audioBuffer) return;
     
-    // Store current state
-    const wasPlaying = this.isPlaying;
-    
     // If not playing, go to cue point and start playing
     if (!this.isPlaying) {
-      // Find the most recently set cue point
-      let lastCueTime = null;
-      for (let i = 1; i <= 2; i++) {
-        if (this.cuePoints[i] !== null) {
-          lastCueTime = this.cuePoints[i];
-        }
-      }
-      // Go to last cue point or beginning
-      const cueTime = lastCueTime !== null ? lastCueTime : 0;
-      this.seek(cueTime);
+      this.seek(this.getLastCueTime());
     }
     
     // Start playing and mark as cue active
@@ -471,17 +440,7 @@ class Deck {
     
     // Stop playing and return to cue point
     this.pause();
-    
-    // Find the most recently set cue point
-    let lastCueTime = null;
-    for (let i = 1; i <= 2; i++) {
-      if (this.cuePoints[i] !== null) {
-        lastCueTime = this.cuePoints[i];
-      }
-    }
-    // Return to last cue point or beginning
-    const cueTime = lastCueTime !== null ? lastCueTime : 0;
-    this.seek(cueTime);
+    this.seek(this.getLastCueTime());
     
     this.isCueActive = false;
     console.log(`Deck ${this.deckId}: CUE mode stopped`);

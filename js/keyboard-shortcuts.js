@@ -2,6 +2,7 @@ class KeyboardShortcuts {
   constructor() {
     this.modalElement = null;
     this.isModalOpen = false;
+    this.cueKeysPressed = new Set(); // Track which CUE keys are currently pressed
     this.initialize();
   }
 
@@ -12,6 +13,7 @@ class KeyboardShortcuts {
 
   setupEventListeners() {
     document.addEventListener('keydown', (e) => this.handleKeyDown(e));
+    document.addEventListener('keyup', (e) => this.handleKeyUp(e));
   }
 
   setupModal() {
@@ -103,7 +105,18 @@ class KeyboardShortcuts {
         window.mixerController?.stopDeck('A');
         break;
       case 'KeyR':
-        window.mixerController?.cueDeck('A');
+        // CUE Deck A - press and hold behavior
+        if (!this.cueKeysPressed.has('KeyR')) {
+          this.cueKeysPressed.add('KeyR');
+          const deck = window.audioEngine.getDeck('A');
+          if (deck) {
+            deck.startCueMode();
+            const controller = window.mixerController.deckControllers['A'];
+            if (controller) {
+              controller.updateCueState(true);
+            }
+          }
+        }
         break;
       
       // Deck B Controls
@@ -117,7 +130,18 @@ class KeyboardShortcuts {
         window.mixerController?.stopDeck('B');
         break;
       case 'KeyF':
-        window.mixerController?.cueDeck('B');
+        // CUE Deck B - press and hold behavior
+        if (!this.cueKeysPressed.has('KeyF')) {
+          this.cueKeysPressed.add('KeyF');
+          const deck = window.audioEngine.getDeck('B');
+          if (deck) {
+            deck.startCueMode();
+            const controller = window.mixerController.deckControllers['B'];
+            if (controller) {
+              controller.updateCueState(true);
+            }
+          }
+        }
         break;
       
       // Cue Points
@@ -242,6 +266,38 @@ class KeyboardShortcuts {
       this.modalElement.classList.remove('show');
       document.body.style.overflow = 'auto';
       this.isModalOpen = false;
+    }
+  }
+
+  handleKeyUp(e) {
+    // Handle CUE key releases for press-and-hold behavior
+    switch (e.code) {
+      case 'KeyR':
+        if (this.cueKeysPressed.has('KeyR')) {
+          this.cueKeysPressed.delete('KeyR');
+          const deck = window.audioEngine.getDeck('A');
+          if (deck) {
+            deck.stopCueMode();
+            const controller = window.mixerController.deckControllers['A'];
+            if (controller) {
+              controller.updateCueState(false);
+            }
+          }
+        }
+        break;
+      case 'KeyF':
+        if (this.cueKeysPressed.has('KeyF')) {
+          this.cueKeysPressed.delete('KeyF');
+          const deck = window.audioEngine.getDeck('B');
+          if (deck) {
+            deck.stopCueMode();
+            const controller = window.mixerController.deckControllers['B'];
+            if (controller) {
+              controller.updateCueState(false);
+            }
+          }
+        }
+        break;
     }
   }
 }
