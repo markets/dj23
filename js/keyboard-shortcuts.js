@@ -42,10 +42,6 @@ class KeyboardShortcuts {
     const deck = window.audioEngine.getDeck(deckId);
     if (deck) {
       deck.startCueMode();
-      const controller = window.mixerController.deckControllers[deckId];
-      if (controller) {
-        controller.updateCueState(true);
-      }
     }
   }
 
@@ -57,10 +53,6 @@ class KeyboardShortcuts {
     const deck = window.audioEngine.getDeck(deckId);
     if (deck) {
       deck.stopCueMode();
-      const controller = window.mixerController.deckControllers[deckId];
-      if (controller) {
-        controller.updateCueState(false);
-      }
     }
   }
 

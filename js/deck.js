@@ -432,6 +432,13 @@ class Deck {
     // Start playing and mark as cue active
     this.isCueActive = true;
     this.play();
+    
+    // Update CUE button visual state
+    const controller = window.mixerController?.deckControllers[this.deckId];
+    if (controller) {
+      controller.updateCueState(true);
+    }
+    
     console.log(`Deck ${this.deckId}: CUE mode started`);
   }
 
@@ -443,6 +450,13 @@ class Deck {
     this.seek(this.getLastCueTime());
     
     this.isCueActive = false;
+    
+    // Update CUE button visual state
+    const controller = window.mixerController?.deckControllers[this.deckId];
+    if (controller) {
+      controller.updateCueState(false);
+    }
+    
     console.log(`Deck ${this.deckId}: CUE mode stopped`);
   }
 
@@ -782,11 +796,9 @@ class DeckController {
       `cue${this.deckId}`,
       () => {
         window.buttonHandler.callDeckMethod(this.deckId, 'startCueMode');
-        this.updateCueState(true);
       },
       () => {
         window.buttonHandler.callDeckMethod(this.deckId, 'stopCueMode');
-        this.updateCueState(false);
       }
     );
 
