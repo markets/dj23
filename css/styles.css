@@ -694,7 +694,7 @@ body {
 .vu-bars {
   display: flex;
   gap: var(--spacing-xs);
-  height: 60px;
+  height: 80px;
   align-items: flex-end;
 }
 
