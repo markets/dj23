@@ -34,6 +34,11 @@ class Deck {
     this.isScratching = false;
     this.originalPlaybackRate = 1;
     this.wasPlayingBeforeScratch = false;
+    this.scratchMomentum = 0;
+    this.currentScratchRate = 0;
+    this.lastScratchInput = 0;
+    this.lastScratchTime = 0;
+    this.scratchDecelerationInterval = null;
 
     // Pitch bend properties
     this.isPitchBending = false;
@@ -145,21 +150,20 @@ class Deck {
     return currentTime; // If no next beat found, return current time
   }
 
-  // Continuously refine BPM during playback (only for first 10 seconds)
+  // Continuously refine BPM during playback
   refineBPMDuringPlayback() {
     if (!this.isPlaying || !this.audioBuffer) return;
     
     const currentTime = this.getCurrentTime();
     
-    // Only refine BPM for the first 10 seconds of the track
-    if (currentTime > 10) return;
+    // Extend refinement analysis to first 30 seconds of the track for better accuracy
+    if (currentTime > 30) return;
     
-    // Only analyze every few seconds to avoid performance issues
-    if (currentTime - this.lastBpmAnalysisTime >= this.bpmAnalysisInterval) {
+    // Analyze every 3 seconds for more frequent updates
+    if (currentTime - this.lastBpmAnalysisTime >= 3) {
       this.lastBpmAnalysisTime = currentTime;
       
-      // Analyze a small window around current position
-      const analysisWindow = 10; // 10 seconds
+      const analysisWindow = 20; // 20 seconds
       const startTime = Math.max(0, currentTime - analysisWindow / 2);
       const endTime = Math.min(this.audioBuffer.duration, currentTime + analysisWindow / 2);
       
@@ -170,7 +174,7 @@ class Deck {
       const audioData = this.audioBuffer.getChannelData(0);
       const windowData = audioData.slice(startSample, endSample);
       
-      if (windowData.length > sampleRate) { // Need at least 1 second of data
+      if (windowData.length > sampleRate * 2) { // Need at least 2 seconds of data
         const refinedBPM = this.detectBPMFromAudio(windowData, sampleRate);
         
         // Add to history
@@ -189,8 +193,8 @@ class Deck {
           const recentBPMs = this.bpmAnalysisHistory.slice(-3).map(entry => entry.bpm);
           const avgRecentBPM = recentBPMs.reduce((sum, bpm) => sum + bpm, 0) / recentBPMs.length;
           
-          // If the recent average differs significantly from current baseBPM, update it
-          if (Math.abs(avgRecentBPM - this.baseBPM) > 2) {
+          // More conservative threshold for BPM updates (3 BPM difference)
+          if (Math.abs(avgRecentBPM - this.baseBPM) > 3) {
             console.log(`Refining BPM for deck ${this.deckId}: ${this.baseBPM} -> ${avgRecentBPM.toFixed(1)}`);
             this.baseBPM = avgRecentBPM;
             this.generateBeatMap(); // Regenerate beat map with new BPM
@@ -290,6 +294,14 @@ class Deck {
     this.isPlaying = false;
     this.isPaused = false;
     this.pauseTime = 0;
+    
+    // Clean up scratch deceleration if active
+    if (this.scratchDecelerationInterval) {
+      clearInterval(this.scratchDecelerationInterval);
+      this.scratchDecelerationInterval = null;
+    }
+    this.currentScratchRate = 0;
+    this.scratchMomentum = 0;
   }
 
   stopSource() {
@@ -297,6 +309,12 @@ class Deck {
       this.source.stop();
       this.source.disconnect();
       this.source = null;
+    }
+    
+    // Also clean up scratch deceleration when source is stopped
+    if (this.scratchDecelerationInterval) {
+      clearInterval(this.scratchDecelerationInterval);
+      this.scratchDecelerationInterval = null;
     }
   }
 
@@ -526,26 +544,102 @@ class Deck {
     if (this.isPlaying) {
       this.wasPlayingBeforeScratch = true;
     }
+    
+    // Initialize scratch properties
+    this.scratchMomentum = 0;
+    this.currentScratchRate = 0;
+    this.lastScratchTime = Date.now();
+    
+    // Stop any existing deceleration
+    if (this.scratchDecelerationInterval) {
+      clearInterval(this.scratchDecelerationInterval);
+      this.scratchDecelerationInterval = null;
+    }
   }
 
   scratch(speed) {
     if (!this.isScratching || !this.source) return;
 
-    // Convert scratch speed to playback rate
-    // Speed is typically between -10 and 10, map to playback rate
-    const scratchRate = Math.max(-4, Math.min(4, speed));
+    const currentTime = Date.now();
+    const deltaTime = Math.max(currentTime - this.lastScratchTime, 1); // Minimum 1ms to avoid division by zero
+    this.lastScratchTime = currentTime;
+    
+    // Store the raw input for momentum calculation
+    this.lastScratchInput = speed;
+    
+    // Apply a more realistic speed curve - exponential for better feel
+    let mappedSpeed = speed;
+    if (Math.abs(speed) > 0.1) {
+      const sign = Math.sign(speed);
+      const absSpeed = Math.abs(speed);
+      // Use a power curve for more natural feel at different speeds
+      mappedSpeed = sign * Math.pow(absSpeed / 10, 0.7) * 8;
+    }
+    
+    // Apply momentum and interpolation for smoother transitions
+    const momentumFactor = 0.15; // How much momentum to apply
+    const interpolationFactor = Math.min(deltaTime / 16, 1); // Smooth interpolation based on time (16ms = 60fps)
+    
+    // Calculate target scratch rate with momentum
+    const targetRate = mappedSpeed + (this.scratchMomentum * momentumFactor);
+    
+    // Smooth interpolation towards target rate
+    this.currentScratchRate += (targetRate - this.currentScratchRate) * interpolationFactor * 0.3;
+    
+    // Update momentum based on current input
+    this.scratchMomentum += (speed - this.scratchMomentum) * 0.2;
+    
+    // Clamp the final rate to prevent extreme values
+    const finalRate = Math.max(-5, Math.min(5, this.currentScratchRate));
 
     if (this.source.playbackRate) {
-      this.source.playbackRate.value = this.originalPlaybackRate + scratchRate;
+      this.source.playbackRate.value = this.originalPlaybackRate + finalRate;
     }
   }
 
   stopScratch() {
     this.isScratching = false;
-    if (this.source && this.source.playbackRate) {
-      this.source.playbackRate.value = this.originalPlaybackRate || this.playbackRate;
-    }
+    
+    // Start realistic deceleration instead of instant stop
+    this.startScratchDeceleration();
+    
     this.wasPlayingBeforeScratch = false;
+  }
+  
+  startScratchDeceleration() {
+    // Clear any existing deceleration
+    if (this.scratchDecelerationInterval) {
+      clearInterval(this.scratchDecelerationInterval);
+    }
+    
+    // Start deceleration process
+    const decelerationRate = 0.85; // How quickly it slows down (0.8 = 20% reduction per frame)
+    const minSpeed = 0.01; // Minimum speed threshold before stopping
+    
+    this.scratchDecelerationInterval = setInterval(() => {
+      if (!this.source || !this.source.playbackRate) {
+        clearInterval(this.scratchDecelerationInterval);
+        this.scratchDecelerationInterval = null;
+        return;
+      }
+      
+      // Apply deceleration to current scratch rate and momentum
+      this.currentScratchRate *= decelerationRate;
+      this.scratchMomentum *= decelerationRate;
+      
+      // If speed is very low, stop the deceleration
+      if (Math.abs(this.currentScratchRate) < minSpeed) {
+        this.source.playbackRate.value = this.originalPlaybackRate || this.playbackRate;
+        this.currentScratchRate = 0;
+        this.scratchMomentum = 0;
+        clearInterval(this.scratchDecelerationInterval);
+        this.scratchDecelerationInterval = null;
+      } else {
+        // Continue applying the decelerating rate
+        const finalRate = Math.max(-5, Math.min(5, this.currentScratchRate));
+        this.source.playbackRate.value = this.originalPlaybackRate + finalRate;
+      }
+    }, 16); // ~60fps for smooth deceleration
   }
 
   // Pitch bend methods
@@ -593,9 +687,8 @@ class Deck {
       const audioData = this.audioBuffer.getChannelData(0);
       const sampleRate = this.audioBuffer.sampleRate;
       
-      // Analyze only first 30 seconds for performance (or full track if shorter)
-      const analysisLength = Math.min(30 * sampleRate, audioData.length);
-      const analysisData = audioData.slice(0, analysisLength);
+      // Analyze the full track for maximum accuracy
+      const analysisData = audioData;
       
       // Detect BPM using onset detection and autocorrelation
       const bpm = this.detectBPMFromAudio(analysisData, sampleRate);
@@ -648,20 +741,34 @@ class Deck {
     // Find the most common interval (tempo)
     const bpm = this.findMostLikelyTempo(filteredIntervals);
     
-    // Validate BPM range (typical electronic music range)
-    if (bpm < 60) return Math.round(bpm * 2);    // Double-time
-    if (bpm > 200) return Math.round(bpm / 2);   // Half-time
-    if (bpm < 80) return Math.round(bpm * 1.5);  // Adjust if too slow
+    // BPM validation for better genre support
+    let validatedBPM = bpm;
     
-    return Math.round(bpm);
+    // Handle extreme cases
+    if (bpm < 60) {
+      validatedBPM = bpm * 2; // Likely half-time detection
+    } else if (bpm > 200) {
+      validatedBPM = bpm / 2; // Likely double-time detection
+    }
+    
+    // Additional check for common double-time patterns in faster genres
+    if (validatedBPM > 160 && validatedBPM / 2 >= 80) {
+      const halfTime = validatedBPM / 2;
+      if (halfTime >= 80 && halfTime <= 140) {
+        validatedBPM = halfTime;
+      }
+    }
+    
+    console.log(`Detected BPM: ${bpm.toFixed(1)} -> Validated: ${validatedBPM.toFixed(1)} for deck ${this.deckId || 'unknown'}`);
+    return Math.round(validatedBPM);
   }
 
   detectOnsets(energyValues, hopSize, sampleRate) {
     const onsets = [];
-    const threshold = 1.2; // Lower threshold for better sensitivity
+    const threshold = 1.3; // Balanced threshold for good sensitivity across genres
     
     // Apply moving average for smoothing
-    const smoothed = this.applyMovingAverage(energyValues, 2); // Smaller window
+    const smoothed = this.applyMovingAverage(energyValues, 2);
     
     // Calculate spectral flux (energy differences between frames)
     const spectralFlux = [];
@@ -670,14 +777,21 @@ class Deck {
       spectralFlux.push(diff);
     }
     
+    // Calculate adaptive threshold based on signal characteristics
+    const meanFlux = spectralFlux.reduce((sum, val) => sum + val, 0) / spectralFlux.length;
+    const stdFlux = Math.sqrt(spectralFlux.reduce((sum, val) => sum + Math.pow(val - meanFlux, 2), 0) / spectralFlux.length);
+    
     // Find peaks in spectral flux
     for (let i = 1; i < spectralFlux.length - 1; i++) {
       const current = spectralFlux[i];
       const previous = spectralFlux[i - 1];
       const next = spectralFlux[i + 1];
       
+      // Dynamic threshold that adapts to signal characteristics
+      const dynamicThreshold = Math.max(meanFlux + stdFlux * 0.5, 0.01);
+      
       // Detect peaks that are significantly higher than neighbors
-      if (current > previous * threshold && current > next && current > 0.01) {
+      if (current > previous * threshold && current > next && current > dynamicThreshold) {
         const timeInSeconds = ((i + 1) * hopSize) / sampleRate;
         onsets.push(timeInSeconds);
       }
@@ -706,9 +820,9 @@ class Deck {
     // Convert intervals to BPM
     const bpmValues = intervals.map(interval => 60 / interval);
     
-    // Create histogram of BPM values
+    // Create histogram of BPM values with genre-aware grouping
     const histogram = {};
-    const tolerance = 3; // Smaller tolerance for more precision
+    const tolerance = 4; // Slightly larger tolerance for better grouping
     
     bpmValues.forEach(bpm => {
       // Round to nearest tolerance value for grouping
@@ -719,25 +833,40 @@ class Deck {
       histogram[roundedBpm].push(bpm);
     });
     
-    // Find the group with most occurrences
-    let maxCount = 0;
+    // Find the group with most occurrences, with genre preference scoring
+    let maxScore = 0;
     let mostLikelyBPM = 120;
     
     Object.keys(histogram).forEach(key => {
       const group = histogram[key];
-      if (group.length > maxCount) {
-        maxCount = group.length;
-        // Average the BPM values in the winning group
-        mostLikelyBPM = group.reduce((sum, bpm) => sum + bpm, 0) / group.length;
+      const avgBpm = group.reduce((sum, bpm) => sum + bpm, 0) / group.length;
+      
+      // Base score from frequency
+      let score = group.length;
+      
+      // Apply genre preference multipliers for better DJ music support
+      if (avgBpm >= 120 && avgBpm <= 140) {
+        score *= 1.3; // Electronic & Dance music boost
+      } else if (avgBpm >= 100 && avgBpm <= 130) {
+        score *= 1.2; // Commercial & Mainstream boost  
+      } else if (avgBpm >= 80 && avgBpm <= 110) {
+        score *= 1.1; // Urban music boost
+      } else if (avgBpm >= 90 && avgBpm <= 150) {
+        score *= 1.05; // Alternative music slight boost
+      }
+      
+      if (score > maxScore) {
+        maxScore = score;
+        mostLikelyBPM = avgBpm;
       }
     });
     
-    // Also check for double-time and half-time patterns
+    // Check for common double/half-time patterns
     const candidates = [mostLikelyBPM, mostLikelyBPM * 2, mostLikelyBPM / 2];
     
     // Return the candidate that makes most sense musically
     for (const candidate of candidates) {
-      if (candidate >= 80 && candidate <= 180) {
+      if (candidate >= 70 && candidate <= 180) {
         return candidate;
       }
     }
@@ -1218,13 +1347,6 @@ class DeckController {
       // Stop vinyl animation
       if (this.vinylElement) {
         this.vinylElement.classList.remove('spinning');
-      }
-      // Stop waveform animations
-      if (window.waveformRenderers && window.waveformRenderers[this.deckId]) {
-        window.waveformRenderers[this.deckId].stopAnimation();
-      }
-      if (window.beatWaveformRenderers && window.beatWaveformRenderers[this.deckId]) {
-        window.beatWaveformRenderers[this.deckId].stopAnimation();
       }
     }
   }
