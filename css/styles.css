@@ -702,8 +702,7 @@ body {
   display: flex;
   justify-content: space-around;
   align-items: flex-start;
-  margin: var(--spacing-xl) 0;
-  height: 140px;
+  margin-bottom: var(--spacing-xl);
 }
 
 .vu-meter {
@@ -714,7 +713,7 @@ body {
 }
 
 .vu-meter label {
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-xl);
   font-weight: 600;
   color: var(--text-secondary);
   writing-mode: horizontal-tb;
@@ -725,20 +724,15 @@ body {
   flex-direction: column-reverse;
   gap: 2px;
   width: 20px;
-  height: 100px;
   align-items: center;
 }
 
 .vu-bar {
-  width: 4px;
+  width: 16px;
+  height: 4px;
   background: var(--border-primary);
   border-radius: 2px;
   transition: var(--transition-fast);
-}
-
-.vu-bars .vu-bar {
-  width: 16px;
-  height: 4px;
 }
 
 .vu-bar.active-low {
