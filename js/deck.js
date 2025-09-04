@@ -924,8 +924,19 @@ class DeckController {
     this.effectsController = new EffectsController(deckId);
   }
 
-  // Utility function for creating slider event handlers
-  createSliderHandler(sliderId, deckMethod, displayOptions = {}) {
+  // Utility function for creating deck method button handlers
+  createDeckMethodHandler(buttonName, deckMethod, ...args) {
+    window.buttonHandler.createClickHandler(`${buttonName}${this.deckId}`, () => {
+      window.buttonHandler.callDeckMethod(this.deckId, deckMethod, ...args);
+    });
+  }
+
+  // Utility function for creating controller method button handlers
+  createControllerMethodHandler(buttonName, controllerMethod) {
+    window.buttonHandler.createClickHandler(`${buttonName}${this.deckId}`, () => {
+      this[controllerMethod]();
+    });
+  }
     const slider = document.getElementById(sliderId);
     if (!slider) return;
 
@@ -963,9 +974,9 @@ class DeckController {
     });
 
     // Transport controls - using unified click handlers
-    window.buttonHandler.createClickHandler(`play${this.deckId}`, () => this.play());
-    window.buttonHandler.createClickHandler(`pause${this.deckId}`, () => this.pause());
-    window.buttonHandler.createClickHandler(`stop${this.deckId}`, () => this.stop());
+    this.createControllerMethodHandler('play', 'play');
+    this.createControllerMethodHandler('pause', 'pause');
+    this.createControllerMethodHandler('stop', 'stop');
 
     // CUE button - press and hold behavior using unified handler
     window.buttonHandler.createPressAndHoldHandler(
@@ -1038,32 +1049,18 @@ class DeckController {
       }
     });
 
-    // CUE point controls - using unified click handlers
-    window.buttonHandler.createClickHandler(`cue1${this.deckId}`, () => {
-      window.buttonHandler.callDeckMethod(this.deckId, 'jumpToCue', 1);
-    });
-    window.buttonHandler.createClickHandler(`cue2${this.deckId}`, () => {
-      window.buttonHandler.callDeckMethod(this.deckId, 'jumpToCue', 2);
-    });
-    window.buttonHandler.createClickHandler(`setCue1${this.deckId}`, () => {
-      window.buttonHandler.callDeckMethod(this.deckId, 'setCuePoint', 1);
-    });
-    window.buttonHandler.createClickHandler(`setCue2${this.deckId}`, () => {
-      window.buttonHandler.callDeckMethod(this.deckId, 'setCuePoint', 2);
-    });
+    // CUE point controls - using unified handlers
+    this.createDeckMethodHandler('cue1', 'jumpToCue', 1);
+    this.createDeckMethodHandler('cue2', 'jumpToCue', 2);
+    this.createDeckMethodHandler('setCue1', 'setCuePoint', 1);
+    this.createDeckMethodHandler('setCue2', 'setCuePoint', 2);
 
-    // TAP and loop controls - using unified click handlers
-    window.buttonHandler.createClickHandler(`tap${this.deckId}`, () => this.handleTap());
-    window.buttonHandler.createClickHandler(`loopIn${this.deckId}`, () => {
-      window.buttonHandler.callDeckMethod(this.deckId, 'setLoopIn');
-    });
-    window.buttonHandler.createClickHandler(`loopOut${this.deckId}`, () => {
-      window.buttonHandler.callDeckMethod(this.deckId, 'setLoopOut');
-    });
-    window.buttonHandler.createClickHandler(`loopToggle${this.deckId}`, () => {
-      window.buttonHandler.callDeckMethod(this.deckId, 'toggleLoop');
-    });
-    window.buttonHandler.createClickHandler(`resetFilters${this.deckId}`, () => this.resetFilters());
+    // TAP and loop controls - using unified handlers
+    this.createControllerMethodHandler('tap', 'handleTap');
+    this.createDeckMethodHandler('loopIn', 'setLoopIn');
+    this.createDeckMethodHandler('loopOut', 'setLoopOut');
+    this.createDeckMethodHandler('loopToggle', 'toggleLoop');
+    this.createControllerMethodHandler('resetFilters', 'resetFilters');
 
     // Loop length slider
     this.createSliderHandler(`loopLength${this.deckId}`, 'setLoopLength', {

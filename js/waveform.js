@@ -1,13 +1,11 @@
-class WaveformRenderer {
+// Base class for waveform renderers to avoid code duplication
+class BaseWaveformRenderer {
   constructor(canvasId, deckId) {
     this.canvas = document.getElementById(canvasId);
     this.ctx = this.canvas.getContext('2d');
     this.deckId = deckId;
     this.waveformData = null;
     this.animationId = null;
-        
-    this.setupCanvas();
-    this.setupEventListeners();
   }
 
   setupCanvas() {
@@ -18,6 +16,48 @@ class WaveformRenderer {
         
     this.canvas.style.width = rect.width + 'px';
     this.canvas.style.height = rect.height + 'px';
+  }
+
+  loadWaveformData(audioBuffer) {
+    if (!audioBuffer) return;
+    
+    const channelData = audioBuffer.getChannelData(0);
+    const samples = 1000; // Number of waveform points
+    const blockSize = Math.floor(channelData.length / samples);
+    const waveformData = [];
+
+    for (let i = 0; i < samples; i++) {
+      const start = i * blockSize;
+      const end = start + blockSize;
+      let sum = 0;
+
+      for (let j = start; j < end && j < channelData.length; j++) {
+        sum += Math.abs(channelData[j]);
+      }
+
+      waveformData.push(sum / blockSize);
+    }
+
+    this.waveformData = waveformData;
+  }
+
+  startAnimation() {
+    // Don't start if already animating
+    if (this.animationId) return;
+    
+    const animate = () => {
+      this.render();
+      this.animationId = requestAnimationFrame(animate);
+    };
+    animate();
+  }
+}
+
+class WaveformRenderer extends BaseWaveformRenderer {
+  constructor(canvasId, deckId) {
+    super(canvasId, deckId);        
+    this.setupCanvas();
+    this.setupEventListeners();
   }
 
   setupEventListeners() {
@@ -50,24 +90,7 @@ class WaveformRenderer {
   }
 
   async generateWaveform(audioBuffer) {
-    const channelData = audioBuffer.getChannelData(0);
-    const samples = 1000; // Number of waveform points
-    const blockSize = Math.floor(channelData.length / samples);
-    const waveformData = [];
-
-    for (let i = 0; i < samples; i++) {
-      const start = i * blockSize;
-      const end = start + blockSize;
-      let sum = 0;
-
-      for (let j = start; j < end && j < channelData.length; j++) {
-        sum += Math.abs(channelData[j]);
-      }
-
-      waveformData.push(sum / blockSize);
-    }
-
-    this.waveformData = waveformData;
+    this.loadWaveformData(audioBuffer);
     this.render();
   }
 
@@ -199,42 +222,17 @@ class WaveformRenderer {
       playhead.style.opacity = '0.3';
     }
   }
-
-  startAnimation() {
-    // Don't start if already animating
-    if (this.animationId) return;
-    
-    const animate = () => {
-      this.render();
-      this.animationId = requestAnimationFrame(animate);
-    };
-    animate();
-  }
 }
 
-class ZoomedWaveformRenderer {
+class ZoomedWaveformRenderer extends BaseWaveformRenderer {
   constructor(canvasId, deckId, zoomIndex) {
-    this.canvas = document.getElementById(canvasId);
-    this.ctx = this.canvas.getContext('2d');
-    this.deckId = deckId;
+    super(canvasId, deckId);
     this.zoomIndex = zoomIndex;
-    this.waveformData = null;
-    this.animationId = null;
     this.zoomLevel = 20; // Shows about 20 seconds of audio for beat matching
     this.offsetSeconds = 0; // Current offset from track start
         
     this.setupCanvas();
     this.setupEventListeners();
-  }
-
-  setupCanvas() {
-    const rect = this.canvas.getBoundingClientRect();
-    this.canvas.width = rect.width * window.devicePixelRatio;
-    this.canvas.height = rect.height * window.devicePixelRatio;
-    this.ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-        
-    this.canvas.style.width = rect.width + 'px';
-    this.canvas.style.height = rect.height + 'px';
   }
 
   setupEventListeners() {
