@@ -1251,8 +1251,6 @@ class DeckController {
       if (this.vinylElement) {
         this.vinylElement.classList.remove('spinning');
       }
-      // Keep waveform animations running when paused to allow drag interaction
-      // Waveforms need to update visually when user drags while paused
     }
   }
 
