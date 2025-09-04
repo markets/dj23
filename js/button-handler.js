@@ -66,19 +66,6 @@ class ButtonHandler {
     }
     return null;
   }
-
-  callDeckWithController(deckId, method, controllerMethod = null, ...args) {
-    const result = this.callDeckMethod(deckId, method, ...args);
-    
-    if (controllerMethod) {
-      const controller = window.mixerController?.deckControllers[deckId];
-      if (controller && typeof controller[controllerMethod] === 'function') {
-        controller[controllerMethod](...args);
-      }
-    }
-    
-    return result;
-  }
 }
 
 // Create global instance
