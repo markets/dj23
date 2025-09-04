@@ -538,7 +538,6 @@ body {
 
 .sound-pad-btn:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
 }
 
 .sound-pad-btn:active {
@@ -694,7 +693,7 @@ body {
 .vu-bars {
   display: flex;
   gap: var(--spacing-xs);
-  height: 60px;
+  height: 80px;
   align-items: flex-end;
 }
 
@@ -702,8 +701,7 @@ body {
   display: flex;
   justify-content: space-around;
   align-items: flex-start;
-  margin: var(--spacing-xl) 0;
-  height: 200px;
+  margin-bottom: var(--spacing-xl);
 }
 
 .vu-meter {
@@ -723,22 +721,17 @@ body {
 .vu-bars {
   display: flex;
   flex-direction: column-reverse;
-  gap: var(--spacing-xs);
+  gap: 3px;
   width: 20px;
-  height: 150px;
   align-items: center;
 }
 
 .vu-bar {
-  width: 4px;
+  width: 16px;
+  height: 4px;
   background: var(--border-primary);
   border-radius: 2px;
   transition: var(--transition-fast);
-}
-
-.vu-bars .vu-bar {
-  width: 16px;
-  height: 4px;
 }
 
 .vu-bar.active-low {
@@ -1248,7 +1241,7 @@ input[type="range"]::-moz-range-thumb {
   margin-bottom: var(--spacing-3xl);
   background: linear-gradient(145deg, var(--bg-secondary), var(--bg-primary));
   border-radius: var(--radius-xl);
-  padding: var(--spacing-xl);
+  padding: var(--spacing-md) var(--spacing-xl);
   border: 1px solid var(--border-primary);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
 }

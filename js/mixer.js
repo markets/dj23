@@ -128,7 +128,7 @@ class MixerController {
       const container = document.getElementById(`vu${id === 'master' ? 'Master' : id}`);
       const bars = [];
             
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < 12; i++) {
         const bar = document.createElement('div');
         bar.className = 'vu-bar';
         container.appendChild(bar);
