@@ -348,7 +348,7 @@ class Deck {
       const minFreq = 100; // 100Hz minimum (full filtering at 100%)
       const maxFreq = 15000; // 15kHz maximum (no filtering at 0%)
       
-      // Invert the value so slider works like traditional DJ filter
+      // Invert the value so slider works as expected
       // 0% = no filtering (15kHz), 100% = heavy filtering (100Hz)
       const invertedValue = (100 - value) / 100;
       const logMin = Math.log(minFreq);
