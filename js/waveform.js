@@ -565,6 +565,9 @@ class ZoomedWaveformRenderer extends BaseWaveformRenderer {
     // Draw beat markers (every second)
     this.drawBeatMarkers(width, height, duration);
     
+    // Draw loop points if they exist  
+    this.drawLoopPoints(width, height, deck);
+    
     // Draw red playhead line in center
     const playheadX = width / 2;
     
@@ -638,6 +641,76 @@ class ZoomedWaveformRenderer extends BaseWaveformRenderer {
       playhead.style.left = '50%';
       playhead.style.opacity = '0.3';
     }
+  }
+
+  drawLoopPoints(width, height, deck) {
+    if (!deck || !deck.audioBuffer) return;
+    
+    const duration = deck.getDuration();
+    const windowStart = this.offsetSeconds;
+    const windowEnd = this.offsetSeconds + this.zoomLevel;
+    
+    // Only draw loop points if they're within the visible window
+    if (deck.loopStart !== null && deck.loopStart >= windowStart && deck.loopStart <= windowEnd) {
+      this.drawSingleLoopPoint(deck.loopStart, windowStart, windowEnd, width, height, 'LOOP IN', 42);
+    }
+    
+    if (deck.loopEnd !== null && deck.loopEnd >= windowStart && deck.loopEnd <= windowEnd) {
+      this.drawSingleLoopPoint(deck.loopEnd, windowStart, windowEnd, width, height, 'LOOP OUT', 56);
+    }
+    
+    // Draw loop region if both points are set and loop is active and region is visible
+    if (deck.loopStart !== null && deck.loopEnd !== null && deck.isLooping) {
+      const loopStartInWindow = Math.max(deck.loopStart, windowStart);
+      const loopEndInWindow = Math.min(deck.loopEnd, windowEnd);
+      
+      if (loopStartInWindow < loopEndInWindow) {
+        const windowDuration = windowEnd - windowStart;
+        const loopStartPosition = ((loopStartInWindow - windowStart) / windowDuration) * width;
+        const loopEndPosition = ((loopEndInWindow - windowStart) / windowDuration) * width;
+        const loopWidth = loopEndPosition - loopStartPosition;
+        
+        // Draw semi-transparent loop region
+        this.ctx.fillStyle = 'rgba(0, 255, 0, 0.1)';
+        this.ctx.fillRect(loopStartPosition, 0, loopWidth, height);
+      }
+    }
+  }
+
+  drawSingleLoopPoint(loopTime, windowStart, windowEnd, width, height, label, textY) {
+    const loopPointColor = '#00ff00'; // Green color for loop points
+    const windowDuration = windowEnd - windowStart;
+    const loopPosition = ((loopTime - windowStart) / windowDuration) * width;
+    
+    // Draw loop line with dashed style to distinguish from cue points
+    this.ctx.strokeStyle = loopPointColor;
+    this.ctx.lineWidth = 2;
+    this.ctx.setLineDash([5, 5]);
+    this.ctx.beginPath();
+    this.ctx.moveTo(loopPosition, 0);
+    this.ctx.lineTo(loopPosition, height);
+    this.ctx.stroke();
+    
+    // Reset line dash for other drawing operations
+    this.ctx.setLineDash([]);
+    
+    // Improved text positioning with background for better readability
+    this.ctx.font = 'bold 10px Inter';
+    const textMetrics = this.ctx.measureText(label);
+    
+    // Simple positioning: always render text to the right
+    const textOffset = 8;
+    const textWidth = textMetrics.width + 4;
+    const textX = loopPosition + textOffset;
+    
+    // Draw text background for better readability
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    this.ctx.fillRect(textX - 2, textY - 10, textWidth, 12);
+    
+    // Draw text
+    this.ctx.fillStyle = loopPointColor;
+    this.ctx.textAlign = 'left';
+    this.ctx.fillText(label, textX, textY);
   }
 
   startAnimation() {
