@@ -149,7 +149,7 @@ class Deck {
     return currentTime; // If no next beat found, return current time
   }
 
-  // Continuously refine BPM during playback (extended analysis for better accuracy)
+  // Continuously refine BPM during playback
   refineBPMDuringPlayback() {
     if (!this.isPlaying || !this.audioBuffer) return;
     
@@ -162,8 +162,7 @@ class Deck {
     if (currentTime - this.lastBpmAnalysisTime >= 3) {
       this.lastBpmAnalysisTime = currentTime;
       
-      // Analyze a larger window around current position for better accuracy
-      const analysisWindow = 20; // 20 seconds for more data
+      const analysisWindow = 20; // 20 seconds
       const startTime = Math.max(0, currentTime - analysisWindow / 2);
       const endTime = Math.min(this.audioBuffer.duration, currentTime + analysisWindow / 2);
       
@@ -183,9 +182,9 @@ class Deck {
           bpm: refinedBPM
         });
         
-        // Keep only recent history (last 2 minutes)
+        // Keep only recent history (last 1 minute)
         this.bpmAnalysisHistory = this.bpmAnalysisHistory.filter(
-          entry => currentTime - entry.time <= 120
+          entry => currentTime - entry.time <= 60
         );
         
         // Update BPM if we have enough data and there's a consistent change
@@ -694,7 +693,7 @@ class Deck {
       energyValues.push(Math.sqrt(energy / hopSize));
     }
     
-    // Simplified onset detection using energy-based approach
+    // Detect onset peaks (significant energy increases)
     const onsets = this.detectOnsets(energyValues, hopSize, sampleRate);
     
     // Calculate tempo from onset intervals
@@ -708,7 +707,7 @@ class Deck {
       intervals.push(onsets[i] - onsets[i - 1]);
     }
     
-    // Remove outliers - expand range slightly for better genre coverage
+    // Remove outliers (intervals that are too short or too long)
     const filteredIntervals = intervals.filter(interval => 
       interval >= 0.2 && interval <= 2.0 // Between 30 BPM and 300 BPM
     );
@@ -720,7 +719,7 @@ class Deck {
     // Find the most common interval (tempo)
     const bpm = this.findMostLikelyTempo(filteredIntervals);
     
-    // Improved BPM validation for better genre support
+    // BPM validation for better genre support
     let validatedBPM = bpm;
     
     // Handle extreme cases
@@ -770,9 +769,7 @@ class Deck {
       const dynamicThreshold = Math.max(meanFlux + stdFlux * 0.5, 0.01);
       
       // Detect peaks that are significantly higher than neighbors
-      if (current > previous * threshold && 
-          current > next && 
-          current > dynamicThreshold) {
+      if (current > previous * threshold && current > next && current > dynamicThreshold) {
         const timeInSeconds = ((i + 1) * hopSize) / sampleRate;
         onsets.push(timeInSeconds);
       }
