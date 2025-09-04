@@ -19,7 +19,6 @@ class EffectsEngine {
     this.effectNodes.delayFeedback = this.audioContext.createGain();
     this.effectNodes.delayFeedback.gain.value = 0.3;
 
-    // Improved phaser with better frequency distribution and more musical sound
     this.effectNodes.phaser = [];
     this.effectNodes.phaserLFO = this.audioContext.createOscillator();
     this.effectNodes.phaserLFO.type = 'sine';
@@ -35,7 +34,7 @@ class EffectsEngine {
     this.effectNodes.phaserFeedback = this.audioContext.createGain();
     this.effectNodes.phaserFeedback.gain.value = 0.3; // Moderate feedback for warmth
     
-    // Use fewer filters (6) with more musical frequency distribution
+    // Use 6 filters with more musical frequency distribution
     // Based on common phaser pedal designs - covering a wider frequency range
     const phaserFreqs = [200, 400, 800, 1600, 3200, 6400];
     const phaserQs = [2.0, 2.5, 2.8, 2.5, 2.0, 1.5]; // Varying Q values for more natural sound
@@ -72,7 +71,7 @@ class EffectsEngine {
     this.effectNodes.delayFeedback.connect(this.effectNodes.delay);
     this.effectNodes.delay.connect(this.effectNodes.delayGain);
 
-    // Connect phaser chain with feedback
+    // Connect phaser
     for (let i = 0; i < this.effectNodes.phaser.length; i++) {
       if (i === 0) {
         // First filter connects from source (will be connected in play method)
@@ -142,7 +141,6 @@ class EffectsEngine {
   // Effect parameter control methods
   setReverb(value) {
     if (this.effectNodes.reverbGain) {
-      // Make reverb more noticeable with exponential curve and higher maximum
       const wetLevel = Math.pow(value / 100, 0.7) * 1.2; // Exponential curve, max 120%
       this.effectNodes.reverbGain.gain.value = Math.min(wetLevel, 1.2);
       this.effectNodes.reverbDry.gain.value = Math.max(1 - (wetLevel * 0.8), 0.2); // Keep some dry signal
@@ -158,8 +156,8 @@ class EffectsEngine {
   setPhaser(value) {
     if (this.effectNodes.phaserGain) {
       // Smoother wet/dry mix for more musical phasing
-      const wetLevel = (value / 100) * 0.8; // Reduced max wet level for better balance
-      const dryLevel = Math.max(1 - (wetLevel * 0.5), 0.3); // Keep strong dry signal for punch
+      const wetLevel = (value / 100) * 0.8;
+      const dryLevel = Math.max(1 - (wetLevel * 0.5), 0.3);
       this.effectNodes.phaserGain.gain.value = wetLevel;
       this.effectNodes.phaserDry.gain.value = dryLevel;
       
@@ -178,7 +176,6 @@ class EffectsEngine {
       
       // Slower, more musical LFO frequency range
       if (this.effectNodes.phaserLFO) {
-        // Slower sweep range for more musical results
         const minFreq = 0.08;
         const maxFreq = 0.5;
         this.effectNodes.phaserLFO.frequency.value = minFreq + (value / 100) * (maxFreq - minFreq);
