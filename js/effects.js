@@ -19,22 +19,32 @@ class EffectsEngine {
     this.effectNodes.delayFeedback = this.audioContext.createGain();
     this.effectNodes.delayFeedback.gain.value = 0.3;
 
+    // Improved phaser with better frequency distribution and more musical sound
     this.effectNodes.phaser = [];
     this.effectNodes.phaserLFO = this.audioContext.createOscillator();
     this.effectNodes.phaserLFO.type = 'sine';
     this.effectNodes.phaserLFO.frequency.value = 0.3;
     this.effectNodes.phaserLFOGain = this.audioContext.createGain();
-    this.effectNodes.phaserLFOGain.gain.value = 800;
+    this.effectNodes.phaserLFOGain.gain.value = 0;
     this.effectNodes.phaserGain = this.audioContext.createGain();
     this.effectNodes.phaserGain.gain.value = 0;
     this.effectNodes.phaserDry = this.audioContext.createGain();
     this.effectNodes.phaserDry.gain.value = 1;
     
-    for (let i = 0; i < 8; i++) {
+    // Add feedback for more character
+    this.effectNodes.phaserFeedback = this.audioContext.createGain();
+    this.effectNodes.phaserFeedback.gain.value = 0.3; // Moderate feedback for warmth
+    
+    // Use fewer filters (6) with more musical frequency distribution
+    // Based on common phaser pedal designs - covering a wider frequency range
+    const phaserFreqs = [200, 400, 800, 1600, 3200, 6400];
+    const phaserQs = [2.0, 2.5, 2.8, 2.5, 2.0, 1.5]; // Varying Q values for more natural sound
+    
+    for (let i = 0; i < 6; i++) {
       this.effectNodes.phaser[i] = this.audioContext.createBiquadFilter();
       this.effectNodes.phaser[i].type = 'allpass';
-      this.effectNodes.phaser[i].frequency.value = 500 + (i * 200);
-      this.effectNodes.phaser[i].Q.value = 5;
+      this.effectNodes.phaser[i].frequency.value = phaserFreqs[i];
+      this.effectNodes.phaser[i].Q.value = phaserQs[i];
     }
     
     this.effectNodes.flanger = this.audioContext.createDelay(0.02);
@@ -62,7 +72,7 @@ class EffectsEngine {
     this.effectNodes.delayFeedback.connect(this.effectNodes.delay);
     this.effectNodes.delay.connect(this.effectNodes.delayGain);
 
-    // Connect phaser chain
+    // Connect phaser chain with feedback
     for (let i = 0; i < this.effectNodes.phaser.length; i++) {
       if (i === 0) {
         // First filter connects from source (will be connected in play method)
@@ -71,8 +81,18 @@ class EffectsEngine {
       }
     }
     
-    // Connect phaser LFO through gain node for proper modulation
+    // Add feedback from the last phaser stage back to the first for more character
+    if (this.effectNodes.phaser.length > 0) {
+      const lastPhaser = this.effectNodes.phaser[this.effectNodes.phaser.length - 1];
+      lastPhaser.connect(this.effectNodes.phaserFeedback);
+      this.effectNodes.phaserFeedback.connect(this.effectNodes.phaser[0]);
+    }
+    
+    // Connect phaser LFO through gain node for proper modulation to all filters
     this.effectNodes.phaserLFO.connect(this.effectNodes.phaserLFOGain);
+    for (let i = 0; i < this.effectNodes.phaser.length; i++) {
+      this.effectNodes.phaserLFOGain.connect(this.effectNodes.phaser[i].frequency);
+    }
     
     // Connect flanger feedback loop
     this.effectNodes.flanger.connect(this.effectNodes.flangerFeedback);
@@ -137,20 +157,31 @@ class EffectsEngine {
 
   setPhaser(value) {
     if (this.effectNodes.phaserGain) {
-      // Make phaser more noticeable with stronger modulation and better mix
-      const wetLevel = (value / 100) * 0.9; // Increase max wet level to 90%
-      const dryLevel = 1 - (wetLevel * 0.3); // Keep more dry signal for punch
+      // Smoother wet/dry mix for more musical phasing
+      const wetLevel = (value / 100) * 0.8; // Reduced max wet level for better balance
+      const dryLevel = Math.max(1 - (wetLevel * 0.5), 0.3); // Keep strong dry signal for punch
       this.effectNodes.phaserGain.gain.value = wetLevel;
       this.effectNodes.phaserDry.gain.value = dryLevel;
       
-      // Much stronger LFO depth for more dramatic phasing effect
+      // More musical LFO modulation with exponential curve
       if (this.effectNodes.phaserLFOGain) {
-        this.effectNodes.phaserLFOGain.gain.value = 600 + (value * 15); // Stronger modulation depth
+        // Use exponential curve for more natural sweep
+        const modDepth = Math.pow(value / 100, 0.6) * 600; // Slightly increased modulation depth
+        this.effectNodes.phaserLFOGain.gain.value = modDepth;
       }
       
-      // Also adjust LFO frequency for more noticeable sweep
+      // Dynamic feedback based on effect intensity for more character
+      if (this.effectNodes.phaserFeedback) {
+        const feedbackAmount = (value / 100) * 0.4; // Increase feedback with effect intensity
+        this.effectNodes.phaserFeedback.gain.value = feedbackAmount;
+      }
+      
+      // Slower, more musical LFO frequency range
       if (this.effectNodes.phaserLFO) {
-        this.effectNodes.phaserLFO.frequency.value = 0.2 + (value / 100) * 0.8; // 0.2Hz to 1Hz
+        // Slower sweep range for more musical results
+        const minFreq = 0.08;
+        const maxFreq = 0.5;
+        this.effectNodes.phaserLFO.frequency.value = minFreq + (value / 100) * (maxFreq - minFreq);
       }
     }
   }

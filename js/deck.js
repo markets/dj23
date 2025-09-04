@@ -251,12 +251,8 @@ class Deck {
         phaserInput = this.effectNodes.phaser[i];
       }
 
-      // Connect LFO to modulate phaser frequencies through gain node
-      if (this.effectNodes.phaserLFOGain) {
-        for (let i = 0; i < this.effectNodes.phaser.length; i++) {
-          this.effectNodes.phaserLFOGain.connect(this.effectNodes.phaser[i].frequency);
-        }
-      }
+      // Individual LFO connections will be created dynamically in setPhaser method
+      // No need to connect here as it's handled in the effects engine
 
       // Connect phaser output through gain control
       phaserInput.connect(this.effectNodes.phaserGain);
