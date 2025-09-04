@@ -34,8 +34,6 @@ class Deck {
     this.isScratching = false;
     this.originalPlaybackRate = 1;
     this.wasPlayingBeforeScratch = false;
-    
-    // Enhanced scratching properties for realistic behavior
     this.scratchMomentum = 0;
     this.currentScratchRate = 0;
     this.lastScratchInput = 0;
