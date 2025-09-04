@@ -3,6 +3,7 @@ class SoundPad {
     this.audioEngine = audioEngine;
     this.sounds = {};
     this.volume = 1.0; // Volume level from 0.0 to 1.0
+    this.activeGainNodes = []; // Track gain nodes of currently playing sounds
     this.defaultSounds = {
       airhorn: 'sounds/airhorn.mp3',
       siren: 'sounds/siren.mp3', 
@@ -72,6 +73,17 @@ class SoundPad {
       const gainNode = this.audioEngine.audioContext.createGain();
       gainNode.gain.value = this.volume;
       
+      // Track this gain node so we can update its volume live
+      this.activeGainNodes.push(gainNode);
+      
+      // Clean up the gain node reference when the sound finishes
+      source.addEventListener('ended', () => {
+        const index = this.activeGainNodes.indexOf(gainNode);
+        if (index > -1) {
+          this.activeGainNodes.splice(index, 1);
+        }
+      });
+      
       source.connect(gainNode);
       gainNode.connect(this.audioEngine.masterGain);
       source.start();
@@ -138,6 +150,12 @@ class SoundPad {
       volumeFader.addEventListener('input', (e) => {
         const value = parseInt(e.target.value);
         this.volume = value / 100;
+        
+        // Update volume of all currently playing sounds
+        this.activeGainNodes.forEach(gainNode => {
+          gainNode.gain.value = this.volume;
+        });
+        
         const volumeDisplay = e.target.nextElementSibling;
         if (volumeDisplay) {
           volumeDisplay.textContent = `${value}%`;
