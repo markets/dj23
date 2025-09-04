@@ -261,8 +261,6 @@ class Deck {
       splitter.connect(this.effectNodes.flanger);
       this.effectNodes.flanger.connect(this.effectNodes.flangerGain);
       this.effectNodes.flangerGain.connect(this.globalGainNode);
-
-      // LFO connection is already set up in connectEffectChain
     }
 
     this.gainNode.connect(this.masterGain);
