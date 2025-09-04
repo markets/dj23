@@ -939,6 +939,10 @@ class DeckController {
     this.isScratching = false;
     this.vinylElement = null;
     
+    // Vinyl rotation tracking
+    this.vinylStartTime = 0;
+    this.vinylPausedRotation = 0;
+    
     // TAP functionality
     this.tapTimes = [];
     this.tapTimeout = null;
@@ -1400,7 +1404,7 @@ class DeckController {
       this.updatePauseState(false);
       // Start vinyl animation
       if (this.vinylElement && !this.isScratching) {
-        this.vinylElement.classList.add('spinning');
+        this.startVinylRotation();
       }
       // Resume waveform animations
       if (window.waveformRenderers && window.waveformRenderers[this.deckId]) {
@@ -1418,9 +1422,9 @@ class DeckController {
       deck.pause();
       this.updatePlayingState(false);
       this.updatePauseState(true);
-      // Stop vinyl animation
+      // Pause vinyl animation while preserving position
       if (this.vinylElement) {
-        this.vinylElement.classList.remove('spinning');
+        this.pauseVinylRotation();
       }
     }
   }
@@ -1431,9 +1435,9 @@ class DeckController {
       deck.stop();
       this.updatePlayingState(false);
       this.updatePauseState(false);
-      // Stop vinyl animation
+      // Stop vinyl animation and reset position
       if (this.vinylElement) {
-        this.vinylElement.classList.remove('spinning');
+        this.stopVinylRotation();
       }
       // Force waveform update to show position at beginning
       if (window.waveformRenderers && window.waveformRenderers[this.deckId]) {
@@ -1458,6 +1462,43 @@ class DeckController {
       deckElement.classList.remove('playing');
       playButton.classList.remove('active');
     }
+  }
+
+  startVinylRotation() {
+    if (!this.vinylElement) return;
+    
+    // Record when we start the rotation (accounting for any previous paused rotation)
+    this.vinylStartTime = performance.now() - (this.vinylPausedRotation / 360) * 1800; // 1800ms = 1.8s animation duration
+    
+    // Clear any static rotation and start the spinning animation
+    this.vinylElement.style.transform = '';
+    this.vinylElement.classList.add('spinning');
+  }
+
+  pauseVinylRotation() {
+    if (!this.vinylElement) return;
+    
+    // Calculate current rotation based on time elapsed
+    const currentTime = performance.now();
+    const elapsed = currentTime - this.vinylStartTime;
+    const rotations = (elapsed / 1800) % 1; // 1.8s per rotation
+    this.vinylPausedRotation = rotations * 360;
+    
+    // Remove the spinning animation and apply static rotation
+    this.vinylElement.classList.remove('spinning');
+    this.vinylElement.style.transform = `rotate(${this.vinylPausedRotation}deg)`;
+  }
+
+  stopVinylRotation() {
+    if (!this.vinylElement) return;
+    
+    // Reset rotation tracking
+    this.vinylStartTime = 0;
+    this.vinylPausedRotation = 0;
+    
+    // Remove animation and reset rotation
+    this.vinylElement.classList.remove('spinning');
+    this.vinylElement.style.transform = '';
   }
 
   updatePauseState(isPaused) {
