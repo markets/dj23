@@ -172,7 +172,6 @@ class EffectsController {
   }
 
   setupEffectControls() {
-    // All effects follow the same pattern
     this.createEffectSliderHandler('filter', 'setFilter');
     this.createEffectSliderHandler('reverb', 'setReverb');
     this.createEffectSliderHandler('delay', 'setDelay');

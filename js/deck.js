@@ -976,12 +976,12 @@ class DeckController {
       }
     });
 
-    // Transport controls - using unified click handlers
+    // Transport controls
     this.createControllerMethodHandler('play', 'play');
     this.createControllerMethodHandler('pause', 'pause');
     this.createControllerMethodHandler('stop', 'stop');
 
-    // CUE button - press and hold behavior using unified handler
+    // CUE button - press and hold behavior
     window.buttonHandler.createPressAndHoldHandler(
       `cue${this.deckId}`,
       () => {
@@ -1024,22 +1024,22 @@ class DeckController {
     // Volume control
     this.createSliderHandler(`volume${this.deckId}`, 'setVolume', { suffix: '%' });
 
-    // Pitch bend buttons - press and hold behavior using unified handler
+    // Pitch bend buttons - press and hold behavior
     window.buttonHandler.createPressAndHoldHandler(
       `pitchBendPlus${this.deckId}`,
       () => window.buttonHandler.callDeckMethod(this.deckId, 'pitchBend', 1),
       () => window.buttonHandler.callDeckMethod(this.deckId, 'stopPitchBend'),
-      { updateActiveState: false } // Don't auto-add active class for pitch bend
+      { updateActiveState: false }
     );
 
     window.buttonHandler.createPressAndHoldHandler(
       `pitchBendMinus${this.deckId}`,
       () => window.buttonHandler.callDeckMethod(this.deckId, 'pitchBend', -1),
       () => window.buttonHandler.callDeckMethod(this.deckId, 'stopPitchBend'),
-      { updateActiveState: false } // Don't auto-add active class for pitch bend
+      { updateActiveState: false }
     );
 
-    // Pitch reset button - using unified click handler
+    // Pitch reset button
     window.buttonHandler.createClickHandler(`pitchReset${this.deckId}`, () => {
       const deck = window.audioEngine.getDeck(this.deckId);
       if (deck) {
@@ -1052,24 +1052,26 @@ class DeckController {
       }
     });
 
-    // CUE point controls - using unified handlers
+    // CUE point controls
     this.createDeckMethodHandler('cue1', 'jumpToCue', 1);
     this.createDeckMethodHandler('cue2', 'jumpToCue', 2);
     this.createDeckMethodHandler('setCue1', 'setCuePoint', 1);
     this.createDeckMethodHandler('setCue2', 'setCuePoint', 2);
 
-    // TAP and loop controls - using unified handlers
+    // TAP
     this.createControllerMethodHandler('tap', 'handleTap');
+
+    // Loop controls
     this.createDeckMethodHandler('loopIn', 'setLoopIn');
     this.createDeckMethodHandler('loopOut', 'setLoopOut');
     this.createDeckMethodHandler('loopToggle', 'toggleLoop');
-    this.createControllerMethodHandler('resetFilters', 'resetFilters');
-
-    // Loop length slider
     this.createSliderHandler(`loopLength${this.deckId}`, 'setLoopLength', {
       displayElement: document.getElementById(`loopLengthValue${this.deckId}`),
       suffix: '%'
     });
+
+    // Reset effects
+    this.createControllerMethodHandler('resetFilters', 'resetFilters');
   }
 
   setupVinylControls() {

@@ -38,7 +38,7 @@ class MixerController {
   }
 
   setupEventListeners() {
-    // Master volume control using unified slider handler
+    // Master volume control
     this.createSliderHandler('masterVolume', (value) => {
       window.audioEngine.setMasterVolume(value);
     }, { suffix: '%' });
@@ -52,7 +52,7 @@ class MixerController {
     this.deckControllers.A = new DeckController('A');
     this.deckControllers.B = new DeckController('B');
 
-    // Sync buttons - using unified click handlers
+    // Sync buttons
     window.buttonHandler.createClickHandler('syncAB', () => this.syncDecks('A', 'B'));
     window.buttonHandler.createClickHandler('syncBA', () => this.syncDecks('B', 'A'));
   }
@@ -222,7 +222,6 @@ class MixerController {
         
     updateVU();
   }
-
 }
 
 window.mixerController = new MixerController();
