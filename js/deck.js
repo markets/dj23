@@ -431,31 +431,25 @@ class Deck {
 
   // Helper method to find the most recently set cue point
   getLastCueTime() {
-    let lastCueTime = null;
-    for (let i = 1; i <= 2; i++) {
-      if (this.cuePoints[i] !== null) {
-        lastCueTime = this.cuePoints[i];
-      }
+    // Check for manual cue points (prioritize CUE 2 over CUE 1)
+    if (this.cuePoints[2] !== null) return this.cuePoints[2];
+    if (this.cuePoints[1] !== null) return this.cuePoints[1];
+    
+    // If no manual cue points are set, use the default cue point
+    if (this.defaultCuePoint !== null) {
+      console.log(`Deck ${this.deckId}: Using default CUE at ${this.defaultCuePoint}s`);
+      return this.defaultCuePoint;
     }
     
-    // If no manual cue points are set, use the default cue point or current position
-    if (lastCueTime === null) {
-      if (this.defaultCuePoint !== null) {
-        return this.defaultCuePoint;
-      } else {
-        // First time CUE is used - set default cue point at current position
-        this.defaultCuePoint = this.getCurrentTime();
-        console.log(`Deck ${this.deckId}: Auto-set default CUE at current position ${this.defaultCuePoint}s`);
-        return this.defaultCuePoint;
-      }
-    }
-    
-    return lastCueTime;
+    return 0;
   }
 
   // CUE mode methods for press-and-hold behavior
   startCueMode() {
     if (!this.audioBuffer) return;
+    
+    // Ensure we have a default cue point set
+    this.ensureDefaultCuePoint();
     
     // If not playing, go to cue point and start playing
     if (!this.isPlaying) {
@@ -473,6 +467,16 @@ class Deck {
     }
     
     console.log(`Deck ${this.deckId}: CUE mode started`);
+  }
+
+  ensureDefaultCuePoint() {
+    // Only set default cue point if no manual cue points exist and no default exists
+    const hasManualCues = this.cuePoints[1] !== null || this.cuePoints[2] !== null;
+    
+    if (!hasManualCues && this.defaultCuePoint === null) {
+      this.defaultCuePoint = this.getCurrentTime();
+      console.log(`Deck ${this.deckId}: Auto-set default CUE at current position ${this.defaultCuePoint}s`);
+    }
   }
 
   stopCueMode() {
