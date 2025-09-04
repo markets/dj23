@@ -962,6 +962,11 @@ body {
   background: linear-gradient(145deg, var(--border-secondary), var(--border-primary));
 }
 
+.loop-btn.active {
+  background: var(--gradient-primary) !important;
+  box-shadow: var(--shadow-primary) !important;
+}
+
 .loop-control .loop-length-value {
   font-size: 0.9rem;
   color: var(--text-secondary);

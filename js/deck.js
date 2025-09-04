@@ -1064,7 +1064,12 @@ class DeckController {
     // Loop controls
     this.createDeckMethodHandler('loopIn', 'setLoopIn');
     this.createDeckMethodHandler('loopOut', 'setLoopOut');
-    this.createDeckMethodHandler('loopToggle', 'toggleLoop');
+    // Custom handler for loop toggle to update UI state
+    window.buttonHandler.createClickHandler(`loopToggle${this.deckId}`, () => {
+      const deck = window.audioEngine.getDeck(this.deckId);
+      deck.toggleLoop();
+      this.updateLoopState(deck.isLooping);
+    });
     this.createSliderHandler(`loopLength${this.deckId}`, 'setLoopLength', {
       displayElement: document.getElementById(`loopLengthValue${this.deckId}`),
       suffix: '%'
@@ -1433,6 +1438,16 @@ class DeckController {
       cueButton.classList.add('active');
     } else {
       cueButton.classList.remove('active');
+    }
+  }
+
+  updateLoopState(isLooping) {
+    const loopToggleButton = document.getElementById(`loopToggle${this.deckId}`);
+    
+    if (isLooping) {
+      loopToggleButton.classList.add('active');
+    } else {
+      loopToggleButton.classList.remove('active');
     }
   }
 
