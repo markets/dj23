@@ -1244,12 +1244,8 @@ class DeckController {
       // Reset loop length slider UI
       const loopLengthSlider = document.getElementById(`loopLength${this.deckId}`);
       const loopLengthDisplay = document.getElementById(`loopLengthValue${this.deckId}`);
-      if (loopLengthSlider) {
-        loopLengthSlider.value = 100;
-      }
-      if (loopLengthDisplay) {
-        loopLengthDisplay.textContent = '100%';
-      }
+      if (loopLengthSlider) loopLengthSlider.value = 100;
+      if (loopLengthDisplay) loopLengthDisplay.textContent = '100%';
       
       // Extract metadata and update track display
       await this.extractAndDisplayMetadata(file);
