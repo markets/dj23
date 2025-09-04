@@ -1245,11 +1245,11 @@ input[type="range"]::-moz-range-thumb {
 
 .global-beat-waveforms {
   margin-bottom: var(--spacing-xl);
-  background: linear-gradient(145deg, var(--bg-secondary), var(--bg-primary));
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-sm);
-  border: 1px solid var(--border-primary);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  border: none;
+  box-shadow: none;
 }
 
 .global-beat-waveform-container {
@@ -1303,18 +1303,19 @@ input[type="range"]::-moz-range-thumb {
   position: relative;
   width: 100%;
   height: 60px;
-  background: var(--bg-primary);
+  background: linear-gradient(145deg, var(--bg-secondary), var(--bg-primary));
   border-radius: var(--radius-sm);
   overflow: hidden;
   border: 1px solid var(--border-primary);
   cursor: pointer;
   transition: var(--transition-normal);
   margin-bottom: 1px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .beat-waveform-wrapper-fullwidth:hover {
   border-color: var(--color-primary);
-  box-shadow: 0 2px 8px rgba(78, 205, 196, 0.15);
+  box-shadow: 0 4px 15px rgba(78, 205, 196, 0.2);
 }
 
 .beat-waveform-wrapper-fullwidth:last-child {
