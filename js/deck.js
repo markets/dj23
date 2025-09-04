@@ -427,7 +427,6 @@ class Deck {
     this.loopStart = null;
     this.loopEnd = null;
     this.originalLoopEnd = null;
-    this.loopLengthPercentage = 100;
     
     // Update UI to reflect cleared loop state
     const controller = window.mixerController?.deckControllers[this.deckId];
@@ -1087,15 +1086,14 @@ class DeckController {
     // Loop controls
     this.createDeckMethodHandler('loopIn', 'setLoopIn');
     this.createDeckMethodHandler('loopOut', 'setLoopOut');
-    // Custom handler for loop toggle to update UI state
+    this.createSliderHandler(`loopLength${this.deckId}`, 'setLoopLength', {
+      displayElement: document.getElementById(`loopLengthValue${this.deckId}`),
+      suffix: '%'
+    });
     window.buttonHandler.createClickHandler(`loopToggle${this.deckId}`, () => {
       const deck = window.audioEngine.getDeck(this.deckId);
       deck.toggleLoop();
       this.updateLoopState(deck.isLooping);
-    });
-    this.createSliderHandler(`loopLength${this.deckId}`, 'setLoopLength', {
-      displayElement: document.getElementById(`loopLengthValue${this.deckId}`),
-      suffix: '%'
     });
 
     // Reset effects
@@ -1240,16 +1238,6 @@ class DeckController {
       
       // Reset loops
       deck.resetLoopPoints();
-      
-      // Reset loop length slider UI
-      const loopLengthSlider = document.getElementById(`loopLength${this.deckId}`);
-      const loopLengthDisplay = document.getElementById(`loopLengthValue${this.deckId}`);
-      if (loopLengthSlider) {
-        loopLengthSlider.value = 100;
-      }
-      if (loopLengthDisplay) {
-        loopLengthDisplay.textContent = '100%';
-      }
       
       // Extract metadata and update track display
       await this.extractAndDisplayMetadata(file);
