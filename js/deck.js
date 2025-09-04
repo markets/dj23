@@ -348,15 +348,16 @@ class Deck {
   setFilter(value) {
     if (this.effectNodes.filter) {
       // Use logarithmic scale for more musical frequency response
-      // Map 0-100% to a safer range (100Hz-15kHz) to avoid distortion
-      const minFreq = 100; // 100Hz minimum to avoid muddy low-end
-      const maxFreq = 15000; // 15kHz maximum to avoid harsh high-end distortion
+      // Map 0-100% in INVERSE direction for traditional DJ filter behavior
+      const minFreq = 100; // 100Hz minimum (full filtering at 100%)
+      const maxFreq = 15000; // 15kHz maximum (no filtering at 0%)
       
-      // Logarithmic scaling for more natural frequency response
-      const normalizedValue = value / 100;
+      // Invert the value so slider works like traditional DJ filter
+      // 0% = no filtering (15kHz), 100% = heavy filtering (100Hz)
+      const invertedValue = (100 - value) / 100;
       const logMin = Math.log(minFreq);
       const logMax = Math.log(maxFreq);
-      const frequency = Math.exp(logMin + normalizedValue * (logMax - logMin));
+      const frequency = Math.exp(logMin + invertedValue * (logMax - logMin));
       
       this.effectNodes.filter.frequency.value = frequency;
     }

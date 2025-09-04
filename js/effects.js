@@ -96,13 +96,23 @@ class EffectsEngine {
   }
 
   createReverbImpulse() {
-    const length = this.audioContext.sampleRate * 2;
+    // Create a more dramatic reverb impulse for better audibility
+    const length = this.audioContext.sampleRate * 3; // Longer reverb tail (3 seconds)
     const impulse = this.audioContext.createBuffer(2, length, this.audioContext.sampleRate);
         
     for (let channel = 0; channel < 2; channel++) {
       const channelData = impulse.getChannelData(channel);
       for (let i = 0; i < length; i++) {
-        channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2);
+        const decay = Math.pow(1 - i / length, 1.2); // Slower decay for more prominent reverb
+        const noise = (Math.random() * 2 - 1);
+        
+        // Add some early reflections for more character
+        let amplitude = decay;
+        if (i < this.audioContext.sampleRate * 0.1) { // First 100ms
+          amplitude *= (1 + Math.sin(i / 1000) * 0.3); // Add early reflection pattern
+        }
+        
+        channelData[i] = noise * amplitude;
       }
     }
         
@@ -112,8 +122,10 @@ class EffectsEngine {
   // Effect parameter control methods
   setReverb(value) {
     if (this.effectNodes.reverbGain) {
-      this.effectNodes.reverbGain.gain.value = value / 100;
-      this.effectNodes.reverbDry.gain.value = 1 - (value / 100);
+      // Make reverb more noticeable with exponential curve and higher maximum
+      const wetLevel = Math.pow(value / 100, 0.7) * 1.2; // Exponential curve, max 120%
+      this.effectNodes.reverbGain.gain.value = Math.min(wetLevel, 1.2);
+      this.effectNodes.reverbDry.gain.value = Math.max(1 - (wetLevel * 0.8), 0.2); // Keep some dry signal
     }
   }
 
@@ -125,15 +137,20 @@ class EffectsEngine {
 
   setPhaser(value) {
     if (this.effectNodes.phaserGain) {
-      // Better wet/dry mix curve for more musical phasing
-      const wetLevel = (value / 100) * 0.7; // Max 70% wet for better balance
-      const dryLevel = 1 - (wetLevel * 0.5); // Keep some dry signal for punch
+      // Make phaser more noticeable with stronger modulation and better mix
+      const wetLevel = (value / 100) * 0.9; // Increase max wet level to 90%
+      const dryLevel = 1 - (wetLevel * 0.3); // Keep more dry signal for punch
       this.effectNodes.phaserGain.gain.value = wetLevel;
       this.effectNodes.phaserDry.gain.value = dryLevel;
       
-      // Adjust LFO depth based on effect intensity
+      // Much stronger LFO depth for more dramatic phasing effect
       if (this.effectNodes.phaserLFOGain) {
-        this.effectNodes.phaserLFOGain.gain.value = 400 + (value * 8); // Dynamic modulation depth
+        this.effectNodes.phaserLFOGain.gain.value = 600 + (value * 15); // Stronger modulation depth
+      }
+      
+      // Also adjust LFO frequency for more noticeable sweep
+      if (this.effectNodes.phaserLFO) {
+        this.effectNodes.phaserLFO.frequency.value = 0.2 + (value / 100) * 0.8; // 0.2Hz to 1Hz
       }
     }
   }
