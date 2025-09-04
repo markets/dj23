@@ -703,7 +703,7 @@ body {
   justify-content: space-around;
   align-items: flex-start;
   margin: var(--spacing-xl) 0;
-  height: 200px;
+  height: 140px;
 }
 
 .vu-meter {
@@ -714,7 +714,7 @@ body {
 }
 
 .vu-meter label {
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
   font-weight: 600;
   color: var(--text-secondary);
   writing-mode: horizontal-tb;
@@ -723,9 +723,9 @@ body {
 .vu-bars {
   display: flex;
   flex-direction: column-reverse;
-  gap: var(--spacing-xs);
+  gap: 2px;
   width: 20px;
-  height: 150px;
+  height: 100px;
   align-items: center;
 }
 
