@@ -294,10 +294,7 @@ class ZoomedWaveformRenderer {
         deck.seek(newTime);
         
         // Also apply scratch effect for audio feedback
-        // Skip scratch effects when paused to avoid audio source issues
-        if (deck.isPlaying) {
-          deck.scratch(scratchSpeed * 15); // Scale for audio scratching
-        }
+        deck.scratch(scratchSpeed * 15); // Scale for audio scratching
       }
       
       lastX = currentX;
@@ -365,10 +362,7 @@ class ZoomedWaveformRenderer {
         deck.seek(newTime);
         
         // Also apply scratch effect for audio feedback
-        // Skip scratch effects when paused to avoid audio source issues
-        if (deck.isPlaying) {
-          deck.scratch(scratchSpeed * 15);
-        }
+        deck.scratch(scratchSpeed * 15);
       }
       
       lastX = currentX;

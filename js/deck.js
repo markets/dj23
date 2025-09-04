@@ -1251,13 +1251,8 @@ class DeckController {
       if (this.vinylElement) {
         this.vinylElement.classList.remove('spinning');
       }
-      // Stop waveform animations
-      if (window.waveformRenderers && window.waveformRenderers[this.deckId]) {
-        window.waveformRenderers[this.deckId].stopAnimation();
-      }
-      if (window.beatWaveformRenderers && window.beatWaveformRenderers[this.deckId]) {
-        window.beatWaveformRenderers[this.deckId].stopAnimation();
-      }
+      // Keep waveform animations running when paused to allow drag interaction
+      // Waveforms need to update visually when user drags while paused
     }
   }
 
