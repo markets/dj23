@@ -937,6 +937,9 @@ class DeckController {
       this[controllerMethod]();
     });
   }
+
+  // Utility function for creating slider handlers with unified pattern
+  createSliderHandler(sliderId, deckMethod, displayOptions = {}) {
     const slider = document.getElementById(sliderId);
     if (!slider) return;
 

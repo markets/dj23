@@ -178,7 +178,6 @@ class EffectsController {
     this.createEffectSliderHandler('delay', 'setDelay');
     this.createEffectSliderHandler('phaser', 'setPhaser');
     this.createEffectSliderHandler('flanger', 'setFlanger');
-    });
   }
 }
 
