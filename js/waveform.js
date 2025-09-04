@@ -1,4 +1,3 @@
-// Base class for waveform renderers to avoid code duplication
 class BaseWaveformRenderer {
   constructor(canvasId, deckId) {
     this.canvas = document.getElementById(canvasId);
