@@ -47,6 +47,7 @@ class Deck {
     // CUE points
     this.cuePoints = { 1: null, 2: null };
     this.isCueActive = false; // Track if CUE is currently being held/active
+    this.defaultCuePoint = null; // Auto-set cue point for when no manual cue points exist
 
     // Loop points
     this.loopStart = null;
@@ -410,6 +411,7 @@ class Deck {
   // CUE point methods
   resetCuePoints() {
     this.cuePoints = { 1: null, 2: null };
+    this.defaultCuePoint = null;
     console.log(`Deck ${this.deckId}: CUE points reset`);
   }
 
@@ -435,7 +437,20 @@ class Deck {
         lastCueTime = this.cuePoints[i];
       }
     }
-    return lastCueTime !== null ? lastCueTime : 0;
+    
+    // If no manual cue points are set, use the default cue point or current position
+    if (lastCueTime === null) {
+      if (this.defaultCuePoint !== null) {
+        return this.defaultCuePoint;
+      } else {
+        // First time CUE is used - set default cue point at current position
+        this.defaultCuePoint = this.getCurrentTime();
+        console.log(`Deck ${this.deckId}: Auto-set default CUE at current position ${this.defaultCuePoint}s`);
+        return this.defaultCuePoint;
+      }
+    }
+    
+    return lastCueTime;
   }
 
   // CUE mode methods for press-and-hold behavior
