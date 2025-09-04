@@ -845,7 +845,10 @@ body {
   cursor: grab;
   transition: var(--transition-fast);
   border: 2px solid var(--border-secondary);
-  box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.5);
+  box-shadow: 
+    inset 0 -2px 4px rgba(0, 0, 0, 0.5),
+    0 8px 16px rgba(0, 0, 0, 0.4),
+    0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .vinyl-record:active {
