@@ -158,6 +158,13 @@ class MixerController {
     });
   }
 
+  // Helper function to get VU bar class based on position
+  getVUBarClass(index, totalBars) {
+    if (index < totalBars * 0.6) return 'active-low';
+    if (index < totalBars * 0.8) return 'active-mid';
+    return 'active-high';
+  }
+
   updateVUMeter(deckId, level) {
     const bars = this.vuMeters[deckId];
     if (!bars) return;
@@ -168,13 +175,7 @@ class MixerController {
       bar.classList.remove('active-low', 'active-mid', 'active-high');
             
       if (index < activeCount) {
-        if (index < bars.length * 0.6) {
-          bar.classList.add('active-low');
-        } else if (index < bars.length * 0.8) {
-          bar.classList.add('active-mid');
-        } else {
-          bar.classList.add('active-high');
-        }
+        bar.classList.add(this.getVUBarClass(index, bars.length));
       }
     });
   }
