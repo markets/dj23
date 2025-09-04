@@ -528,11 +528,9 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 75px;
-  width: 75px;
+  height: 70px;
+  width: 70px;
   color: white;
-  font-weight: 500;
-  border: 1px solid var(--border-primary);
   overflow-x: hidden;
 }
 
