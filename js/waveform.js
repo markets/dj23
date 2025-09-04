@@ -210,13 +210,6 @@ class WaveformRenderer {
     };
     animate();
   }
-
-  stopAnimation() {
-    if (this.animationId) {
-      cancelAnimationFrame(this.animationId);
-      this.animationId = null;
-    }
-  }
 }
 
 class ZoomedWaveformRenderer {
@@ -596,13 +589,6 @@ class ZoomedWaveformRenderer {
       this.animationId = requestAnimationFrame(animate);
     };
     animate();
-  }
-
-  stopAnimation() {
-    if (this.animationId) {
-      cancelAnimationFrame(this.animationId);
-      this.animationId = null;
-    }
   }
 }
 
