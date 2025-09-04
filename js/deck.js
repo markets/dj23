@@ -924,6 +924,48 @@ class DeckController {
     this.effectsController = new EffectsController(deckId);
   }
 
+  // Utility function for creating deck method button handlers
+  createDeckMethodHandler(buttonName, deckMethod, ...args) {
+    window.buttonHandler.createClickHandler(`${buttonName}${this.deckId}`, () => {
+      window.buttonHandler.callDeckMethod(this.deckId, deckMethod, ...args);
+    });
+  }
+
+  // Utility function for creating controller method button handlers
+  createControllerMethodHandler(buttonName, controllerMethod) {
+    window.buttonHandler.createClickHandler(`${buttonName}${this.deckId}`, () => {
+      this[controllerMethod]();
+    });
+  }
+
+  // Utility function for creating slider handlers with unified pattern
+  createSliderHandler(sliderId, deckMethod, displayOptions = {}) {
+    const slider = document.getElementById(sliderId);
+    if (!slider) return;
+
+    slider.addEventListener('input', (e) => {
+      const value = parseInt(e.target.value);
+      const deck = window.audioEngine.getDeck(this.deckId);
+      if (deck && typeof deck[deckMethod] === 'function') {
+        deck[deckMethod](value);
+      }
+
+      // Update display element if configured
+      if (displayOptions.updateDisplay !== false) {
+        const displayElement = displayOptions.displayElement || e.target.nextElementSibling;
+        if (displayElement) {
+          const suffix = displayOptions.suffix || '';
+          displayElement.textContent = `${value}${suffix}`;
+        }
+      }
+
+      // Call additional callback if provided
+      if (displayOptions.callback && typeof displayOptions.callback === 'function') {
+        displayOptions.callback(value);
+      }
+    });
+  }
+
   setupEventListeners() {
     // File input
     const fileInput = document.getElementById(`fileInput${this.deckId}`);
@@ -934,12 +976,12 @@ class DeckController {
       }
     });
 
-    // Transport controls - using unified click handlers
-    window.buttonHandler.createClickHandler(`play${this.deckId}`, () => this.play());
-    window.buttonHandler.createClickHandler(`pause${this.deckId}`, () => this.pause());
-    window.buttonHandler.createClickHandler(`stop${this.deckId}`, () => this.stop());
+    // Transport controls
+    this.createControllerMethodHandler('play', 'play');
+    this.createControllerMethodHandler('pause', 'pause');
+    this.createControllerMethodHandler('stop', 'stop');
 
-    // CUE button - press and hold behavior using unified handler
+    // CUE button - press and hold behavior
     window.buttonHandler.createPressAndHoldHandler(
       `cue${this.deckId}`,
       () => {
@@ -955,58 +997,49 @@ class DeckController {
     this.setupVinylControls();
 
     // Pitch control (vertical)
-    const pitchSlider = document.getElementById(`pitch${this.deckId}`);
-    pitchSlider.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.setPitch(value);
-        // Update BPM display to reflect pitch change
-        this.updateBPMDisplay();
-      }
-      document.getElementById(`pitchDisplay${this.deckId}`).textContent = `${value}%`;
+    this.createSliderHandler(`pitch${this.deckId}`, 'setPitch', {
+      displayElement: document.getElementById(`pitchDisplay${this.deckId}`),
+      suffix: '%',
+      callback: () => this.updateBPMDisplay()
     });
 
     // EQ controls
     ['high', 'mid', 'low', 'gain'].forEach(band => {
-      const eqSlider = document.getElementById(`${band}${this.deckId}`);
-      eqSlider.addEventListener('input', (e) => {
-        const value = parseInt(e.target.value);
-        const deck = window.audioEngine.getDeck(this.deckId);
-        if (deck) {
-          deck.setEQ(band, value);
+      this.createSliderHandler(`${band}${this.deckId}`, 'setEQ', {
+        updateDisplay: false, // We'll handle display manually because setEQ needs band parameter
+        callback: (value) => {
+          const deck = window.audioEngine.getDeck(this.deckId);
+          if (deck) {
+            deck.setEQ(band, value);
+          }
+          // Update display manually
+          const slider = document.getElementById(`${band}${this.deckId}`);
+          if (slider && slider.nextElementSibling) {
+            slider.nextElementSibling.textContent = value;
+          }
         }
-        e.target.nextElementSibling.textContent = value;
       });
     });
 
     // Volume control
-    const volumeSlider = document.getElementById(`volume${this.deckId}`);
-    volumeSlider.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.setVolume(value);
-      }
-      e.target.nextElementSibling.textContent = `${value}%`;
-    });
+    this.createSliderHandler(`volume${this.deckId}`, 'setVolume', { suffix: '%' });
 
-    // Pitch bend buttons - press and hold behavior using unified handler
+    // Pitch bend buttons - press and hold behavior
     window.buttonHandler.createPressAndHoldHandler(
       `pitchBendPlus${this.deckId}`,
       () => window.buttonHandler.callDeckMethod(this.deckId, 'pitchBend', 1),
       () => window.buttonHandler.callDeckMethod(this.deckId, 'stopPitchBend'),
-      { updateActiveState: false } // Don't auto-add active class for pitch bend
+      { updateActiveState: false }
     );
 
     window.buttonHandler.createPressAndHoldHandler(
       `pitchBendMinus${this.deckId}`,
       () => window.buttonHandler.callDeckMethod(this.deckId, 'pitchBend', -1),
       () => window.buttonHandler.callDeckMethod(this.deckId, 'stopPitchBend'),
-      { updateActiveState: false } // Don't auto-add active class for pitch bend
+      { updateActiveState: false }
     );
 
-    // Pitch reset button - using unified click handler
+    // Pitch reset button
     window.buttonHandler.createClickHandler(`pitchReset${this.deckId}`, () => {
       const deck = window.audioEngine.getDeck(this.deckId);
       if (deck) {
@@ -1019,46 +1052,26 @@ class DeckController {
       }
     });
 
-    // CUE point controls - using unified click handlers
-    window.buttonHandler.createClickHandler(`cue1${this.deckId}`, () => {
-      window.buttonHandler.callDeckMethod(this.deckId, 'jumpToCue', 1);
-    });
-    window.buttonHandler.createClickHandler(`cue2${this.deckId}`, () => {
-      window.buttonHandler.callDeckMethod(this.deckId, 'jumpToCue', 2);
-    });
-    window.buttonHandler.createClickHandler(`setCue1${this.deckId}`, () => {
-      window.buttonHandler.callDeckMethod(this.deckId, 'setCuePoint', 1);
-    });
-    window.buttonHandler.createClickHandler(`setCue2${this.deckId}`, () => {
-      window.buttonHandler.callDeckMethod(this.deckId, 'setCuePoint', 2);
+    // CUE point controls
+    this.createDeckMethodHandler('cue1', 'jumpToCue', 1);
+    this.createDeckMethodHandler('cue2', 'jumpToCue', 2);
+    this.createDeckMethodHandler('setCue1', 'setCuePoint', 1);
+    this.createDeckMethodHandler('setCue2', 'setCuePoint', 2);
+
+    // TAP
+    this.createControllerMethodHandler('tap', 'handleTap');
+
+    // Loop controls
+    this.createDeckMethodHandler('loopIn', 'setLoopIn');
+    this.createDeckMethodHandler('loopOut', 'setLoopOut');
+    this.createDeckMethodHandler('loopToggle', 'toggleLoop');
+    this.createSliderHandler(`loopLength${this.deckId}`, 'setLoopLength', {
+      displayElement: document.getElementById(`loopLengthValue${this.deckId}`),
+      suffix: '%'
     });
 
-    // TAP and loop controls - using unified click handlers
-    window.buttonHandler.createClickHandler(`tap${this.deckId}`, () => this.handleTap());
-    window.buttonHandler.createClickHandler(`loopIn${this.deckId}`, () => {
-      window.buttonHandler.callDeckMethod(this.deckId, 'setLoopIn');
-    });
-    window.buttonHandler.createClickHandler(`loopOut${this.deckId}`, () => {
-      window.buttonHandler.callDeckMethod(this.deckId, 'setLoopOut');
-    });
-    window.buttonHandler.createClickHandler(`loopToggle${this.deckId}`, () => {
-      window.buttonHandler.callDeckMethod(this.deckId, 'toggleLoop');
-    });
-    window.buttonHandler.createClickHandler(`resetFilters${this.deckId}`, () => this.resetFilters());
-
-    // Loop length slider
-    const loopLengthSlider = document.getElementById(`loopLength${this.deckId}`);
-    const loopLengthValue = document.getElementById(`loopLengthValue${this.deckId}`);
-    
-    loopLengthSlider.addEventListener('input', (e) => {
-      const percentage = parseInt(e.target.value);
-      loopLengthValue.textContent = `${percentage}%`;
-      
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.setLoopLength(percentage);
-      }
-    });
+    // Reset effects
+    this.createControllerMethodHandler('resetFilters', 'resetFilters');
   }
 
   setupVinylControls() {

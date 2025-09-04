@@ -18,18 +18,18 @@ class KeyboardShortcuts {
 
   // Helper function for deck transport controls
   controlDeck(deckId, action) {
-    const mixerController = window.mixerController;
-    if (!mixerController) return;
+    const deckController = window.mixerController?.deckControllers[deckId];
+    if (!deckController) return;
 
     switch (action) {
       case 'play':
-        mixerController.playDeck(deckId);
+        deckController.play();
         break;
       case 'pause':
-        mixerController.pauseDeck(deckId);
+        deckController.pause();
         break;
       case 'stop':
-        mixerController.stopDeck(deckId);
+        deckController.stop();
         break;
     }
   }
