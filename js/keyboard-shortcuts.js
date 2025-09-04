@@ -94,10 +94,10 @@ class KeyboardShortcuts {
 
     // Prevent default for our shortcuts
     const shortcuts = [
-      'Space', 'KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyA', 'KeyS', 'KeyD', 'KeyF',
-      'KeyT', 'KeyY', 'KeyU', 'KeyG', 'KeyH', 'KeyJ',
-      'Digit1', 'Digit2', 'Digit3', 'Digit4',
-      'Minus', 'Equal', 'BracketLeft', 'BracketRight',
+      'Space', 'KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyA', 'KeyS', 'KeyD', 
+      'KeyU', 'KeyI', 'KeyO', 'KeyP', 'KeyJ', 'KeyK', 'KeyL',
+      'KeyZ', 'KeyX', 'KeyN', 'KeyM',
+      'Digit1', 'Digit2', 'Digit8', 'Digit9',
       'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
       'Slash'
     ];
@@ -128,42 +128,48 @@ class KeyboardShortcuts {
   }
 
   handleRegularShortcuts(e) {
-    // Define keyboard mappings for easier maintenance
+    // Define keyboard mappings with logical left/right split
     const shortcuts = {
       // General controls
       'Space': () => this.controlDeck('A', 'play'),
       
-      // Deck A Controls
+      // LEFT SIDE - Deck A Controls
       'KeyQ': () => this.controlDeck('A', 'play'),
       'KeyW': () => this.controlDeck('A', 'pause'),
       'KeyE': () => this.controlDeck('A', 'stop'),
       'KeyR': () => this.handleCuePress('A', 'KeyR'),
       
-      // Deck B Controls
-      'KeyA': () => this.controlDeck('B', 'play'),
-      'KeyS': () => this.controlDeck('B', 'pause'),
-      'KeyD': () => this.controlDeck('B', 'stop'),
-      'KeyF': () => this.handleCuePress('B', 'KeyF'),
-      
-      // Cue Points
+      // LEFT SIDE - Deck A Cue Points (1-2)
       'Digit1': () => this.handleCuePoint(e, 'A', 1),
       'Digit2': () => this.handleCuePoint(e, 'A', 2),
-      'Digit3': () => this.handleCuePoint(e, 'B', 1),
-      'Digit4': () => this.handleCuePoint(e, 'B', 2),
       
-      // Loop Controls
-      'KeyT': () => this.clickButton('loopInA'),
-      'KeyY': () => this.clickButton('loopOutA'),
-      'KeyU': () => this.clickButton('loopToggleA'),
-      'KeyG': () => this.clickButton('loopInB'),
-      'KeyH': () => this.clickButton('loopOutB'),
-      'KeyJ': () => this.clickButton('loopToggleB'),
+      // LEFT SIDE - Deck A Loop Controls
+      'KeyA': () => this.clickButton('loopInA'),
+      'KeyS': () => this.clickButton('loopOutA'),
+      'KeyD': () => this.clickButton('loopToggleA'),
       
-      // Pitch Bend
-      'Equal': () => this.clickButton('pitchBendPlusA'),
-      'Minus': () => this.clickButton('pitchBendMinusA'),
-      'BracketRight': () => this.clickButton('pitchBendPlusB'),
-      'BracketLeft': () => this.clickButton('pitchBendMinusB'),
+      // LEFT SIDE - Deck A Pitch Bend
+      'KeyZ': () => this.clickButton('pitchBendMinusA'),
+      'KeyX': () => this.clickButton('pitchBendPlusA'),
+      
+      // RIGHT SIDE - Deck B Controls
+      'KeyU': () => this.controlDeck('B', 'play'),
+      'KeyI': () => this.controlDeck('B', 'pause'),
+      'KeyO': () => this.controlDeck('B', 'stop'),
+      'KeyP': () => this.handleCuePress('B', 'KeyP'),
+      
+      // RIGHT SIDE - Deck B Cue Points (8-9)
+      'Digit8': () => this.handleCuePoint(e, 'B', 1),
+      'Digit9': () => this.handleCuePoint(e, 'B', 2),
+      
+      // RIGHT SIDE - Deck B Loop Controls
+      'KeyJ': () => this.clickButton('loopInB'),
+      'KeyK': () => this.clickButton('loopOutB'),
+      'KeyL': () => this.clickButton('loopToggleB'),
+      
+      // RIGHT SIDE - Deck B Pitch Bend
+      'KeyN': () => this.clickButton('pitchBendMinusB'),
+      'KeyM': () => this.clickButton('pitchBendPlusB'),
       
       // Crossfader and Master Volume
       'ArrowLeft': () => this.adjustCrossfader(-5),
@@ -235,7 +241,7 @@ class KeyboardShortcuts {
     // Handle CUE key releases for press-and-hold behavior
     const cueKeyMappings = {
       'KeyR': 'A',
-      'KeyF': 'B'
+      'KeyP': 'B'
     };
 
     const deckId = cueKeyMappings[e.code];
