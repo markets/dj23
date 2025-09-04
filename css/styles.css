@@ -538,7 +538,6 @@ body {
 
 .sound-pad-btn:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
 }
 
 .sound-pad-btn:active {
@@ -722,7 +721,7 @@ body {
 .vu-bars {
   display: flex;
   flex-direction: column-reverse;
-  gap: 2px;
+  gap: 3px;
   width: 20px;
   align-items: center;
 }
@@ -1242,7 +1241,7 @@ input[type="range"]::-moz-range-thumb {
   margin-bottom: var(--spacing-3xl);
   background: linear-gradient(145deg, var(--bg-secondary), var(--bg-primary));
   border-radius: var(--radius-xl);
-  padding: var(--spacing-xl);
+  padding: var(--spacing-md) var(--spacing-xl);
   border: 1px solid var(--border-primary);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
 }
