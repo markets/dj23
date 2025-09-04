@@ -217,8 +217,6 @@ class MixerController {
       this.deckControllers[deckId].stop();
     }
   }
-
-
 }
 
 window.mixerController = new MixerController();

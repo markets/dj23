@@ -1040,8 +1040,6 @@ class DeckController {
         deck.setLoopLength(percentage);
       }
     });
-
-
   }
 
   setupVinylControls() {
