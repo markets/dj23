@@ -133,7 +133,6 @@ class WaveformRenderer extends BaseWaveformRenderer {
     }
 
     this.drawCuePoints(width, height, deck);
-    this.drawLoopPoints(width, height, deck);
 
     this.updatePlayhead();
   }
@@ -182,49 +181,6 @@ class WaveformRenderer extends BaseWaveformRenderer {
     
     // Draw text
     this.ctx.fillStyle = cuePointColor;
-    this.ctx.textAlign = 'left';
-    this.ctx.fillText(label, textX, textY);
-  }
-
-  drawLoopPoints(width, height, deck) {
-    if (!deck || !deck.audioBuffer) return;
-    
-    const duration = deck.getDuration();
-    
-    // Draw loop region if both points are set and loop is active
-    if (deck.loopStart !== null && deck.loopEnd !== null && deck.isLooping) {
-      const loopStartPosition = (deck.loopStart / duration) * width;
-      const loopEndPosition = (deck.loopEnd / duration) * width;
-      const loopWidth = loopEndPosition - loopStartPosition;
-      
-      // Draw semi-transparent loop region using cue color (white) for consistency
-      this.ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-      this.ctx.fillRect(loopStartPosition, 0, loopWidth, height);
-      
-      // Draw single "LOOP" label in the center of the loop region
-      const centerPosition = loopStartPosition + (loopWidth / 2);
-      this.drawLoopLabel(centerPosition, 42);
-    }
-  }
-
-  drawLoopLabel(position, textY) {
-    const label = 'LOOP';
-    const labelColor = '#fff'; // White color to match cue points
-    
-    // Improved text positioning with background for better readability
-    this.ctx.font = 'bold 10px Inter';
-    const textMetrics = this.ctx.measureText(label);
-    
-    // Center the text horizontally around the position
-    const textWidth = textMetrics.width + 4;
-    const textX = position - (textWidth / 2);
-    
-    // Draw text background for better readability
-    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    this.ctx.fillRect(textX - 2, textY - 10, textWidth, 12);
-    
-    // Draw text
-    this.ctx.fillStyle = labelColor;
     this.ctx.textAlign = 'left';
     this.ctx.fillText(label, textX, textY);
   }
