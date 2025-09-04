@@ -24,17 +24,26 @@ class EffectsEngine {
     this.effectNodes.phaserLFO.type = 'sine';
     this.effectNodes.phaserLFO.frequency.value = 0.3;
     this.effectNodes.phaserLFOGain = this.audioContext.createGain();
-    this.effectNodes.phaserLFOGain.gain.value = 800;
+    this.effectNodes.phaserLFOGain.gain.value = 0;
     this.effectNodes.phaserGain = this.audioContext.createGain();
     this.effectNodes.phaserGain.gain.value = 0;
     this.effectNodes.phaserDry = this.audioContext.createGain();
     this.effectNodes.phaserDry.gain.value = 1;
     
-    for (let i = 0; i < 8; i++) {
+    // Add feedback for more character
+    this.effectNodes.phaserFeedback = this.audioContext.createGain();
+    this.effectNodes.phaserFeedback.gain.value = 0.3; // Moderate feedback for warmth
+    
+    // Use 6 filters with more musical frequency distribution
+    // Based on common phaser pedal designs - covering a wider frequency range
+    const phaserFreqs = [200, 400, 800, 1600, 3200, 6400];
+    const phaserQs = [2.0, 2.5, 2.8, 2.5, 2.0, 1.5]; // Varying Q values for more natural sound
+    
+    for (let i = 0; i < 6; i++) {
       this.effectNodes.phaser[i] = this.audioContext.createBiquadFilter();
       this.effectNodes.phaser[i].type = 'allpass';
-      this.effectNodes.phaser[i].frequency.value = 500 + (i * 200);
-      this.effectNodes.phaser[i].Q.value = 5;
+      this.effectNodes.phaser[i].frequency.value = phaserFreqs[i];
+      this.effectNodes.phaser[i].Q.value = phaserQs[i];
     }
     
     this.effectNodes.flanger = this.audioContext.createDelay(0.02);
@@ -62,7 +71,7 @@ class EffectsEngine {
     this.effectNodes.delayFeedback.connect(this.effectNodes.delay);
     this.effectNodes.delay.connect(this.effectNodes.delayGain);
 
-    // Connect phaser chain
+    // Connect phaser
     for (let i = 0; i < this.effectNodes.phaser.length; i++) {
       if (i === 0) {
         // First filter connects from source (will be connected in play method)
@@ -71,8 +80,18 @@ class EffectsEngine {
       }
     }
     
-    // Connect phaser LFO through gain node for proper modulation
+    // Add feedback from the last phaser stage back to the first for more character
+    if (this.effectNodes.phaser.length > 0) {
+      const lastPhaser = this.effectNodes.phaser[this.effectNodes.phaser.length - 1];
+      lastPhaser.connect(this.effectNodes.phaserFeedback);
+      this.effectNodes.phaserFeedback.connect(this.effectNodes.phaser[0]);
+    }
+    
+    // Connect phaser LFO through gain node for proper modulation to all filters
     this.effectNodes.phaserLFO.connect(this.effectNodes.phaserLFOGain);
+    for (let i = 0; i < this.effectNodes.phaser.length; i++) {
+      this.effectNodes.phaserLFOGain.connect(this.effectNodes.phaser[i].frequency);
+    }
     
     // Connect flanger feedback loop
     this.effectNodes.flanger.connect(this.effectNodes.flangerFeedback);
@@ -96,13 +115,23 @@ class EffectsEngine {
   }
 
   createReverbImpulse() {
-    const length = this.audioContext.sampleRate * 2;
+    // Create a more dramatic reverb impulse for better audibility
+    const length = this.audioContext.sampleRate * 3; // Longer reverb tail (3 seconds)
     const impulse = this.audioContext.createBuffer(2, length, this.audioContext.sampleRate);
         
     for (let channel = 0; channel < 2; channel++) {
       const channelData = impulse.getChannelData(channel);
       for (let i = 0; i < length; i++) {
-        channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2);
+        const decay = Math.pow(1 - i / length, 1.2); // Slower decay for more prominent reverb
+        const noise = (Math.random() * 2 - 1);
+        
+        // Add some early reflections for more character
+        let amplitude = decay;
+        if (i < this.audioContext.sampleRate * 0.1) { // First 100ms
+          amplitude *= (1 + Math.sin(i / 1000) * 0.3); // Add early reflection pattern
+        }
+        
+        channelData[i] = noise * amplitude;
       }
     }
         
@@ -112,8 +141,9 @@ class EffectsEngine {
   // Effect parameter control methods
   setReverb(value) {
     if (this.effectNodes.reverbGain) {
-      this.effectNodes.reverbGain.gain.value = value / 100;
-      this.effectNodes.reverbDry.gain.value = 1 - (value / 100);
+      const wetLevel = Math.pow(value / 100, 0.7) * 1.2; // Exponential curve, max 120%
+      this.effectNodes.reverbGain.gain.value = Math.min(wetLevel, 1.2);
+      this.effectNodes.reverbDry.gain.value = Math.max(1 - (wetLevel * 0.8), 0.2); // Keep some dry signal
     }
   }
 
@@ -125,15 +155,30 @@ class EffectsEngine {
 
   setPhaser(value) {
     if (this.effectNodes.phaserGain) {
-      // Better wet/dry mix curve for more musical phasing
-      const wetLevel = (value / 100) * 0.7; // Max 70% wet for better balance
-      const dryLevel = 1 - (wetLevel * 0.5); // Keep some dry signal for punch
+      // Smoother wet/dry mix for more musical phasing
+      const wetLevel = (value / 100) * 0.8;
+      const dryLevel = Math.max(1 - (wetLevel * 0.5), 0.3);
       this.effectNodes.phaserGain.gain.value = wetLevel;
       this.effectNodes.phaserDry.gain.value = dryLevel;
       
-      // Adjust LFO depth based on effect intensity
+      // More musical LFO modulation with exponential curve
       if (this.effectNodes.phaserLFOGain) {
-        this.effectNodes.phaserLFOGain.gain.value = 400 + (value * 8); // Dynamic modulation depth
+        // Use exponential curve for more natural sweep
+        const modDepth = Math.pow(value / 100, 0.6) * 600; // Slightly increased modulation depth
+        this.effectNodes.phaserLFOGain.gain.value = modDepth;
+      }
+      
+      // Dynamic feedback based on effect intensity for more character
+      if (this.effectNodes.phaserFeedback) {
+        const feedbackAmount = (value / 100) * 0.4; // Increase feedback with effect intensity
+        this.effectNodes.phaserFeedback.gain.value = feedbackAmount;
+      }
+      
+      // Slower, more musical LFO frequency range
+      if (this.effectNodes.phaserLFO) {
+        const minFreq = 0.08;
+        const maxFreq = 0.5;
+        this.effectNodes.phaserLFO.frequency.value = minFreq + (value / 100) * (maxFreq - minFreq);
       }
     }
   }
