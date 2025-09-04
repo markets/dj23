@@ -713,7 +713,7 @@ body {
 }
 
 .vu-meter label {
-  margin-bottom: var(--spacing-xl);
+  margin-bottom: var(--spacing-md);
   font-weight: 600;
   color: var(--text-secondary);
   writing-mode: horizontal-tb;
