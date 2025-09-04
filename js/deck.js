@@ -415,6 +415,29 @@ class Deck {
     console.log(`Deck ${this.deckId}: CUE points reset`);
   }
 
+  // Loop cleanup method
+  resetLoopPoints() {
+    // Stop any active looping
+    if (this.isLooping) {
+      this.stopLoopMonitoring();
+      this.isLooping = false;
+    }
+    
+    // Reset loop points
+    this.loopStart = null;
+    this.loopEnd = null;
+    this.originalLoopEnd = null;
+    this.loopLengthPercentage = 100;
+    
+    // Update UI to reflect cleared loop state
+    const controller = window.mixerController?.deckControllers[this.deckId];
+    if (controller) {
+      controller.updateLoopState(false);
+    }
+    
+    console.log(`Deck ${this.deckId}: Loop points reset`);
+  }
+
   setCuePoint(cueNumber) {
     if (cueNumber === 1 || cueNumber === 2) {
       this.cuePoints[cueNumber] = this.getCurrentTime();
@@ -1214,6 +1237,19 @@ class DeckController {
     if (success) {
       // Reset cues
       deck.resetCuePoints();
+      
+      // Reset loops
+      deck.resetLoopPoints();
+      
+      // Reset loop length slider UI
+      const loopLengthSlider = document.getElementById(`loopLength${this.deckId}`);
+      const loopLengthDisplay = document.getElementById(`loopLengthValue${this.deckId}`);
+      if (loopLengthSlider) {
+        loopLengthSlider.value = 100;
+      }
+      if (loopLengthDisplay) {
+        loopLengthDisplay.textContent = '100%';
+      }
       
       // Extract metadata and update track display
       await this.extractAndDisplayMetadata(file);
