@@ -46,6 +46,8 @@ class Deck {
 
     // CUE points
     this.cuePoints = { 1: null, 2: null };
+    this.isCueActive = false; // Track if CUE is currently being held/active
+    this.defaultCuePoint = null; // Auto-set cue point for when no manual cue points exist
 
     // Loop points
     this.loopStart = null;
@@ -409,6 +411,7 @@ class Deck {
   // CUE point methods
   resetCuePoints() {
     this.cuePoints = { 1: null, 2: null };
+    this.defaultCuePoint = null;
     console.log(`Deck ${this.deckId}: CUE points reset`);
   }
 
@@ -426,34 +429,72 @@ class Deck {
     }
   }
 
-  // Main CUE function - returns to last cue point or beginning
-  cue() {
-    // If playing, pause and return to last cue point
-    if (this.isPlaying) {
-      this.pause();
-      // Find the most recently set cue point
-      let lastCueTime = null;
-      for (let i = 1; i <= 2; i++) {
-        if (this.cuePoints[i] !== null) {
-          lastCueTime = this.cuePoints[i];
-        }
-      }
-      // Go to last cue point or beginning
-      const cueTime = lastCueTime !== null ? lastCueTime : 0;
-      this.seek(cueTime);
-      console.log(`Deck ${this.deckId}: CUE - returned to ${cueTime}s`);
-    } else {
-      // If paused, just go to beginning or last cue point
-      let lastCueTime = null;
-      for (let i = 1; i <= 2; i++) {
-        if (this.cuePoints[i] !== null) {
-          lastCueTime = this.cuePoints[i];
-        }
-      }
-      const cueTime = lastCueTime !== null ? lastCueTime : 0;
-      this.seek(cueTime);
-      console.log(`Deck ${this.deckId}: CUE - moved to ${cueTime}s`);
+  // Helper method to find the most recently set cue point
+  getLastCueTime() {
+    // Check for manual cue points (prioritize CUE 2 over CUE 1)
+    if (this.cuePoints[2] !== null) return this.cuePoints[2];
+    if (this.cuePoints[1] !== null) return this.cuePoints[1];
+    
+    // If no manual cue points are set, use the default cue point
+    if (this.defaultCuePoint !== null) {
+      console.log(`Deck ${this.deckId}: Using default CUE at ${this.defaultCuePoint}s`);
+      return this.defaultCuePoint;
     }
+    
+    return 0;
+  }
+
+  // CUE mode methods for press-and-hold behavior
+  startCueMode() {
+    if (!this.audioBuffer) return;
+    
+    // Ensure we have a default cue point set
+    this.ensureDefaultCuePoint();
+    
+    // If not playing, go to cue point and start playing
+    if (!this.isPlaying) {
+      this.seek(this.getLastCueTime());
+    }
+    
+    // Start playing and mark as cue active
+    this.isCueActive = true;
+    this.play();
+    
+    // Update CUE button visual state
+    const controller = window.mixerController?.deckControllers[this.deckId];
+    if (controller) {
+      controller.updateCueState(true);
+    }
+    
+    console.log(`Deck ${this.deckId}: CUE mode started`);
+  }
+
+  ensureDefaultCuePoint() {
+    // Only set default cue point if no manual cue points exist and no default exists
+    const hasManualCues = this.cuePoints[1] !== null || this.cuePoints[2] !== null;
+    
+    if (!hasManualCues && this.defaultCuePoint === null) {
+      this.defaultCuePoint = this.getCurrentTime();
+      console.log(`Deck ${this.deckId}: Auto-set default CUE at current position ${this.defaultCuePoint}s`);
+    }
+  }
+
+  stopCueMode() {
+    if (!this.isCueActive) return;
+    
+    // Stop playing and return to cue point
+    this.pause();
+    this.seek(this.getLastCueTime());
+    
+    this.isCueActive = false;
+    
+    // Update CUE button visual state
+    const controller = window.mixerController?.deckControllers[this.deckId];
+    if (controller) {
+      controller.updateCueState(false);
+    }
+    
+    console.log(`Deck ${this.deckId}: CUE mode stopped`);
   }
 
   // Loop methods
@@ -893,22 +934,21 @@ class DeckController {
       }
     });
 
-    // Transport controls
-    document.getElementById(`play${this.deckId}`).addEventListener('click', () => {
-      this.play();
-    });
+    // Transport controls - using unified click handlers
+    window.buttonHandler.createClickHandler(`play${this.deckId}`, () => this.play());
+    window.buttonHandler.createClickHandler(`pause${this.deckId}`, () => this.pause());
+    window.buttonHandler.createClickHandler(`stop${this.deckId}`, () => this.stop());
 
-    document.getElementById(`pause${this.deckId}`).addEventListener('click', () => {
-      this.pause();
-    });
-
-    document.getElementById(`stop${this.deckId}`).addEventListener('click', () => {
-      this.stop();
-    });
-
-    document.getElementById(`cue${this.deckId}`).addEventListener('click', () => {
-      this.cue();
-    });
+    // CUE button - press and hold behavior using unified handler
+    window.buttonHandler.createPressAndHoldHandler(
+      `cue${this.deckId}`,
+      () => {
+        window.buttonHandler.callDeckMethod(this.deckId, 'startCueMode');
+      },
+      () => {
+        window.buttonHandler.callDeckMethod(this.deckId, 'stopCueMode');
+      }
+    );
 
     // Vinyl scratching
     this.vinylElement = document.getElementById(`vinyl${this.deckId}`);
@@ -951,42 +991,23 @@ class DeckController {
       e.target.nextElementSibling.textContent = `${value}%`;
     });
 
-    // Pitch bend buttons (vertical layout)
-    document.getElementById(`pitchBendPlus${this.deckId}`).addEventListener('mousedown', () => {
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.pitchBend(1);
-      }
-    });
+    // Pitch bend buttons - press and hold behavior using unified handler
+    window.buttonHandler.createPressAndHoldHandler(
+      `pitchBendPlus${this.deckId}`,
+      () => window.buttonHandler.callDeckMethod(this.deckId, 'pitchBend', 1),
+      () => window.buttonHandler.callDeckMethod(this.deckId, 'stopPitchBend'),
+      { updateActiveState: false } // Don't auto-add active class for pitch bend
+    );
 
-    document.getElementById(`pitchBendMinus${this.deckId}`).addEventListener('mousedown', () => {
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.pitchBend(-1);
-      }
-    });
+    window.buttonHandler.createPressAndHoldHandler(
+      `pitchBendMinus${this.deckId}`,
+      () => window.buttonHandler.callDeckMethod(this.deckId, 'pitchBend', -1),
+      () => window.buttonHandler.callDeckMethod(this.deckId, 'stopPitchBend'),
+      { updateActiveState: false } // Don't auto-add active class for pitch bend
+    );
 
-    // Stop pitch bend on mouse up
-    ['pitchBendPlus', 'pitchBendMinus'].forEach(buttonId => {
-      const button = document.getElementById(`${buttonId}${this.deckId}`);
-      button.addEventListener('mouseup', () => {
-        const deck = window.audioEngine.getDeck(this.deckId);
-        if (deck) {
-          deck.stopPitchBend();
-        }
-      });
-      
-      // Also stop pitch bend when mouse leaves the button
-      button.addEventListener('mouseleave', () => {
-        const deck = window.audioEngine.getDeck(this.deckId);
-        if (deck) {
-          deck.stopPitchBend();
-        }
-      });
-    });
-
-    // Pitch reset button
-    document.getElementById(`pitchReset${this.deckId}`).addEventListener('click', () => {
+    // Pitch reset button - using unified click handler
+    window.buttonHandler.createClickHandler(`pitchReset${this.deckId}`, () => {
       const deck = window.audioEngine.getDeck(this.deckId);
       if (deck) {
         deck.setPitch(0);
@@ -994,67 +1015,36 @@ class DeckController {
         document.getElementById(`pitch${this.deckId}`).value = 0;
         document.getElementById(`pitchDisplay${this.deckId}`).textContent = '0%';
         // Update BPM display
-        if (deck.bpm) {
-          document.getElementById(`bpm${this.deckId}`).textContent = deck.bpm.toFixed(1);
-        }
+        this.updateBPMDisplay();
       }
     });
 
-    // CUE point controls
-    document.getElementById(`cue1${this.deckId}`).addEventListener('click', () => {
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.jumpToCue(1);
-      }
+    // CUE point controls - using unified click handlers
+    window.buttonHandler.createClickHandler(`cue1${this.deckId}`, () => {
+      window.buttonHandler.callDeckMethod(this.deckId, 'jumpToCue', 1);
+    });
+    window.buttonHandler.createClickHandler(`cue2${this.deckId}`, () => {
+      window.buttonHandler.callDeckMethod(this.deckId, 'jumpToCue', 2);
+    });
+    window.buttonHandler.createClickHandler(`setCue1${this.deckId}`, () => {
+      window.buttonHandler.callDeckMethod(this.deckId, 'setCuePoint', 1);
+    });
+    window.buttonHandler.createClickHandler(`setCue2${this.deckId}`, () => {
+      window.buttonHandler.callDeckMethod(this.deckId, 'setCuePoint', 2);
     });
 
-    document.getElementById(`cue2${this.deckId}`).addEventListener('click', () => {
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.jumpToCue(2);
-      }
+    // TAP and loop controls - using unified click handlers
+    window.buttonHandler.createClickHandler(`tap${this.deckId}`, () => this.handleTap());
+    window.buttonHandler.createClickHandler(`loopIn${this.deckId}`, () => {
+      window.buttonHandler.callDeckMethod(this.deckId, 'setLoopIn');
     });
-
-    document.getElementById(`setCue1${this.deckId}`).addEventListener('click', () => {
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.setCuePoint(1);
-      }
+    window.buttonHandler.createClickHandler(`loopOut${this.deckId}`, () => {
+      window.buttonHandler.callDeckMethod(this.deckId, 'setLoopOut');
     });
-
-    document.getElementById(`setCue2${this.deckId}`).addEventListener('click', () => {
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.setCuePoint(2);
-      }
+    window.buttonHandler.createClickHandler(`loopToggle${this.deckId}`, () => {
+      window.buttonHandler.callDeckMethod(this.deckId, 'toggleLoop');
     });
-
-    // TAP button for manual BPM setting
-    document.getElementById(`tap${this.deckId}`).addEventListener('click', () => {
-      this.handleTap();
-    });
-
-    // Loop controls
-    document.getElementById(`loopIn${this.deckId}`).addEventListener('click', () => {
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.setLoopIn();
-      }
-    });
-
-    document.getElementById(`loopOut${this.deckId}`).addEventListener('click', () => {
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.setLoopOut();
-      }
-    });
-
-    document.getElementById(`loopToggle${this.deckId}`).addEventListener('click', () => {
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.toggleLoop();
-      }
-    });
+    window.buttonHandler.createClickHandler(`resetFilters${this.deckId}`, () => this.resetFilters());
 
     // Loop length slider
     const loopLengthSlider = document.getElementById(`loopLength${this.deckId}`);
@@ -1068,11 +1058,6 @@ class DeckController {
       if (deck) {
         deck.setLoopLength(percentage);
       }
-    });
-
-    // Reset filters button
-    document.getElementById(`resetFilters${this.deckId}`).addEventListener('click', () => {
-      this.resetFilters();
     });
   }
 
@@ -1405,13 +1390,6 @@ class DeckController {
     }
   }
 
-  cue() {
-    const deck = window.audioEngine.getDeck(this.deckId);
-    if (deck) {
-      deck.cue();
-    }
-  }
-
   updatePlayingState(isPlaying) {
     const deckElement = document.getElementById(`deck${this.deckId}`);
     const playButton = document.getElementById(`play${this.deckId}`);
@@ -1432,6 +1410,16 @@ class DeckController {
       pauseButton.classList.add('active');
     } else {
       pauseButton.classList.remove('active');
+    }
+  }
+
+  updateCueState(isCueActive) {
+    const cueButton = document.getElementById(`cue${this.deckId}`);
+    
+    if (isCueActive) {
+      cueButton.classList.add('active');
+    } else {
+      cueButton.classList.remove('active');
     }
   }
 

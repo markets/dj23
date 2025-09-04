@@ -29,13 +29,9 @@ class MixerController {
     this.deckControllers.A = new DeckController('A');
     this.deckControllers.B = new DeckController('B');
 
-    document.getElementById('syncAB').addEventListener('click', () => {
-      this.syncDecks('A', 'B');
-    });
-
-    document.getElementById('syncBA').addEventListener('click', () => {
-      this.syncDecks('B', 'A');
-    });
+    // Sync buttons - using unified click handlers
+    window.buttonHandler.createClickHandler('syncAB', () => this.syncDecks('A', 'B'));
+    window.buttonHandler.createClickHandler('syncBA', () => this.syncDecks('B', 'A'));
   }
 
   updateCrossfader() {
@@ -219,12 +215,6 @@ class MixerController {
   stopDeck(deckId) {
     if (this.deckControllers[deckId]) {
       this.deckControllers[deckId].stop();
-    }
-  }
-
-  cueDeck(deckId) {
-    if (this.deckControllers[deckId]) {
-      this.deckControllers[deckId].cue();
     }
   }
 }
