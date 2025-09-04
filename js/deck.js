@@ -347,8 +347,18 @@ class Deck {
 
   setFilter(value) {
     if (this.effectNodes.filter) {
-      const frequency = 20000 * (value / 100);
-      this.effectNodes.filter.frequency.value = Math.max(20, frequency);
+      // Use logarithmic scale for more musical frequency response
+      // Map 0-100% to a safer range (100Hz-15kHz) to avoid distortion
+      const minFreq = 100; // 100Hz minimum to avoid muddy low-end
+      const maxFreq = 15000; // 15kHz maximum to avoid harsh high-end distortion
+      
+      // Logarithmic scaling for more natural frequency response
+      const normalizedValue = value / 100;
+      const logMin = Math.log(minFreq);
+      const logMax = Math.log(maxFreq);
+      const frequency = Math.exp(logMin + normalizedValue * (logMax - logMin));
+      
+      this.effectNodes.filter.frequency.value = frequency;
     }
   }
 
@@ -1024,6 +1034,11 @@ class DeckController {
     // Volume control
     this.createSliderHandler(`volume${this.deckId}`, 'setVolume', { suffix: '%' });
 
+    // Effects controls
+    ['filter', 'reverb', 'delay', 'phaser', 'flanger'].forEach(effect => {
+      this.createSliderHandler(`${effect}${this.deckId}`, `set${effect.charAt(0).toUpperCase() + effect.slice(1)}`);
+    });
+
     // Pitch bend buttons - press and hold behavior
     window.buttonHandler.createPressAndHoldHandler(
       `pitchBendPlus${this.deckId}`,
@@ -1471,7 +1486,7 @@ class DeckController {
 
     // Reset effects controls only (not EQ)
     const effects = [
-      { id: 'filter', defaultValue: 50 },
+      { id: 'filter', defaultValue: 0 },
       { id: 'reverb', defaultValue: 0 },
       { id: 'delay', defaultValue: 0 },
       { id: 'phaser', defaultValue: 0 },
