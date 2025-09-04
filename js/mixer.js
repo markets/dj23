@@ -12,13 +12,36 @@ class MixerController {
     this.startVUAnimation();
   }
 
-  setupEventListeners() {
-    const masterVolume = document.getElementById('masterVolume');
-    masterVolume.addEventListener('input', (e) => {
+  // Utility function to calculate average of analyser data
+  getAnalyserAverage(analyserData) {
+    return analyserData.reduce((sum, value) => sum + value, 0) / analyserData.length;
+  }
+
+  // Utility function for creating slider event handlers
+  createSliderHandler(sliderId, callback, displayOptions = {}) {
+    const slider = document.getElementById(sliderId);
+    if (!slider) return;
+
+    slider.addEventListener('input', (e) => {
       const value = parseInt(e.target.value);
-      window.audioEngine.setMasterVolume(value);
-      e.target.nextElementSibling.textContent = `${value}%`;
+      callback(value);
+
+      // Update display element if configured
+      if (displayOptions.updateDisplay !== false) {
+        const displayElement = displayOptions.displayElement || e.target.nextElementSibling;
+        if (displayElement) {
+          const suffix = displayOptions.suffix || '';
+          displayElement.textContent = `${value}${suffix}`;
+        }
+      }
     });
+  }
+
+  setupEventListeners() {
+    // Master volume control using unified slider handler
+    this.createSliderHandler('masterVolume', (value) => {
+      window.audioEngine.setMasterVolume(value);
+    }, { suffix: '%' });
 
     const crossfader = document.getElementById('crossfader');
     crossfader.addEventListener('input', (e) => {
@@ -165,7 +188,7 @@ class MixerController {
         const deck = window.audioEngine.getDeck(deckId);
         if (deck && deck.isPlaying) {
           const analyserData = deck.getAnalyserData();
-          const average = analyserData.reduce((sum, value) => sum + value, 0) / analyserData.length;
+          const average = this.getAnalyserAverage(analyserData);
           const scaledLevel = average * masterVolume;
           this.updateVUMeter(deckId, scaledLevel);
         } else {
@@ -179,12 +202,12 @@ class MixerController {
             
       if (deckA && deckA.isPlaying) {
         const dataA = deckA.getAnalyserData();
-        masterLevel += dataA.reduce((sum, value) => sum + value, 0) / dataA.length;
+        masterLevel += this.getAnalyserAverage(dataA);
       }
             
       if (deckB && deckB.isPlaying) {
         const dataB = deckB.getAnalyserData();
-        masterLevel += dataB.reduce((sum, value) => sum + value, 0) / dataB.length;
+        masterLevel += this.getAnalyserAverage(dataB);
       }
       
       const scaledMasterLevel = (masterLevel / 2) * masterVolume;
@@ -199,24 +222,6 @@ class MixerController {
     updateVU();
   }
 
-  // Transport control methods for keyboard shortcuts
-  playDeck(deckId) {
-    if (this.deckControllers[deckId]) {
-      this.deckControllers[deckId].play();
-    }
-  }
-
-  pauseDeck(deckId) {
-    if (this.deckControllers[deckId]) {
-      this.deckControllers[deckId].pause();
-    }
-  }
-
-  stopDeck(deckId) {
-    if (this.deckControllers[deckId]) {
-      this.deckControllers[deckId].stop();
-    }
-  }
 }
 
 window.mixerController = new MixerController();

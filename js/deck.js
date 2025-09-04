@@ -924,6 +924,34 @@ class DeckController {
     this.effectsController = new EffectsController(deckId);
   }
 
+  // Utility function for creating slider event handlers
+  createSliderHandler(sliderId, deckMethod, displayOptions = {}) {
+    const slider = document.getElementById(sliderId);
+    if (!slider) return;
+
+    slider.addEventListener('input', (e) => {
+      const value = parseInt(e.target.value);
+      const deck = window.audioEngine.getDeck(this.deckId);
+      if (deck && typeof deck[deckMethod] === 'function') {
+        deck[deckMethod](value);
+      }
+
+      // Update display element if configured
+      if (displayOptions.updateDisplay !== false) {
+        const displayElement = displayOptions.displayElement || e.target.nextElementSibling;
+        if (displayElement) {
+          const suffix = displayOptions.suffix || '';
+          displayElement.textContent = `${value}${suffix}`;
+        }
+      }
+
+      // Call additional callback if provided
+      if (displayOptions.callback && typeof displayOptions.callback === 'function') {
+        displayOptions.callback(value);
+      }
+    });
+  }
+
   setupEventListeners() {
     // File input
     const fileInput = document.getElementById(`fileInput${this.deckId}`);
@@ -955,41 +983,32 @@ class DeckController {
     this.setupVinylControls();
 
     // Pitch control (vertical)
-    const pitchSlider = document.getElementById(`pitch${this.deckId}`);
-    pitchSlider.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.setPitch(value);
-        // Update BPM display to reflect pitch change
-        this.updateBPMDisplay();
-      }
-      document.getElementById(`pitchDisplay${this.deckId}`).textContent = `${value}%`;
+    this.createSliderHandler(`pitch${this.deckId}`, 'setPitch', {
+      displayElement: document.getElementById(`pitchDisplay${this.deckId}`),
+      suffix: '%',
+      callback: () => this.updateBPMDisplay()
     });
 
     // EQ controls
     ['high', 'mid', 'low', 'gain'].forEach(band => {
-      const eqSlider = document.getElementById(`${band}${this.deckId}`);
-      eqSlider.addEventListener('input', (e) => {
-        const value = parseInt(e.target.value);
-        const deck = window.audioEngine.getDeck(this.deckId);
-        if (deck) {
-          deck.setEQ(band, value);
+      this.createSliderHandler(`${band}${this.deckId}`, 'setEQ', {
+        updateDisplay: false, // We'll handle display manually because setEQ needs band parameter
+        callback: (value) => {
+          const deck = window.audioEngine.getDeck(this.deckId);
+          if (deck) {
+            deck.setEQ(band, value);
+          }
+          // Update display manually
+          const slider = document.getElementById(`${band}${this.deckId}`);
+          if (slider && slider.nextElementSibling) {
+            slider.nextElementSibling.textContent = value;
+          }
         }
-        e.target.nextElementSibling.textContent = value;
       });
     });
 
     // Volume control
-    const volumeSlider = document.getElementById(`volume${this.deckId}`);
-    volumeSlider.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.setVolume(value);
-      }
-      e.target.nextElementSibling.textContent = `${value}%`;
-    });
+    this.createSliderHandler(`volume${this.deckId}`, 'setVolume', { suffix: '%' });
 
     // Pitch bend buttons - press and hold behavior using unified handler
     window.buttonHandler.createPressAndHoldHandler(
@@ -1047,17 +1066,9 @@ class DeckController {
     window.buttonHandler.createClickHandler(`resetFilters${this.deckId}`, () => this.resetFilters());
 
     // Loop length slider
-    const loopLengthSlider = document.getElementById(`loopLength${this.deckId}`);
-    const loopLengthValue = document.getElementById(`loopLengthValue${this.deckId}`);
-    
-    loopLengthSlider.addEventListener('input', (e) => {
-      const percentage = parseInt(e.target.value);
-      loopLengthValue.textContent = `${percentage}%`;
-      
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.setLoopLength(percentage);
-      }
+    this.createSliderHandler(`loopLength${this.deckId}`, 'setLoopLength', {
+      displayElement: document.getElementById(`loopLengthValue${this.deckId}`),
+      suffix: '%'
     });
   }
 

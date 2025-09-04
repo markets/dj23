@@ -157,55 +157,27 @@ class EffectsController {
     this.setupEffectControls();
   }
 
+  // Utility function for creating effect slider handlers
+  createEffectSliderHandler(effectName, deckMethod) {
+    const slider = document.getElementById(`${effectName}${this.deckId}`);
+    if (!slider) return;
+
+    slider.addEventListener('input', (e) => {
+      const value = parseInt(e.target.value);
+      const deck = window.audioEngine.getDeck(this.deckId);
+      if (deck && typeof deck[deckMethod] === 'function') {
+        deck[deckMethod](value);
+      }
+    });
+  }
+
   setupEffectControls() {
-    // Filter effect
-    const filterSlider = document.getElementById(`filter${this.deckId}`);
-    filterSlider.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.setFilter(value);
-      }
-    });
-
-    // Reverb effect
-    const reverbSlider = document.getElementById(`reverb${this.deckId}`);
-    reverbSlider.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.setReverb(value);
-      }
-    });
-
-    // Delay effect
-    const delaySlider = document.getElementById(`delay${this.deckId}`);
-    delaySlider.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.setDelay(value);
-      }
-    });
-
-    // Phaser effect
-    const phaserSlider = document.getElementById(`phaser${this.deckId}`);
-    phaserSlider.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.setPhaser(value);
-      }
-    });
-
-    // Flanger effect
-    const flangerSlider = document.getElementById(`flanger${this.deckId}`);
-    flangerSlider.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.setFlanger(value);
-      }
+    // All effects follow the same pattern
+    this.createEffectSliderHandler('filter', 'setFilter');
+    this.createEffectSliderHandler('reverb', 'setReverb');
+    this.createEffectSliderHandler('delay', 'setDelay');
+    this.createEffectSliderHandler('phaser', 'setPhaser');
+    this.createEffectSliderHandler('flanger', 'setFlanger');
     });
   }
 }
