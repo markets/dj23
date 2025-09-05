@@ -155,30 +155,66 @@ class BPMAnalyzer {
     this.metadataBPM = null;
     this.lastManualTapTime = 0;
     
-    if (!audioBuffer) return 120;
+    if (!audioBuffer || !audioBuffer.getChannelData) {
+      console.warn(`BPM Analyzer: Invalid audio buffer for deck ${this.deckId}`);
+      return 120;
+    }
     
     try {
       // Get audio data from the buffer
       const audioData = audioBuffer.getChannelData(0);
       const sampleRate = audioBuffer.sampleRate;
       
-      // Analyze the full track for maximum accuracy
-      const analysisData = audioData;
+      if (!audioData || audioData.length === 0 || !sampleRate) {
+        console.warn(`BPM Analyzer: Invalid audio data for deck ${this.deckId}`);
+        return 120;
+      }
       
-      // Detect BPM using onset detection and autocorrelation
-      const bpm = this.detectBPMFromAudio(analysisData, sampleRate);
+      // Detect BPM using onset detection
+      const bpm = this.detectBPMFromAudio(audioData, sampleRate);
       
-      console.log(`Detected BPM: ${bpm} for deck ${this.deckId}`);
+      console.log(`BPM Analyzer: Calculated BPM ${bpm} for deck ${this.deckId}`);
       this.baseBPM = bpm;
       this.bpmSource = 'auto-detected';
       return bpm;
     } catch (error) {
-      console.error('BPM detection failed:', error);
+      console.error(`BPM Analyzer: Detection failed for deck ${this.deckId}:`, error);
       return 120; // Default fallback
     }
   }
 
+  // Consolidated BPM validation with genre-aware correction
+  validateAndCorrectBPM(detectedBPM) {
+    if (!detectedBPM || detectedBPM <= 0) return 120;
+    
+    let validatedBPM = detectedBPM;
+    
+    // Handle extreme cases with smart correction
+    if (detectedBPM < 60) {
+      validatedBPM = detectedBPM * 2; // Likely half-time detection
+    } else if (detectedBPM > 200) {
+      validatedBPM = detectedBPM / 2; // Likely double-time detection
+    }
+    
+    // Additional check for common double-time patterns in faster genres
+    if (validatedBPM > 160) {
+      const halfTime = validatedBPM / 2;
+      // Prefer half-time if it falls in common DJ music range
+      if (halfTime >= 80 && halfTime <= 140) {
+        validatedBPM = halfTime;
+      }
+    }
+    
+    // Final bounds check
+    if (validatedBPM < 50) validatedBPM = 120;
+    if (validatedBPM > 250) validatedBPM = 120;
+    
+    return Math.round(validatedBPM);
+  }
+
   detectBPMFromAudio(audioData, sampleRate) {
+    if (!audioData || audioData.length === 0 || !sampleRate) return 120;
+    
     // Calculate energy levels to detect beats
     const hopSize = 512;
     const energyValues = [];
@@ -192,7 +228,7 @@ class BPMAnalyzer {
       energyValues.push(Math.sqrt(energy / hopSize));
     }
     
-    // Detect onset peaks (significant energy increases)
+    // Detect onset peaks
     const onsets = this.detectOnsets(energyValues, hopSize, sampleRate);
     
     // Calculate tempo from onset intervals
@@ -216,33 +252,18 @@ class BPMAnalyzer {
     }
     
     // Find the most common interval (tempo)
-    const bpm = this.findMostLikelyTempo(filteredIntervals);
+    const detectedBPM = this.findMostLikelyTempo(filteredIntervals);
     
-    // BPM validation for better genre support
-    let validatedBPM = bpm;
+    // Apply consolidated validation
+    const validatedBPM = this.validateAndCorrectBPM(detectedBPM);
     
-    // Handle extreme cases
-    if (bpm < 60) {
-      validatedBPM = bpm * 2; // Likely half-time detection
-    } else if (bpm > 200) {
-      validatedBPM = bpm / 2; // Likely double-time detection
-    }
-    
-    // Additional check for common double-time patterns in faster genres
-    if (validatedBPM > 160 && validatedBPM / 2 >= 80) {
-      const halfTime = validatedBPM / 2;
-      if (halfTime >= 80 && halfTime <= 140) {
-        validatedBPM = halfTime;
-      }
-    }
-    
-    console.log(`Detected BPM: ${bpm.toFixed(1)} -> Validated: ${validatedBPM.toFixed(1)} for deck ${this.deckId || 'unknown'}`);
-    return Math.round(validatedBPM);
+    console.log(`BPM Analyzer: Detected ${detectedBPM.toFixed(1)} -> Validated ${validatedBPM} BPM for deck ${this.deckId || 'unknown'}`);
+    return validatedBPM;
   }
 
   detectOnsets(energyValues, hopSize, sampleRate) {
     const onsets = [];
-    const threshold = 1.3; // Balanced threshold for good sensitivity across genres
+    const baseThreshold = 1.3; // Base threshold for onset detection
     
     // Apply moving average for smoothing
     const smoothed = this.applyMovingAverage(energyValues, 2);
@@ -254,21 +275,29 @@ class BPMAnalyzer {
       spectralFlux.push(diff);
     }
     
+    if (spectralFlux.length === 0) return onsets;
+    
     // Calculate adaptive threshold based on signal characteristics
     const meanFlux = spectralFlux.reduce((sum, val) => sum + val, 0) / spectralFlux.length;
     const stdFlux = Math.sqrt(spectralFlux.reduce((sum, val) => sum + Math.pow(val - meanFlux, 2), 0) / spectralFlux.length);
     
-    // Find peaks in spectral flux
+    // Improved adaptive threshold calculation
+    const minThreshold = 0.01;
+    const adaptiveMultiplier = Math.max(0.3, Math.min(0.8, stdFlux / meanFlux)); // Dynamic based on signal variation
+    const adaptiveThreshold = Math.max(meanFlux + stdFlux * adaptiveMultiplier, minThreshold);
+    
+    // Find peaks in spectral flux with improved peak detection
     for (let i = 1; i < spectralFlux.length - 1; i++) {
       const current = spectralFlux[i];
       const previous = spectralFlux[i - 1];
       const next = spectralFlux[i + 1];
       
-      // Dynamic threshold that adapts to signal characteristics
-      const dynamicThreshold = Math.max(meanFlux + stdFlux * 0.5, 0.01);
+      // Multi-criteria peak detection
+      const isLocalPeak = current > previous * baseThreshold && current > next;
+      const isAboveThreshold = current > adaptiveThreshold;
+      const isSignificantPeak = current > meanFlux * 1.2; // Additional significance check
       
-      // Detect peaks that are significantly higher than neighbors
-      if (current > previous * threshold && current > next && current > dynamicThreshold) {
+      if (isLocalPeak && isAboveThreshold && isSignificantPeak) {
         const timeInSeconds = ((i + 1) * hopSize) / sampleRate;
         onsets.push(timeInSeconds);
       }
@@ -294,28 +323,27 @@ class BPMAnalyzer {
   findMostLikelyTempo(intervals) {
     if (intervals.length === 0) return 120;
     
-    // Convert intervals to BPM
+    // Convert intervals to BPM (cache the conversion for performance)
     const bpmValues = intervals.map(interval => 60 / interval);
     
-    // Create histogram of BPM values with genre-aware grouping
-    const histogram = {};
-    const tolerance = 4; // Slightly larger tolerance for better grouping
+    // Create histogram with optimized grouping
+    const histogram = new Map();
+    const tolerance = 4; // BPM grouping tolerance
     
-    bpmValues.forEach(bpm => {
+    for (const bpm of bpmValues) {
       // Round to nearest tolerance value for grouping
       const roundedBpm = Math.round(bpm / tolerance) * tolerance;
-      if (!histogram[roundedBpm]) {
-        histogram[roundedBpm] = [];
+      if (!histogram.has(roundedBpm)) {
+        histogram.set(roundedBpm, []);
       }
-      histogram[roundedBpm].push(bpm);
-    });
+      histogram.get(roundedBpm).push(bpm);
+    }
     
-    // Find the group with most occurrences, with genre preference scoring
+    // Find the group with the best score (frequency + genre preference)
     let maxScore = 0;
     let mostLikelyBPM = 120;
     
-    Object.keys(histogram).forEach(key => {
-      const group = histogram[key];
+    for (const [key, group] of histogram) {
       const avgBpm = group.reduce((sum, bpm) => sum + bpm, 0) / group.length;
       
       // Base score from frequency
@@ -336,7 +364,7 @@ class BPMAnalyzer {
         maxScore = score;
         mostLikelyBPM = avgBpm;
       }
-    });
+    }
     
     // Check for common double/half-time patterns
     const candidates = [mostLikelyBPM, mostLikelyBPM * 2, mostLikelyBPM / 2];
@@ -364,30 +392,38 @@ class BPMAnalyzer {
 
   // Method to manually set BPM (used by TAP functionality)
   setBPM(bpm, audioBuffer) {
-    this.baseBPM = bpm;
+    if (!bpm || typeof bpm !== 'number' || bpm <= 0 || bpm > 300) {
+      console.warn(`BPM Analyzer: Invalid BPM value ${bpm} for deck ${this.deckId}`);
+      return false;
+    }
+    
+    this.baseBPM = Math.round(bpm);
     this.bpmSource = 'manual';
     this.lastManualTapTime = 0; // Will be updated to current playback time when called
-    console.log(`Manual BPM override set for deck ${this.deckId}: ${bpm} BPM - limited auto-refinement for 3 seconds`);
+    console.log(`BPM Analyzer: Manual BPM set to ${this.baseBPM} for deck ${this.deckId} - limited auto-refinement for 3 seconds`);
     
-    if (audioBuffer) {
+    if (audioBuffer && audioBuffer.duration) {
       this.generateBeatMap(audioBuffer);
     }
+    return true;
   }
 
   // Method to set BPM from metadata (called when reading file metadata)
   setMetadataBPM(bpm, audioBuffer) {
-    if (bpm && bpm > 0) {
-      this.metadataBPM = bpm;
-      this.baseBPM = bpm;
-      this.bpmSource = 'metadata';
-      console.log(`Metadata BPM set for deck ${this.deckId}: ${bpm} BPM - very limited auto-refinement`);
-      
-      if (audioBuffer) {
-        this.generateBeatMap(audioBuffer);
-      }
-      return true;
+    if (!bpm || typeof bpm !== 'number' || bpm <= 0 || bpm > 300) {
+      console.warn(`BPM Analyzer: Invalid metadata BPM value ${bpm} for deck ${this.deckId}`);
+      return false;
     }
-    return false;
+    
+    this.metadataBPM = Math.round(bpm);
+    this.baseBPM = this.metadataBPM;
+    this.bpmSource = 'metadata';
+    console.log(`BPM Analyzer: Metadata BPM set to ${this.baseBPM} for deck ${this.deckId} - very limited auto-refinement`);
+    
+    if (audioBuffer && audioBuffer.duration) {
+      this.generateBeatMap(audioBuffer);
+    }
+    return true;
   }
 
   // Update the manual tap time (should be called with current playback time)
@@ -404,5 +440,40 @@ class BPMAnalyzer {
       source: this.bpmSource,
       metadataBPM: this.metadataBPM
     };
+  }
+
+  // Extract BPM from metadata tags (moved from DeckController for better organization)
+  extractBPMFromTags(tags) {
+    if (!tags || typeof tags !== 'object') return null;
+    
+    // Try various common BPM tag formats
+    const bpmFields = ['BPM', 'TBPM', 'bpm', 'Bpm', 'BeatsPerMinute', 'BEATS_PER_MINUTE'];
+    
+    for (const field of bpmFields) {
+      if (tags[field] && typeof tags[field] === 'string') {
+        const bpmValue = parseFloat(tags[field]);
+        if (!isNaN(bpmValue) && bpmValue > 0 && bpmValue <= 300) {
+          console.log(`BPM Analyzer: Found metadata BPM ${bpmValue} in field '${field}'`);
+          return Math.round(bpmValue);
+        }
+      }
+    }
+    
+    // Try to extract BPM from comment or description fields
+    const textFields = ['comment', 'Comment', 'COMMENT', 'description', 'Description'];
+    for (const field of textFields) {
+      if (tags[field] && typeof tags[field] === 'string') {
+        const bpmMatch = tags[field].match(/(?:BPM|bpm|tempo)[\s:=]*(\d+(?:\.\d+)?)/i);
+        if (bpmMatch) {
+          const bpmValue = parseFloat(bpmMatch[1]);
+          if (!isNaN(bpmValue) && bpmValue > 0 && bpmValue <= 300) {
+            console.log(`BPM Analyzer: Found metadata BPM ${bpmValue} in ${field} field`);
+            return Math.round(bpmValue);
+          }
+        }
+      }
+    }
+    
+    return null; // No BPM found in metadata
   }
 }
