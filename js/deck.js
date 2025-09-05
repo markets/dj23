@@ -636,6 +636,11 @@ class Deck {
     this.analyser.getByteFrequencyData(dataArray);
     return dataArray;
   }
+
+  // Get the current global gain value (from EQ gain control)
+  getGlobalGain() {
+    return this.globalGainNode ? this.globalGainNode.gain.value : 1.0;
+  }
 }
 
 class DeckController {
