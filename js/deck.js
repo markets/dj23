@@ -1081,7 +1081,7 @@ class DeckController {
     // Try to extract BPM from comment or description fields
     const textFields = ['comment', 'Comment', 'COMMENT', 'description', 'Description'];
     for (const field of textFields) {
-      if (tags[field]) {
+      if (tags[field] && typeof tags[field] === 'string') {
         const bpmMatch = tags[field].match(/(?:BPM|bpm|tempo)[\s:=]*(\d+(?:\.\d+)?)/i);
         if (bpmMatch) {
           const bpmValue = parseFloat(bpmMatch[1]);
