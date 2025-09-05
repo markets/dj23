@@ -374,6 +374,29 @@ class ZoomedWaveformRenderer extends BaseWaveformRenderer {
       }
     });
 
+    // Mouse wheel zoom functionality
+    this.canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      
+      if (!this.waveformData) return;
+      
+      const zoomSensitivity = 0.1; // Adjust zoom speed
+      const minZoom = 1; // Minimum 1 second for detailed beat matching
+      const maxZoom = 20; // Maximum 20 seconds (current default)
+      
+      // Determine zoom direction (zoom out on wheel down, zoom in on wheel up)
+      const zoomDelta = e.deltaY > 0 ? zoomSensitivity : -zoomSensitivity;
+      const newZoomLevel = Math.max(minZoom, Math.min(maxZoom, this.zoomLevel + zoomDelta));
+      
+      // Only update if zoom level actually changed
+      if (newZoomLevel !== this.zoomLevel) {
+        this.zoomLevel = newZoomLevel;
+        // Re-render with new zoom level
+        this.render();
+        console.log(`Beat waveform zoom changed to ${this.zoomLevel.toFixed(1)} seconds on deck ${this.deckId}`);
+      }
+    });
+
     window.addEventListener('resize', () => {
       this.setupCanvas();
       this.render();
