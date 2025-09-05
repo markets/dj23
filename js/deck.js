@@ -987,6 +987,9 @@ class DeckController {
 
   async extractAndDisplayMetadata(file) {
     return new Promise((resolve) => {
+      // Store reference to this context for use in callback
+      const self = this;
+      
       // Use jsmediatags to extract metadata
       window.jsmediatags.read(file, {
         onSuccess: (tag) => {
@@ -999,9 +1002,9 @@ class DeckController {
           const album = tags.album || '';
           
           // Try to extract BPM from metadata using BPM analyzer
-          const metadataBPM = deck.bpmAnalyzer.extractBPMFromTags(tags);
+          const metadataBPM = self.bpmAnalyzer.extractBPMFromTags(tags);
           if (metadataBPM) {
-            deck.bpmAnalyzer.setMetadataBPM(metadataBPM, deck.audioBuffer);
+            self.bpmAnalyzer.setMetadataBPM(metadataBPM, self.audioBuffer);
           }
           
           // Format display title
@@ -1011,11 +1014,11 @@ class DeckController {
             displayTitle = title;
           } else {
             // Fallback to filename parsing
-            displayTitle = this.parseFilenameForMetadata(file.name);
+            displayTitle = self.parseFilenameForMetadata(file.name);
           }
           
           // Update track name display
-          const trackNameElement = document.querySelector(`#trackInfo${this.deckId} .track-name`);
+          const trackNameElement = document.querySelector(`#trackInfo${self.deckId} .track-name`);
           trackNameElement.textContent = displayTitle;
           
           // Add album info if available
@@ -1024,16 +1027,16 @@ class DeckController {
           }
           
           // Handle album cover
-          this.displayAlbumCover(tags.picture);
+          self.displayAlbumCover(tags.picture);
           
           resolve();
         },
         onError: (error) => {
           console.log('Metadata extraction failed:', error);
           // Fallback to filename parsing
-          const trackNameElement = document.querySelector(`#trackInfo${this.deckId} .track-name`);
-          trackNameElement.textContent = this.parseFilenameForMetadata(file.name);
-          this.displayAlbumCover(null);
+          const trackNameElement = document.querySelector(`#trackInfo${self.deckId} .track-name`);
+          trackNameElement.textContent = self.parseFilenameForMetadata(file.name);
+          self.displayAlbumCover(null);
           resolve();
         }
       });
