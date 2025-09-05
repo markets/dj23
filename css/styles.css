@@ -693,47 +693,54 @@ body {
 .beat-meters {
   display: flex;
   justify-content: center;
-  gap: var(--spacing-xl);
+  gap: var(--spacing-2xl);
   align-items: center;
 }
 
 .beat-meter-deck {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-md);
 }
 
 .beat-meter-deck .deck-label {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  min-width: 15px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  min-width: 20px;
 }
 
 .beat-bars {
   display: flex;
-  gap: var(--spacing-xs);
+  gap: var(--spacing-sm);
   align-items: center;
+  padding: var(--spacing-xs);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-primary);
 }
 
 .beat-bar {
-  width: 12px;
-  height: 12px;
+  width: 16px;
+  height: 16px;
   background: var(--border-primary);
   border-radius: var(--radius-sm);
   transition: all 0.1s ease;
   position: relative;
+  border: 1px solid var(--border-secondary);
 }
 
 .beat-bar.active {
   background: var(--color-primary);
-  box-shadow: 0 0 8px rgba(78, 205, 196, 0.6);
-  transform: scale(1.1);
+  box-shadow: 0 0 10px rgba(78, 205, 196, 0.8);
+  transform: scale(1.15);
+  border-color: var(--color-primary);
 }
 
 .beat-bar.sync-highlight {
   background: var(--color-secondary);
-  box-shadow: 0 0 8px rgba(255, 107, 107, 0.6);
+  box-shadow: 0 0 10px rgba(255, 107, 107, 0.8);
+  border-color: var(--color-secondary);
 }
 
 /* ============================================================================
