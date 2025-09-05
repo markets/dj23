@@ -654,6 +654,15 @@ class DeckController {
     this.effectsController = new EffectsController(deckId);
   }
 
+  // Reset TAP functionality when loading a new track
+  resetTapState() {
+    this.tapTimes = [];
+    if (this.tapTimeout) {
+      clearTimeout(this.tapTimeout);
+      this.tapTimeout = null;
+    }
+  }
+
   // Utility function for creating deck method button handlers
   createDeckMethodHandler(buttonName, deckMethod, ...args) {
     window.buttonHandler.createClickHandler(`${buttonName}${this.deckId}`, () => {
@@ -939,6 +948,9 @@ class DeckController {
         
     // Stop current track if playing before loading new one
     this.stop();
+    
+    // Reset TAP state for new track
+    this.resetTapState();
         
     // Show loading state
     trackInfo.classList.add('loading');
@@ -987,6 +999,12 @@ class DeckController {
 
   async extractAndDisplayMetadata(file) {
     return new Promise((resolve) => {
+      // Store reference to this context for use in callback
+      const self = this;
+      
+      // Get deck instance to access bpmAnalyzer
+      const deck = window.audioEngine.getDeck(self.deckId);
+      
       // Use jsmediatags to extract metadata
       window.jsmediatags.read(file, {
         onSuccess: (tag) => {
@@ -998,6 +1016,12 @@ class DeckController {
           const title = tags.title || '';
           const album = tags.album || '';
           
+          // Try to extract BPM from metadata using BPM analyzer
+          const metadataBPM = deck.bpmAnalyzer.extractBPMFromTags(tags);
+          if (metadataBPM) {
+            deck.bpmAnalyzer.setMetadataBPM(metadataBPM, deck.audioBuffer);
+          }
+          
           // Format display title
           if (artist && title) {
             displayTitle = `${artist} - ${title}`;
@@ -1005,11 +1029,11 @@ class DeckController {
             displayTitle = title;
           } else {
             // Fallback to filename parsing
-            displayTitle = this.parseFilenameForMetadata(file.name);
+            displayTitle = self.parseFilenameForMetadata(file.name);
           }
           
           // Update track name display
-          const trackNameElement = document.querySelector(`#trackInfo${this.deckId} .track-name`);
+          const trackNameElement = document.querySelector(`#trackInfo${self.deckId} .track-name`);
           trackNameElement.textContent = displayTitle;
           
           // Add album info if available
@@ -1018,16 +1042,16 @@ class DeckController {
           }
           
           // Handle album cover
-          this.displayAlbumCover(tags.picture);
+          self.displayAlbumCover(tags.picture);
           
           resolve();
         },
         onError: (error) => {
           console.log('Metadata extraction failed:', error);
           // Fallback to filename parsing
-          const trackNameElement = document.querySelector(`#trackInfo${this.deckId} .track-name`);
-          trackNameElement.textContent = this.parseFilenameForMetadata(file.name);
-          this.displayAlbumCover(null);
+          const trackNameElement = document.querySelector(`#trackInfo${self.deckId} .track-name`);
+          trackNameElement.textContent = self.parseFilenameForMetadata(file.name);
+          self.displayAlbumCover(null);
           resolve();
         }
       });
@@ -1294,8 +1318,8 @@ class DeckController {
       tapButton.classList.remove('active');
     }, 150);
     
-    // Need at least 2 taps to calculate BPM
-    if (this.tapTimes.length < 2) return;
+    // Need at least 3 taps to calculate reliable BPM with outlier detection
+    if (this.tapTimes.length < 3) return;
     
     // Calculate intervals between taps
     const intervals = [];
@@ -1303,17 +1327,84 @@ class DeckController {
       intervals.push(this.tapTimes[i] - this.tapTimes[i - 1]);
     }
     
-    // Calculate average interval in milliseconds
-    const avgInterval = intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
-    
-    // Convert to BPM (60000 ms = 1 minute)
-    const bpm = Math.round(60000 / avgInterval);
+    // Apply outlier detection and robust averaging
+    const robustBPM = this.calculateRobustBPM(intervals);
     
     // Validate BPM range
-    if (bpm >= 60 && bpm <= 200) {
-      deck.bpmAnalyzer.setBPM(bpm, deck.audioBuffer);
+    if (robustBPM >= 60 && robustBPM <= 200) {
+      deck.bpmAnalyzer.setBPM(robustBPM, deck.audioBuffer);
+      // Update the manual tap time with current playback time for refinement protection
+      const currentTime = deck.getCurrentTime();
+      deck.bpmAnalyzer.updateManualTapTime(currentTime);
       this.updateBPMDisplay();
-      console.log(`Manual BPM set via TAP for deck ${this.deckId}: ${bpm} BPM`);
+      console.log(`TAP: Manual BPM set to ${robustBPM} for deck ${this.deckId} at ${currentTime.toFixed(1)}s (${intervals.length} intervals processed)`);
+    }
+  }
+
+  // Robust BPM calculation with outlier detection
+  calculateRobustBPM(intervals) {
+    if (intervals.length === 0) return 120;
+    
+    // For small number of intervals, use simple average
+    if (intervals.length < 4) {
+      const avgInterval = intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
+      return Math.round(60000 / avgInterval);
+    }
+    
+    // Sort intervals to find median and quartiles
+    const sortedIntervals = [...intervals].sort((a, b) => a - b);
+    const median = this.getMedian(sortedIntervals);
+    
+    // Calculate MAD (Median Absolute Deviation) for robust outlier detection
+    const deviations = intervals.map(interval => Math.abs(interval - median));
+    const mad = this.getMedian(deviations.sort((a, b) => a - b));
+    
+    // Filter outliers using MAD-based method (more robust than standard deviation)
+    // An interval is considered an outlier if it's more than 2.5 MADs from the median
+    const threshold = 2.5 * mad;
+    const filteredIntervals = intervals.filter(interval => 
+      Math.abs(interval - median) <= threshold
+    );
+    
+    // If too many intervals were filtered, fall back to median
+    if (filteredIntervals.length < Math.max(2, intervals.length / 2)) {
+      console.log(`TAP: Using median (${median}ms) - too many outliers detected for deck ${this.deckId}`);
+      return Math.round(60000 / median);
+    }
+    
+    // Use weighted average: give more weight to recent intervals and those closer to median
+    let weightedSum = 0;
+    let totalWeight = 0;
+    
+    for (let i = 0; i < filteredIntervals.length; i++) {
+      const interval = filteredIntervals[i];
+      // Recent intervals get higher weight (recency bias)
+      const recencyWeight = (i + 1) / filteredIntervals.length;
+      // Intervals closer to median get higher weight (consistency bias)
+      const consistencyWeight = 1 - (Math.abs(interval - median) / (median + 1));
+      // Combined weight
+      const weight = recencyWeight * consistencyWeight;
+      
+      weightedSum += interval * weight;
+      totalWeight += weight;
+    }
+    
+    const robustAvgInterval = weightedSum / totalWeight;
+    const robustBPM = Math.round(60000 / robustAvgInterval);
+    
+    console.log(`TAP: Filtered ${intervals.length - filteredIntervals.length} outliers for deck ${this.deckId}, median: ${median}ms, robust avg: ${robustAvgInterval.toFixed(1)}ms`);
+    
+    return robustBPM;
+  }
+
+  // Helper function to calculate median
+  getMedian(sortedArray) {
+    const length = sortedArray.length;
+    if (length === 0) return 0;
+    if (length % 2 === 0) {
+      return (sortedArray[length / 2 - 1] + sortedArray[length / 2]) / 2;
+    } else {
+      return sortedArray[Math.floor(length / 2)];
     }
   }
 }
