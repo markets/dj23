@@ -654,6 +654,21 @@ class DeckController {
     this.effectsController = new EffectsController(deckId);
   }
 
+  // Reset TAP functionality when loading a new track
+  resetTapState() {
+    this.tapTimes = [];
+    if (this.tapTimeout) {
+      clearTimeout(this.tapTimeout);
+      this.tapTimeout = null;
+    }
+    
+    // Remove active state from TAP button
+    const tapButton = document.getElementById(`tap${this.deckId}`);
+    if (tapButton) {
+      tapButton.classList.remove('active');
+    }
+  }
+
   // Utility function for creating deck method button handlers
   createDeckMethodHandler(buttonName, deckMethod, ...args) {
     window.buttonHandler.createClickHandler(`${buttonName}${this.deckId}`, () => {
@@ -939,6 +954,9 @@ class DeckController {
         
     // Stop current track if playing before loading new one
     this.stop();
+    
+    // Reset TAP state for new track
+    this.resetTapState();
         
     // Show loading state
     trackInfo.classList.add('loading');

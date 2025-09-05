@@ -155,6 +155,10 @@ class BPMAnalyzer {
     this.metadataBPM = null;
     this.lastManualTapTime = 0;
     
+    // Reset analysis history for new track
+    this.bpmAnalysisHistory = [];
+    this.lastBpmAnalysisTime = 0;
+    
     if (!audioBuffer || !audioBuffer.getChannelData) {
       console.warn(`BPM Analyzer: Invalid audio buffer for deck ${this.deckId}`);
       return 120;
