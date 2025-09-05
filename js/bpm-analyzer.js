@@ -15,6 +15,9 @@ class BPMAnalyzer {
     
     // Store original BPM for pitch-adjusted calculations
     this.baseBPM = 120; // Default BPM, will be updated when track loads
+    
+    // Manual BPM override tracking
+    this.isManualBPMSet = false; // Flag to track if user has manually set BPM via TAP
   }
 
   generateBeatMap(audioBuffer) {
@@ -67,11 +70,14 @@ class BPMAnalyzer {
   refineBPMDuringPlayback(audioBuffer, currentTime, isPlaying) {
     if (!isPlaying || !audioBuffer) return;
     
-    // Extend refinement analysis to first 30 seconds of the track for better accuracy
-    if (currentTime > 30) return;
+    // Stop refinement if user has manually set BPM via TAP
+    if (this.isManualBPMSet) return;
     
-    // Analyze every 3 seconds for more frequent updates
-    if (currentTime - this.lastBpmAnalysisTime >= 3) {
+    // Limit refinement analysis to first 10 seconds of the track for better accuracy
+    if (currentTime > 10) return;
+    
+    // Analyze every 1.5 seconds for more frequent updates (faster convergence)
+    if (currentTime - this.lastBpmAnalysisTime >= 1.5) {
       this.lastBpmAnalysisTime = currentTime;
       
       const analysisWindow = 20; // 20 seconds
@@ -116,6 +122,9 @@ class BPMAnalyzer {
   }
 
   calculateBPM(audioBuffer) {
+    // Reset manual BPM flag when calculating BPM for a new track
+    this.isManualBPMSet = false;
+    
     if (!audioBuffer) return 120;
     
     try {
@@ -325,6 +334,9 @@ class BPMAnalyzer {
   // Method to manually set BPM (used by TAP functionality)
   setBPM(bpm, audioBuffer) {
     this.baseBPM = bpm;
+    this.isManualBPMSet = true; // Mark that user has manually set BPM
+    console.log(`Manual BPM override set for deck ${this.deckId}: ${bpm} BPM - auto-refinement disabled`);
+    
     if (audioBuffer) {
       this.generateBeatMap(audioBuffer);
     }
