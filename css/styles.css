@@ -692,8 +692,9 @@ body {
 
 .beat-meters {
   display: flex;
+  flex-direction: column;
   justify-content: center;
-  gap: var(--spacing-2xl);
+  gap: var(--spacing-md);
   align-items: center;
 }
 
