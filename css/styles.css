@@ -1371,20 +1371,21 @@ input[type="range"]::-moz-range-thumb {
   border-radius: 0;
   overflow: hidden;
   border: none;
-  border-top: 1px solid var(--border-primary);
   cursor: pointer;
   transition: var(--transition-normal);
   margin-bottom: 0;
   box-shadow: none;
 }
 
+.beat-waveform-wrapper-fullwidth:not(:first-child) {
+  border-top: 1px solid var(--border-primary);
+}
+
 .beat-waveform-wrapper-fullwidth:hover {
   background: linear-gradient(145deg, var(--bg-tertiary), var(--bg-secondary));
 }
 
-.beat-waveform-wrapper-fullwidth:first-child {
-  border-top: none;
-}
+
 
 .beat-waveform-wrapper-fullwidth:last-child {
   margin-bottom: 0;

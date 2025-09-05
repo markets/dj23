@@ -20,24 +20,69 @@ class BaseWaveformRenderer {
   loadWaveformData(audioBuffer) {
     if (!audioBuffer) return;
     
+    const deck = window.audioEngine.getDeck(this.deckId);
+    if (!deck) {
+      console.warn(`WaveformRenderer: No deck found for ${this.deckId}`);
+      return;
+    }
+
+    const beatPositions = deck.getBeatPositions();
     const channelData = audioBuffer.getChannelData(0);
-    const samples = 1000; // Number of waveform points
-    const blockSize = Math.floor(channelData.length / samples);
+    const sampleRate = audioBuffer.sampleRate;
+    
+    if (beatPositions.length === 0) {
+      console.warn(`WaveformRenderer: No beats detected for deck ${this.deckId}, waveform will be empty`);
+      this.waveformData = [];
+      return;
+    }
+
+    // Generate waveform data aligned to beats
     const waveformData = [];
-
-    for (let i = 0; i < samples; i++) {
-      const start = i * blockSize;
-      const end = start + blockSize;
-      let sum = 0;
-
-      for (let j = start; j < end && j < channelData.length; j++) {
-        sum += Math.abs(channelData[j]);
+    
+    // For each beat position, calculate the average energy in that beat segment
+    for (let i = 0; i < beatPositions.length - 1; i++) {
+      const beatStart = beatPositions[i];
+      const beatEnd = beatPositions[i + 1];
+      
+      const startSample = Math.floor(beatStart * sampleRate);
+      const endSample = Math.floor(beatEnd * sampleRate);
+      
+      if (startSample < channelData.length && endSample <= channelData.length) {
+        let sum = 0;
+        const sampleCount = endSample - startSample;
+        
+        for (let j = startSample; j < endSample; j++) {
+          sum += Math.abs(channelData[j]);
+        }
+        
+        waveformData.push(sampleCount > 0 ? sum / sampleCount : 0);
       }
-
-      waveformData.push(sum / blockSize);
+    }
+    
+    // Handle the last beat segment (from last beat to end of track)
+    if (beatPositions.length > 0) {
+      const lastBeatStart = beatPositions[beatPositions.length - 1];
+      const trackEnd = audioBuffer.duration;
+      
+      if (lastBeatStart < trackEnd) {
+        const startSample = Math.floor(lastBeatStart * sampleRate);
+        const endSample = channelData.length;
+        
+        let sum = 0;
+        const sampleCount = endSample - startSample;
+        
+        for (let j = startSample; j < endSample; j++) {
+          sum += Math.abs(channelData[j]);
+        }
+        
+        waveformData.push(sampleCount > 0 ? sum / sampleCount : 0);
+      }
     }
 
     this.waveformData = waveformData;
+    this.beatPositions = beatPositions; // Store beat positions for rendering
+    
+    console.log(`WaveformRenderer: Generated ${waveformData.length} beat-aligned samples for deck ${this.deckId} (${beatPositions.length} beats detected)`);
   }
 
   startAnimation() {
@@ -61,7 +106,7 @@ class WaveformRenderer extends BaseWaveformRenderer {
 
   setupEventListeners() {
     this.canvas.addEventListener('click', (e) => {
-      if (!this.waveformData) {
+      if (!this.waveformData || this.waveformData.length === 0) {
         console.log(`Deck ${this.deckId}: No waveform data available for seeking`);
         return;
       }
@@ -71,14 +116,18 @@ class WaveformRenderer extends BaseWaveformRenderer {
       const percentage = x / rect.width;
             
       const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck && deck.audioBuffer) {
-        const seekTime = percentage * deck.getDuration();
-        console.log(`Deck ${this.deckId}: Waveform clicked - seeking to ${seekTime.toFixed(2)}s (${(percentage * 100).toFixed(1)}%)`);
+      if (deck && deck.audioBuffer && this.beatPositions && this.beatPositions.length > 0) {
+        // Convert click position to beat index
+        const beatIndex = Math.floor(percentage * this.beatPositions.length);
+        const clampedIndex = Math.max(0, Math.min(beatIndex, this.beatPositions.length - 1));
+        const seekTime = this.beatPositions[clampedIndex];
+        
+        console.log(`Deck ${this.deckId}: Waveform clicked - seeking to beat ${clampedIndex} at ${seekTime.toFixed(2)}s (${(percentage * 100).toFixed(1)}%)`);
         deck.seek(seekTime);
         // Immediately update playhead position after seeking
         this.updatePlayhead();
       } else {
-        console.log(`Deck ${this.deckId}: No audio buffer available for seeking`);
+        console.log(`Deck ${this.deckId}: No audio buffer or beat data available for seeking`);
       }
     });
 
@@ -94,7 +143,7 @@ class WaveformRenderer extends BaseWaveformRenderer {
   }
 
   render() {
-    if (!this.waveformData) {
+    if (!this.waveformData || this.waveformData.length === 0) {
       this.renderEmpty();
       return;
     }
@@ -117,15 +166,23 @@ class WaveformRenderer extends BaseWaveformRenderer {
       this.ctx.fillRect(x, centerY, barWidth - 1, barHeight);
     }
 
-    if (deck && deck.isPlaying) {
-      const progress = deck.getCurrentTime() / deck.getDuration();
-      const playedWidth = width * progress;
-            
+    if (deck && deck.isPlaying && this.beatPositions && this.beatPositions.length > 0) {
+      const currentTime = deck.getCurrentTime();
+      const duration = deck.getDuration();
+      
+      // Find which beat we're currently at
+      let currentBeatIndex = 0;
+      for (let i = 0; i < this.beatPositions.length; i++) {
+        if (this.beatPositions[i] <= currentTime) {
+          currentBeatIndex = i;
+        } else {
+          break;
+        }
+      }
+      
       this.ctx.fillStyle = '#4ecdc4';
-      for (let i = 0; i < this.waveformData.length; i++) {
+      for (let i = 0; i <= currentBeatIndex && i < this.waveformData.length; i++) {
         const x = i * barWidth;
-        if (x > playedWidth) break;
-                
         const barHeight = this.waveformData[i] * centerY * 0.8;
         this.ctx.fillRect(x, centerY - barHeight, barWidth - 1, barHeight);
         this.ctx.fillRect(x, centerY, barWidth - 1, barHeight);
@@ -416,9 +473,10 @@ class ZoomedWaveformRenderer extends BaseWaveformRenderer {
     const sampleRate = audioBuffer.sampleRate;
     
     if (beatPositions.length === 0) {
-      // Fallback to time-based sampling if no beats detected
-      console.log(`ZoomedWaveformRenderer: No beats detected for deck ${this.deckId}, using time-based sampling`);
-      this.generateTimeBased(audioBuffer);
+      console.warn(`ZoomedWaveformRenderer: No beats detected for deck ${this.deckId}, waveform will be empty`);
+      this.waveformData = [];
+      this.beatPositions = [];
+      this.render();
       return;
     }
 
@@ -472,28 +530,7 @@ class ZoomedWaveformRenderer extends BaseWaveformRenderer {
     this.render();
   }
 
-  // Fallback method for time-based sampling when no beats are detected
-  generateTimeBased(audioBuffer) {
-    const channelData = audioBuffer.getChannelData(0);
-    const samples = 2000; // Higher resolution for beat matching
-    const blockSize = Math.floor(channelData.length / samples);
-    const waveformData = [];
 
-    for (let i = 0; i < samples; i++) {
-      const start = i * blockSize;
-      const end = start + blockSize;
-      let sum = 0;
-
-      for (let j = start; j < end && j < channelData.length; j++) {
-        sum += Math.abs(channelData[j]);
-      }
-
-      waveformData.push(sum / blockSize);
-    }
-
-    this.waveformData = waveformData;
-    this.beatPositions = null; // No beat alignment
-  }
 
   updateZoomWindow() {
     const deck = window.audioEngine.getDeck(this.deckId);
@@ -535,12 +572,9 @@ class ZoomedWaveformRenderer extends BaseWaveformRenderer {
     if (this.beatPositions && this.beatPositions.length > 0) {
       // Render beat-aligned waveform
       this.renderBeatAligned(width, height, duration, currentTime, deck);
-    } else {
-      // Render time-based waveform (fallback)
-      this.renderTimeBased(width, height, duration, currentTime, deck);
     }
 
-    // Draw beat markers (every second)
+    // Draw beat markers (every 8 beats)
     this.drawBeatMarkers(width, height, duration);
     
     // Draw red playhead line in center
@@ -616,83 +650,34 @@ class ZoomedWaveformRenderer extends BaseWaveformRenderer {
     }
   }
 
-  renderTimeBased(width, height, duration, currentTime, deck) {
-    // Original time-based rendering logic
-    const totalSamples = this.waveformData.length;
-    
-    const windowStart = this.offsetSeconds;
-    const windowEnd = this.offsetSeconds + this.zoomLevel;
-    
-    const startRatio = Math.max(0, windowStart) / duration;
-    const endRatio = Math.min(1, windowEnd / duration);
-    
-    const startSample = Math.floor(startRatio * totalSamples);
-    const endSample = Math.floor(endRatio * totalSamples);
-    const visibleSamples = endSample - startSample;
-    
-    if (visibleSamples <= 0) return;
 
-    const pixelsPerSecond = width / this.zoomLevel;
-    const barWidth = pixelsPerSecond / (totalSamples / duration);
-    const centerY = height / 2;
-
-    const drawOffsetPixels = windowStart < 0 ? -windowStart * pixelsPerSecond : 0;
-
-    // Draw waveform with higher detail
-    this.ctx.fillStyle = '#444';
-    for (let i = 0; i < visibleSamples; i++) {
-      const sampleIndex = startSample + i;
-      if (sampleIndex >= this.waveformData.length) break;
-      
-      const barHeight = this.waveformData[sampleIndex] * centerY * 0.9;
-      const x = drawOffsetPixels + i * barWidth;
-      
-      if (x >= 0 && x < width) {
-        this.ctx.fillRect(x, centerY - barHeight, barWidth - 0.5, barHeight);
-        this.ctx.fillRect(x, centerY, barWidth - 0.5, barHeight);
-      }
-    }
-
-    // Draw played portion in zoom window
-    if (deck.isPlaying) {
-      const currentTime = deck.getCurrentTime();
-      if (currentTime >= Math.max(0, this.offsetSeconds) && 
-          currentTime <= this.offsetSeconds + this.zoomLevel) {
-        
-        const pixelsPerSecond = width / this.zoomLevel;
-        const currentTimePosition = (currentTime - this.offsetSeconds) * pixelsPerSecond;
-        
-        this.ctx.fillStyle = '#4ecdc4';
-        for (let i = 0; i < visibleSamples; i++) {
-          const x = drawOffsetPixels + i * barWidth;
-          if (x > currentTimePosition || x < 0 || x >= width) continue;
-          
-          const sampleIndex = startSample + i;
-          if (sampleIndex >= this.waveformData.length) break;
-                
-          const barHeight = this.waveformData[sampleIndex] * centerY * 0.9;
-          this.ctx.fillRect(x, centerY - barHeight, barWidth - 0.5, barHeight);
-          this.ctx.fillRect(x, centerY, barWidth - 0.5, barHeight);
-        }
-      }
-    }
-  }
 
   drawBeatMarkers(width, height, duration) {
-    const windowDuration = Math.min(this.zoomLevel, duration - this.offsetSeconds);
-    const secondsPerPixel = windowDuration / width;
-    
+    const deck = window.audioEngine.getDeck(this.deckId);
+    if (!deck || !this.beatPositions || this.beatPositions.length === 0) return;
+
+    const windowStart = this.offsetSeconds;
+    const windowEnd = this.offsetSeconds + this.zoomLevel;
+
     this.ctx.strokeStyle = '#666';
     this.ctx.lineWidth = 1;
     this.ctx.setLineDash([2, 2]);
     
-    // Draw vertical lines every second
-    for (let i = 0; i < windowDuration; i++) {
-      const x = (i / windowDuration) * width;
-      this.ctx.beginPath();
-      this.ctx.moveTo(x, 0);
-      this.ctx.lineTo(x, height);
-      this.ctx.stroke();
+    // Draw vertical lines every 8 beats
+    for (let i = 0; i < this.beatPositions.length; i += 8) {
+      const beatTime = this.beatPositions[i];
+      
+      // Only draw if beat is visible in current window
+      if (beatTime >= windowStart && beatTime <= windowEnd) {
+        const x = ((beatTime - windowStart) / this.zoomLevel) * width;
+        
+        if (x >= 0 && x <= width) {
+          this.ctx.beginPath();
+          this.ctx.moveTo(x, 0);
+          this.ctx.lineTo(x, height);
+          this.ctx.stroke();
+        }
+      }
     }
     
     this.ctx.setLineDash([]);
