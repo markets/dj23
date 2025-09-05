@@ -1332,8 +1332,8 @@ class DeckController {
       tapButton.classList.remove('active');
     }, 150);
     
-    // Need at least 2 taps to calculate BPM
-    if (this.tapTimes.length < 2) return;
+    // Need at least 3 taps to calculate reliable BPM with outlier detection
+    if (this.tapTimes.length < 3) return;
     
     // Calculate intervals between taps
     const intervals = [];
@@ -1341,20 +1341,84 @@ class DeckController {
       intervals.push(this.tapTimes[i] - this.tapTimes[i - 1]);
     }
     
-    // Calculate average interval in milliseconds
-    const avgInterval = intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
-    
-    // Convert to BPM (60000 ms = 1 minute)
-    const bpm = Math.round(60000 / avgInterval);
+    // Apply outlier detection and robust averaging
+    const robustBPM = this.calculateRobustBPM(intervals);
     
     // Validate BPM range
-    if (bpm >= 60 && bpm <= 200) {
-      deck.bpmAnalyzer.setBPM(bpm, deck.audioBuffer);
+    if (robustBPM >= 60 && robustBPM <= 200) {
+      deck.bpmAnalyzer.setBPM(robustBPM, deck.audioBuffer);
       // Update the manual tap time with current playback time for refinement protection
       const currentTime = deck.getCurrentTime();
       deck.bpmAnalyzer.updateManualTapTime(currentTime);
       this.updateBPMDisplay();
-      console.log(`Manual BPM set via TAP for deck ${this.deckId}: ${bpm} BPM (playback time: ${currentTime.toFixed(1)}s)`);
+      console.log(`Manual BPM set via TAP for deck ${this.deckId}: ${robustBPM} BPM (playback time: ${currentTime.toFixed(1)}s) [${intervals.length} intervals processed]`);
+    }
+  }
+
+  // Robust BPM calculation with outlier detection
+  calculateRobustBPM(intervals) {
+    if (intervals.length === 0) return 120;
+    
+    // For small number of intervals, use simple average
+    if (intervals.length < 4) {
+      const avgInterval = intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
+      return Math.round(60000 / avgInterval);
+    }
+    
+    // Sort intervals to find median and quartiles
+    const sortedIntervals = [...intervals].sort((a, b) => a - b);
+    const median = this.getMedian(sortedIntervals);
+    
+    // Calculate MAD (Median Absolute Deviation) for robust outlier detection
+    const deviations = intervals.map(interval => Math.abs(interval - median));
+    const mad = this.getMedian(deviations.sort((a, b) => a - b));
+    
+    // Filter outliers using MAD-based method (more robust than standard deviation)
+    // An interval is considered an outlier if it's more than 2.5 MADs from the median
+    const threshold = 2.5 * mad;
+    const filteredIntervals = intervals.filter(interval => 
+      Math.abs(interval - median) <= threshold
+    );
+    
+    // If too many intervals were filtered, fall back to median
+    if (filteredIntervals.length < Math.max(2, intervals.length / 2)) {
+      console.log(`TAP outlier detection: Using median (${median}ms) - too many outliers detected`);
+      return Math.round(60000 / median);
+    }
+    
+    // Use weighted average: give more weight to recent intervals and those closer to median
+    let weightedSum = 0;
+    let totalWeight = 0;
+    
+    for (let i = 0; i < filteredIntervals.length; i++) {
+      const interval = filteredIntervals[i];
+      // Recent intervals get higher weight (recency bias)
+      const recencyWeight = (i + 1) / filteredIntervals.length;
+      // Intervals closer to median get higher weight (consistency bias)
+      const consistencyWeight = 1 - (Math.abs(interval - median) / (median + 1));
+      // Combined weight
+      const weight = recencyWeight * consistencyWeight;
+      
+      weightedSum += interval * weight;
+      totalWeight += weight;
+    }
+    
+    const robustAvgInterval = weightedSum / totalWeight;
+    const robustBPM = Math.round(60000 / robustAvgInterval);
+    
+    console.log(`TAP outlier detection: Filtered ${intervals.length - filteredIntervals.length} outliers, median: ${median}ms, robust avg: ${robustAvgInterval.toFixed(1)}ms`);
+    
+    return robustBPM;
+  }
+
+  // Helper function to calculate median
+  getMedian(sortedArray) {
+    const length = sortedArray.length;
+    if (length === 0) return 0;
+    if (length % 2 === 0) {
+      return (sortedArray[length / 2 - 1] + sortedArray[length / 2]) / 2;
+    } else {
+      return sortedArray[Math.floor(length / 2)];
     }
   }
 }
