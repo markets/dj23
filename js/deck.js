@@ -105,6 +105,16 @@ class Deck {
     return this.bpmAnalyzer.getNextBeat(currentTime);
   }
 
+  // Get all beat positions for waveform rendering
+  getBeatPositions() {
+    return this.bpmAnalyzer.beatPositions || [];
+  }
+
+  // Get beat interval (time between beats) for waveform sampling
+  getBeatInterval() {
+    return this.bpmAnalyzer.beatInterval || 0.5;
+  }
+
   play() {
     if (!this.audioBuffer) return;
 
