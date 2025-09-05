@@ -610,6 +610,27 @@ class ZoomedWaveformRenderer extends BaseWaveformRenderer {
     };
     animate();
   }
+
+  // Method to handle zoom changes from buttons
+  zoom(direction) {
+    if (!this.waveformData) return;
+    
+    const zoomSensitivity = 0.4;
+    const minZoom = 4;
+    const maxZoom = 60;
+    
+    // direction: 1 for zoom in (-), -1 for zoom out (+)
+    const zoomDelta = direction * zoomSensitivity;
+    const newZoomLevel = Math.max(minZoom, Math.min(maxZoom, this.zoomLevel + zoomDelta));
+    
+    // Only update if zoom level actually changed
+    if (newZoomLevel !== this.zoomLevel) {
+      this.zoomLevel = newZoomLevel;
+      // Re-render with new zoom level
+      this.render();
+      console.log(`Beat waveform zoom changed to ${this.zoomLevel.toFixed(1)} seconds on deck ${this.deckId}`);
+    }
+  }
 }
 
 // Global waveform renderers
