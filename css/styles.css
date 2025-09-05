@@ -1251,7 +1251,7 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .global-beat-waveforms {
-  margin-bottom: var(--spacing-xl);
+  margin-bottom: var(--spacing-2xl);
   background: transparent;
   border-radius: var(--radius-lg);
   padding: 0;
@@ -1277,14 +1277,14 @@ input[type="range"]::-moz-range-thumb {
 
 .global-beat-waveform-container > label {
   position: absolute;
-  top: var(--spacing-sm);
-  left: var(--spacing-sm);
+  top: var(--spacing-xs);
+  left: var(--spacing-xs);
   z-index: 15;
   font-weight: 600;
   color: var(--color-primary);
   text-transform: uppercase;
   letter-spacing: 1px;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   background: rgba(0, 0, 0, 0.7);
   padding: 2px 8px;
   border-radius: var(--radius-sm);
