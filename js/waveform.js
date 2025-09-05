@@ -224,9 +224,8 @@ class WaveformRenderer extends BaseWaveformRenderer {
 }
 
 class ZoomedWaveformRenderer extends BaseWaveformRenderer {
-  constructor(canvasId, deckId, zoomIndex) {
+  constructor(canvasId, deckId) {
     super(canvasId, deckId);
-    this.zoomIndex = zoomIndex;
     this.zoomLevel = 20; // Shows about 20 seconds of audio for beat matching
     this.offsetSeconds = 0; // Current offset from track start
         

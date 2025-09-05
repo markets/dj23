@@ -21,6 +21,10 @@ class AudioEngine {
       this.decks.A = new Deck(this.audioContext, this.masterGain, 'A');
       this.decks.B = new Deck(this.audioContext, this.masterGain, 'B');
 
+      // Set initial deck volumes
+      this.decks.A.setVolume(100);
+      this.decks.B.setVolume(0);
+
       this.isInitialized = true;
     } catch (error) {
       console.error('Failed to initialize audio context:', error);
