@@ -228,11 +228,6 @@ class MixerController {
       
       if (index === currentBeat && isOnBeat) {
         bar.classList.add('active');
-      } else if (index < currentBeat) {
-        // Dim previous beats
-        bar.style.opacity = '0.3';
-      } else {
-        bar.style.opacity = '1';
       }
     });
 
