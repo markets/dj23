@@ -206,7 +206,7 @@ class MixerController {
     if (!deck || !bars || !deck.audioBuffer || !deck.isPlaying) {
       // Clear all bars if deck is not playing
       bars.forEach(bar => {
-        bar.classList.remove('active', 'sync-highlight');
+        bar.classList.remove('active');
       });
       return;
     }
@@ -224,51 +224,15 @@ class MixerController {
     
     // Update the bars
     bars.forEach((bar, index) => {
-      bar.classList.remove('active', 'sync-highlight');
+      bar.classList.remove('active');
       
       if (index === currentBeat && isOnBeat) {
         bar.classList.add('active');
       }
     });
-
-    // Check for sync between decks
-    if (deckId === 'A') {
-      this.checkBeatSync();
-    }
   }
 
-  checkBeatSync() {
-    const deckA = window.audioEngine.getDeck('A');
-    const deckB = window.audioEngine.getDeck('B');
-    const barsA = this.beatMeters.A;
-    const barsB = this.beatMeters.B;
 
-    if (!deckA || !deckB || !barsA || !barsB || !deckA.isPlaying || !deckB.isPlaying) {
-      return;
-    }
-
-    const timeA = deckA.getCurrentTime();
-    const timeB = deckB.getCurrentTime();
-    const beatIntervalA = 60 / deckA.getBPM();
-    const beatIntervalB = 60 / deckB.getBPM();
-    
-    // Calculate beat positions
-    const beatA = (timeA % beatIntervalA) / beatIntervalA;
-    const beatB = (timeB % beatIntervalB) / beatIntervalB;
-    
-    // Check if beats are synchronized (within 5% of beat interval)
-    const beatDifference = Math.abs(beatA - beatB);
-    const isInSync = beatDifference < 0.05 || beatDifference > 0.95;
-    
-    if (isInSync) {
-      // Highlight sync with special color
-      const currentBeatA = Math.floor(timeA / beatIntervalA) % 4;
-      const currentBeatB = Math.floor(timeB / beatIntervalB) % 4;
-      
-      if (barsA[currentBeatA]) barsA[currentBeatA].classList.add('sync-highlight');
-      if (barsB[currentBeatB]) barsB[currentBeatB].classList.add('sync-highlight');
-    }
-  }
 
   startVUAnimation() {
     const updateVU = () => {

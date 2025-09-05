@@ -726,11 +726,7 @@ body {
   border-color: var(--color-primary);
 }
 
-.beat-bar.sync-highlight {
-  background: var(--color-secondary);
-  box-shadow: 0 0 10px rgba(255, 107, 107, 0.8);
-  border-color: var(--color-secondary);
-}
+
 
 /* ============================================================================
    VU METERS
