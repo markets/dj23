@@ -998,6 +998,12 @@ class DeckController {
           const title = tags.title || '';
           const album = tags.album || '';
           
+          // Try to extract BPM from metadata (common tags: BPM, TBPM, bpm)
+          const metadataBPM = this.extractBPMFromTags(tags);
+          if (metadataBPM && this.bpmAnalyzer) {
+            this.bpmAnalyzer.setMetadataBPM(metadataBPM, this.audioBuffer);
+          }
+          
           // Format display title
           if (artist && title) {
             displayTitle = `${artist} - ${title}`;
@@ -1056,6 +1062,38 @@ class DeckController {
     
     // If no pattern matches, return cleaned filename
     return nameWithoutExt.trim();
+  }
+
+  extractBPMFromTags(tags) {
+    // Try various common BPM tag formats
+    const bpmFields = ['BPM', 'TBPM', 'bpm', 'Bpm', 'BeatsPerMinute', 'BEATS_PER_MINUTE'];
+    
+    for (const field of bpmFields) {
+      if (tags[field]) {
+        const bpmValue = parseFloat(tags[field]);
+        if (!isNaN(bpmValue) && bpmValue > 0 && bpmValue <= 300) {
+          console.log(`Found metadata BPM: ${bpmValue} in field '${field}'`);
+          return Math.round(bpmValue);
+        }
+      }
+    }
+    
+    // Try to extract BPM from comment or description fields
+    const textFields = ['comment', 'Comment', 'COMMENT', 'description', 'Description'];
+    for (const field of textFields) {
+      if (tags[field]) {
+        const bpmMatch = tags[field].match(/(?:BPM|bpm|tempo)[\s:=]*(\d+(?:\.\d+)?)/i);
+        if (bpmMatch) {
+          const bpmValue = parseFloat(bpmMatch[1]);
+          if (!isNaN(bpmValue) && bpmValue > 0 && bpmValue <= 300) {
+            console.log(`Found metadata BPM: ${bpmValue} in ${field} field`);
+            return Math.round(bpmValue);
+          }
+        }
+      }
+    }
+    
+    return null; // No BPM found in metadata
   }
 
   displayAlbumCover(pictureData) {
@@ -1312,8 +1350,11 @@ class DeckController {
     // Validate BPM range
     if (bpm >= 60 && bpm <= 200) {
       deck.bpmAnalyzer.setBPM(bpm, deck.audioBuffer);
+      // Update the manual tap time with current playback time for refinement protection
+      const currentTime = deck.getCurrentTime();
+      deck.bpmAnalyzer.updateManualTapTime(currentTime);
       this.updateBPMDisplay();
-      console.log(`Manual BPM set via TAP for deck ${this.deckId}: ${bpm} BPM`);
+      console.log(`Manual BPM set via TAP for deck ${this.deckId}: ${bpm} BPM (playback time: ${currentTime.toFixed(1)}s)`);
     }
   }
 }

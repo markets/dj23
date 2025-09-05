@@ -16,8 +16,10 @@ class BPMAnalyzer {
     // Store original BPM for pitch-adjusted calculations
     this.baseBPM = 120; // Default BPM, will be updated when track loads
     
-    // Manual BPM override tracking
-    this.isManualBPMSet = false; // Flag to track if user has manually set BPM via TAP
+    // BPM source tracking for priority system
+    this.bpmSource = 'default'; // Can be: 'default', 'metadata', 'auto-detected', 'manual'
+    this.metadataBPM = null; // Store BPM from metadata
+    this.lastManualTapTime = 0; // Track when user last used TAP
   }
 
   generateBeatMap(audioBuffer) {
@@ -70,13 +72,28 @@ class BPMAnalyzer {
   refineBPMDuringPlayback(audioBuffer, currentTime, isPlaying) {
     if (!isPlaying || !audioBuffer) return;
     
-    // Stop refinement if user has manually set BPM via TAP
-    if (this.isManualBPMSet) return;
+    // Smart refinement logic based on BPM source and timing
+    const timeSinceManualTap = currentTime - this.lastManualTapTime;
     
-    // Limit refinement analysis to first 10 seconds of the track for better accuracy
+    // If user manually set BPM via TAP, allow brief refinement window (2-3 seconds) then protect
+    if (this.bpmSource === 'manual' && timeSinceManualTap > 3) {
+      return; // Protect manual BPM after 3 seconds
+    }
+    
+    // If we have metadata BPM, only allow very brief refinement (1 second) to verify accuracy
+    if (this.bpmSource === 'metadata' && currentTime > 1) {
+      return;
+    }
+    
+    // For auto-detected BPM, allow longer refinement window (10 seconds)
+    if (this.bpmSource === 'auto-detected' && currentTime > 10) {
+      return;
+    }
+    
+    // Default case: allow refinement for first 10 seconds
     if (currentTime > 10) return;
     
-    // Analyze every 1.5 seconds for more frequent updates (faster convergence)
+    // Analyze every 1.5 seconds for frequent updates during critical period
     if (currentTime - this.lastBpmAnalysisTime >= 1.5) {
       this.lastBpmAnalysisTime = currentTime;
       
@@ -110,10 +127,21 @@ class BPMAnalyzer {
           const recentBPMs = this.bpmAnalysisHistory.slice(-3).map(entry => entry.bpm);
           const avgRecentBPM = recentBPMs.reduce((sum, bpm) => sum + bpm, 0) / recentBPMs.length;
           
-          // More conservative threshold for BPM updates (3 BPM difference)
-          if (Math.abs(avgRecentBPM - this.baseBPM) > 3) {
-            console.log(`Refining BPM for deck ${this.deckId}: ${this.baseBPM} -> ${avgRecentBPM.toFixed(1)}`);
+          // Adjust threshold based on BPM source - be more conservative with manual/metadata BPM
+          let threshold = 3; // Default threshold
+          if (this.bpmSource === 'metadata') {
+            threshold = 8; // Very conservative for metadata BPM
+          } else if (this.bpmSource === 'manual') {
+            threshold = 6; // Conservative for manual BPM
+          }
+          
+          if (Math.abs(avgRecentBPM - this.baseBPM) > threshold) {
+            console.log(`Refining BPM for deck ${this.deckId}: ${this.baseBPM} -> ${avgRecentBPM.toFixed(1)} (source: ${this.bpmSource})`);
             this.baseBPM = avgRecentBPM;
+            // Only update source if it was auto-detected, preserve higher priority sources
+            if (this.bpmSource === 'auto-detected' || this.bpmSource === 'default') {
+              this.bpmSource = 'auto-detected';
+            }
             this.generateBeatMap(audioBuffer); // Regenerate beat map with new BPM
           }
         }
@@ -122,8 +150,10 @@ class BPMAnalyzer {
   }
 
   calculateBPM(audioBuffer) {
-    // Reset manual BPM flag when calculating BPM for a new track
-    this.isManualBPMSet = false;
+    // Reset BPM source tracking when calculating BPM for a new track
+    this.bpmSource = 'default';
+    this.metadataBPM = null;
+    this.lastManualTapTime = 0;
     
     if (!audioBuffer) return 120;
     
@@ -140,6 +170,7 @@ class BPMAnalyzer {
       
       console.log(`Detected BPM: ${bpm} for deck ${this.deckId}`);
       this.baseBPM = bpm;
+      this.bpmSource = 'auto-detected';
       return bpm;
     } catch (error) {
       console.error('BPM detection failed:', error);
@@ -334,11 +365,44 @@ class BPMAnalyzer {
   // Method to manually set BPM (used by TAP functionality)
   setBPM(bpm, audioBuffer) {
     this.baseBPM = bpm;
-    this.isManualBPMSet = true; // Mark that user has manually set BPM
-    console.log(`Manual BPM override set for deck ${this.deckId}: ${bpm} BPM - auto-refinement disabled`);
+    this.bpmSource = 'manual';
+    this.lastManualTapTime = 0; // Will be updated to current playback time when called
+    console.log(`Manual BPM override set for deck ${this.deckId}: ${bpm} BPM - limited auto-refinement for 3 seconds`);
     
     if (audioBuffer) {
       this.generateBeatMap(audioBuffer);
     }
+  }
+
+  // Method to set BPM from metadata (called when reading file metadata)
+  setMetadataBPM(bpm, audioBuffer) {
+    if (bpm && bpm > 0) {
+      this.metadataBPM = bpm;
+      this.baseBPM = bpm;
+      this.bpmSource = 'metadata';
+      console.log(`Metadata BPM set for deck ${this.deckId}: ${bpm} BPM - very limited auto-refinement`);
+      
+      if (audioBuffer) {
+        this.generateBeatMap(audioBuffer);
+      }
+      return true;
+    }
+    return false;
+  }
+
+  // Update the manual tap time (should be called with current playback time)
+  updateManualTapTime(currentTime) {
+    if (this.bpmSource === 'manual') {
+      this.lastManualTapTime = currentTime;
+    }
+  }
+
+  // Get information about current BPM source
+  getBPMInfo() {
+    return {
+      bpm: this.baseBPM,
+      source: this.bpmSource,
+      metadataBPM: this.metadataBPM
+    };
   }
 }
