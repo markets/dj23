@@ -685,7 +685,8 @@ body {
    BEAT METER
    ============================================================================ */
 .beat-meter-section {
-  text-align: center;
+  display: flex;
+  justify-content: center;
   margin: var(--spacing-lg) 0;
 }
 
@@ -695,7 +696,7 @@ body {
   justify-content: center;
   align-items: center;
   gap: var(--spacing-md);
-  padding: var(--spacing-xs);
+  padding: var(--spacing-md);
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
   border: 1px solid var(--border-primary);
@@ -714,7 +715,7 @@ body {
   width: 30px;
   height: 10px;
   background: var(--border-primary);
-  border-radius: var(--radius-sm);
+  border-radius: 2px;
   transition: all 0.1s ease;
   position: relative;
   border: 1px solid var(--border-secondary);
@@ -728,8 +729,6 @@ body {
   transform: scale(1.15);
   border-color: var(--color-primary);
 }
-
-
 
 /* ============================================================================
    VU METERS

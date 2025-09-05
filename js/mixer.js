@@ -225,8 +225,6 @@ class MixerController {
     });
   }
 
-
-
   startVUAnimation() {
     const updateVU = () => {
       // Get master volume for VU meter scaling
