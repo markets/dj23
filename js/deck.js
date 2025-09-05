@@ -990,6 +990,9 @@ class DeckController {
       // Store reference to this context for use in callback
       const self = this;
       
+      // Get deck instance to access bpmAnalyzer
+      const deck = window.audioEngine.getDeck(self.deckId);
+      
       // Use jsmediatags to extract metadata
       window.jsmediatags.read(file, {
         onSuccess: (tag) => {
@@ -1002,9 +1005,9 @@ class DeckController {
           const album = tags.album || '';
           
           // Try to extract BPM from metadata using BPM analyzer
-          const metadataBPM = self.bpmAnalyzer.extractBPMFromTags(tags);
+          const metadataBPM = deck.bpmAnalyzer.extractBPMFromTags(tags);
           if (metadataBPM) {
-            self.bpmAnalyzer.setMetadataBPM(metadataBPM, self.audioBuffer);
+            deck.bpmAnalyzer.setMetadataBPM(metadataBPM, deck.audioBuffer);
           }
           
           // Format display title
