@@ -6,9 +6,18 @@ class MixerController {
       B: null,
       master: null
     };
+    this.beatMeters = {
+      A: null,
+      B: null
+    };
+    this.beatStates = {
+      A: { currentBeat: 0, lastBeatTime: 0 },
+      B: { currentBeat: 0, lastBeatTime: 0 }
+    };
     this.deckControllers = {};
     this.setupEventListeners();
     this.initializeVUMeters();
+    this.initializeBeatMeters();
     this.startVUAnimation();
   }
 
@@ -158,6 +167,16 @@ class MixerController {
     });
   }
 
+  initializeBeatMeters() {
+    ['A', 'B'].forEach(deckId => {
+      const container = document.getElementById(`beatMeter${deckId}`);
+      if (container) {
+        const bars = Array.from(container.querySelectorAll('.beat-bar'));
+        this.beatMeters[deckId] = bars;
+      }
+    });
+  }
+
   // Helper function to get VU bar class based on position
   getVUBarClass(index, totalBars) {
     if (index < totalBars * 0.6) return 'active-low';
@@ -180,6 +199,82 @@ class MixerController {
     });
   }
 
+  updateBeatMeter(deckId) {
+    const deck = window.audioEngine.getDeck(deckId);
+    const bars = this.beatMeters[deckId];
+    
+    if (!deck || !bars || !deck.audioBuffer || !deck.isPlaying) {
+      // Clear all bars if deck is not playing
+      bars.forEach(bar => {
+        bar.classList.remove('active', 'sync-highlight');
+      });
+      return;
+    }
+
+    const currentTime = deck.getCurrentTime();
+    const beatInterval = 60 / deck.getBPM(); // Time between beats in seconds
+    const timeSinceLastBeat = currentTime % beatInterval;
+    const currentBeat = Math.floor(currentTime / beatInterval) % 4; // 4 beats per measure
+
+    // Update beat state
+    const beatState = this.beatStates[deckId];
+    
+    // Check if we're close to a beat (within 100ms)
+    const isOnBeat = timeSinceLastBeat < 0.1 || timeSinceLastBeat > (beatInterval - 0.1);
+    
+    // Update the bars
+    bars.forEach((bar, index) => {
+      bar.classList.remove('active', 'sync-highlight');
+      
+      if (index === currentBeat && isOnBeat) {
+        bar.classList.add('active');
+      } else if (index < currentBeat) {
+        // Dim previous beats
+        bar.style.opacity = '0.3';
+      } else {
+        bar.style.opacity = '1';
+      }
+    });
+
+    // Check for sync between decks
+    if (deckId === 'A') {
+      this.checkBeatSync();
+    }
+  }
+
+  checkBeatSync() {
+    const deckA = window.audioEngine.getDeck('A');
+    const deckB = window.audioEngine.getDeck('B');
+    const barsA = this.beatMeters.A;
+    const barsB = this.beatMeters.B;
+
+    if (!deckA || !deckB || !barsA || !barsB || !deckA.isPlaying || !deckB.isPlaying) {
+      return;
+    }
+
+    const timeA = deckA.getCurrentTime();
+    const timeB = deckB.getCurrentTime();
+    const beatIntervalA = 60 / deckA.getBPM();
+    const beatIntervalB = 60 / deckB.getBPM();
+    
+    // Calculate beat positions
+    const beatA = (timeA % beatIntervalA) / beatIntervalA;
+    const beatB = (timeB % beatIntervalB) / beatIntervalB;
+    
+    // Check if beats are synchronized (within 5% of beat interval)
+    const beatDifference = Math.abs(beatA - beatB);
+    const isInSync = beatDifference < 0.05 || beatDifference > 0.95;
+    
+    if (isInSync) {
+      // Highlight sync with special color
+      const currentBeatA = Math.floor(timeA / beatIntervalA) % 4;
+      const currentBeatB = Math.floor(timeB / beatIntervalB) % 4;
+      
+      if (barsA[currentBeatA]) barsA[currentBeatA].classList.add('sync-highlight');
+      if (barsB[currentBeatB]) barsB[currentBeatB].classList.add('sync-highlight');
+    }
+  }
+
   startVUAnimation() {
     const updateVU = () => {
       // Get master volume for VU meter scaling
@@ -195,6 +290,9 @@ class MixerController {
         } else {
           this.updateVUMeter(deckId, 0);
         }
+        
+        // Update beat meters
+        this.updateBeatMeter(deckId);
       });
             
       const deckA = window.audioEngine.getDeck('A');

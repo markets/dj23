@@ -675,6 +675,68 @@ body {
 }
 
 /* ============================================================================
+   BEAT METER
+   ============================================================================ */
+.beat-meter-section {
+  text-align: center;
+  margin: var(--spacing-lg) 0;
+}
+
+.beat-meter-section label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: var(--spacing-md);
+  font-weight: 600;
+}
+
+.beat-meters {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-xl);
+  align-items: center;
+}
+
+.beat-meter-deck {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.beat-meter-deck .deck-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 15px;
+}
+
+.beat-bars {
+  display: flex;
+  gap: var(--spacing-xs);
+  align-items: center;
+}
+
+.beat-bar {
+  width: 12px;
+  height: 12px;
+  background: var(--border-primary);
+  border-radius: var(--radius-sm);
+  transition: all 0.1s ease;
+  position: relative;
+}
+
+.beat-bar.active {
+  background: var(--color-primary);
+  box-shadow: 0 0 8px rgba(78, 205, 196, 0.6);
+  transform: scale(1.1);
+}
+
+.beat-bar.sync-highlight {
+  background: var(--color-secondary);
+  box-shadow: 0 0 8px rgba(255, 107, 107, 0.6);
+}
+
+/* ============================================================================
    VU METERS
    ============================================================================ */
 .vu-meter {
