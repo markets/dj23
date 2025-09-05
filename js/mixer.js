@@ -6,9 +6,14 @@ class MixerController {
       B: null,
       master: null
     };
+    this.beatMeters = {
+      A: null,
+      B: null
+    };
     this.deckControllers = {};
     this.setupEventListeners();
     this.initializeVUMeters();
+    this.initializeBeatMeters();
     this.startVUAnimation();
   }
 
@@ -158,6 +163,16 @@ class MixerController {
     });
   }
 
+  initializeBeatMeters() {
+    ['A', 'B'].forEach(deckId => {
+      const container = document.getElementById(`beatMeter${deckId}`);
+      if (container) {
+        const bars = Array.from(container.querySelectorAll('.beat-bar'));
+        this.beatMeters[deckId] = bars;
+      }
+    });
+  }
+
   // Helper function to get VU bar class based on position
   getVUBarClass(index, totalBars) {
     if (index < totalBars * 0.6) return 'active-low';
@@ -180,6 +195,36 @@ class MixerController {
     });
   }
 
+  updateBeatMeter(deckId) {
+    const deck = window.audioEngine.getDeck(deckId);
+    const bars = this.beatMeters[deckId];
+    
+    if (!deck || !bars || !deck.audioBuffer || !deck.isPlaying) {
+      // Clear all bars if deck is not playing
+      bars.forEach(bar => {
+        bar.classList.remove('active');
+      });
+      return;
+    }
+
+    const currentTime = deck.getCurrentTime();
+    const beatInterval = 60 / deck.getBPM(); // Time between beats in seconds
+    const timeSinceLastBeat = currentTime % beatInterval;
+    const currentBeat = Math.floor(currentTime / beatInterval) % 4; // 4 beats per measure
+    
+    // Check if we're close to a beat (within 100ms)
+    const isOnBeat = timeSinceLastBeat < 0.1 || timeSinceLastBeat > (beatInterval - 0.1);
+    
+    // Update the bars
+    bars.forEach((bar, index) => {
+      bar.classList.remove('active');
+      
+      if (index === currentBeat && isOnBeat) {
+        bar.classList.add('active');
+      }
+    });
+  }
+
   startVUAnimation() {
     const updateVU = () => {
       // Get master volume for VU meter scaling
@@ -195,6 +240,9 @@ class MixerController {
         } else {
           this.updateVUMeter(deckId, 0);
         }
+        
+        // Update beat meters
+        this.updateBeatMeter(deckId);
       });
             
       const deckA = window.audioEngine.getDeck('A');
