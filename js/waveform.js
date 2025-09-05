@@ -380,9 +380,9 @@ class ZoomedWaveformRenderer extends BaseWaveformRenderer {
       
       if (!this.waveformData) return;
       
-      const zoomSensitivity = 0.1; // Adjust zoom speed
-      const minZoom = 1; // Minimum 1 second for detailed beat matching
-      const maxZoom = 20; // Maximum 20 seconds (current default)
+      const zoomSensitivity = 0.4;
+      const minZoom = 4;
+      const maxZoom = 60;
       
       // Determine zoom direction (zoom out on wheel down, zoom in on wheel up)
       const zoomDelta = e.deltaY > 0 ? zoomSensitivity : -zoomSensitivity;
