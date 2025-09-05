@@ -385,6 +385,20 @@ class ZoomedWaveformRenderer extends BaseWaveformRenderer {
       this.zoom(direction);
     });
 
+    // Setup zoom button event listeners
+    document.getElementById('zoomInA').addEventListener('click', () => {
+      this.zoom(-5);
+    });
+    document.getElementById('zoomOutA').addEventListener('click', () => {
+      this.zoom(5);
+    });
+    document.getElementById('zoomInB').addEventListener('click', () => {
+      this.zoom(-5);
+    });
+    document.getElementById('zoomOutB').addEventListener('click', () => {
+      this.zoom(5);
+    });
+
     window.addEventListener('resize', () => {
       this.setupCanvas();
       this.render();

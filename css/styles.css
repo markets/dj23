@@ -1346,6 +1346,7 @@ input[type="range"]::-moz-range-thumb {
   right: var(--spacing-xs);
   z-index: 15;
   display: flex;
+  gap: 4px;
 }
 
 .zoom-btn {

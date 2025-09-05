@@ -9,20 +9,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.beatWaveformRenderers.A = new ZoomedWaveformRenderer('beatWaveformA', 'A', 1);
   window.beatWaveformRenderers.B = new ZoomedWaveformRenderer('beatWaveformB', 'B', 1);
     
-  // Setup zoom button event listeners
-  document.getElementById('zoomInA').addEventListener('click', () => {
-    window.beatWaveformRenderers.A.zoom(-1); // Zoom in (negative direction)
-  });
-  document.getElementById('zoomOutA').addEventListener('click', () => {
-    window.beatWaveformRenderers.A.zoom(1); // Zoom out (positive direction)
-  });
-  document.getElementById('zoomInB').addEventListener('click', () => {
-    window.beatWaveformRenderers.B.zoom(-1); // Zoom in (negative direction)
-  });
-  document.getElementById('zoomOutB').addEventListener('click', () => {
-    window.beatWaveformRenderers.B.zoom(1); // Zoom out (positive direction)
-  });
-    
   window.waveformRenderers.A.startAnimation();
   window.waveformRenderers.B.startAnimation();
   
