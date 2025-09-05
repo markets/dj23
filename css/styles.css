@@ -711,13 +711,15 @@ body {
 }
 
 .beat-bars {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
   gap: var(--spacing-sm);
-  align-items: center;
   padding: var(--spacing-xs);
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
   border: 1px solid var(--border-primary);
+  width: fit-content;
 }
 
 .beat-bar {
