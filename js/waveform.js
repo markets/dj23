@@ -281,9 +281,8 @@ class WaveformRenderer extends BaseWaveformRenderer {
 }
 
 class ZoomedWaveformRenderer extends BaseWaveformRenderer {
-  constructor(canvasId, deckId, zoomIndex) {
+  constructor(canvasId, deckId) {
     super(canvasId, deckId);
-    this.zoomIndex = zoomIndex;
     this.zoomLevel = 20; // Shows about 20 seconds of audio for beat matching
     this.offsetSeconds = 0; // Current offset from track start
         
@@ -437,21 +436,23 @@ class ZoomedWaveformRenderer extends BaseWaveformRenderer {
       
       if (!this.waveformData) return;
       
-      const zoomSensitivity = 0.4;
-      const minZoom = 4;
-      const maxZoom = 60;
-      
       // Determine zoom direction (zoom out on wheel down, zoom in on wheel up)
-      const zoomDelta = e.deltaY > 0 ? zoomSensitivity : -zoomSensitivity;
-      const newZoomLevel = Math.max(minZoom, Math.min(maxZoom, this.zoomLevel + zoomDelta));
-      
-      // Only update if zoom level actually changed
-      if (newZoomLevel !== this.zoomLevel) {
-        this.zoomLevel = newZoomLevel;
-        // Re-render with new zoom level
-        this.render();
-        console.log(`Beat waveform zoom changed to ${this.zoomLevel.toFixed(1)} seconds on deck ${this.deckId}`);
-      }
+      const direction = e.deltaY > 0 ? 1 : -1;
+      this.zoom(direction);
+    });
+
+    // Setup zoom button event listeners
+    document.getElementById('zoomInA').addEventListener('click', () => {
+      this.zoom(-5);
+    });
+    document.getElementById('zoomOutA').addEventListener('click', () => {
+      this.zoom(5);
+    });
+    document.getElementById('zoomInB').addEventListener('click', () => {
+      this.zoom(-5);
+    });
+    document.getElementById('zoomOutB').addEventListener('click', () => {
+      this.zoom(5);
     });
 
     window.addEventListener('resize', () => {
@@ -734,6 +735,27 @@ class ZoomedWaveformRenderer extends BaseWaveformRenderer {
       this.animationId = requestAnimationFrame(animate);
     };
     animate();
+  }
+
+  // Method to handle zoom changes from buttons
+  zoom(direction) {
+    if (!this.waveformData) return;
+    
+    const zoomSensitivity = 0.4;
+    const minZoom = 4;
+    const maxZoom = 60;
+    
+    // direction: 1 for zoom in (-), -1 for zoom out (+)
+    const zoomDelta = direction * zoomSensitivity;
+    const newZoomLevel = Math.max(minZoom, Math.min(maxZoom, this.zoomLevel + zoomDelta));
+    
+    // Only update if zoom level actually changed
+    if (newZoomLevel !== this.zoomLevel) {
+      this.zoomLevel = newZoomLevel;
+      // Re-render with new zoom level
+      this.render();
+      console.log(`Beat waveform zoom changed to ${this.zoomLevel.toFixed(1)} seconds on deck ${this.deckId}`);
+    }
   }
 }
 
