@@ -235,7 +235,9 @@ class MixerController {
         if (deck && deck.isPlaying) {
           const analyserData = deck.getAnalyserData();
           const average = this.getAnalyserAverage(analyserData);
-          const scaledLevel = average * masterVolume;
+          // Factor in the global gain (EQ gain) to reflect reality
+          const globalGain = deck.getGlobalGain();
+          const scaledLevel = average * masterVolume * globalGain;
           this.updateVUMeter(deckId, scaledLevel);
         } else {
           this.updateVUMeter(deckId, 0);
@@ -248,18 +250,28 @@ class MixerController {
       const deckA = window.audioEngine.getDeck('A');
       const deckB = window.audioEngine.getDeck('B');
       let masterLevel = 0;
+      let totalGain = 0;
+      let activeDeckCount = 0;
             
       if (deckA && deckA.isPlaying) {
         const dataA = deckA.getAnalyserData();
-        masterLevel += this.getAnalyserAverage(dataA);
+        const globalGainA = deckA.getGlobalGain();
+        masterLevel += this.getAnalyserAverage(dataA) * globalGainA;
+        totalGain += globalGainA;
+        activeDeckCount++;
       }
             
       if (deckB && deckB.isPlaying) {
         const dataB = deckB.getAnalyserData();
-        masterLevel += this.getAnalyserAverage(dataB);
+        const globalGainB = deckB.getGlobalGain();
+        masterLevel += this.getAnalyserAverage(dataB) * globalGainB;
+        totalGain += globalGainB;
+        activeDeckCount++;
       }
       
-      const scaledMasterLevel = (masterLevel / 2) * masterVolume;
+      // Average the master level accounting for active decks
+      const avgMasterLevel = activeDeckCount > 0 ? masterLevel / activeDeckCount : 0;
+      const scaledMasterLevel = avgMasterLevel * masterVolume;
       this.updateVUMeter('master', scaledMasterLevel);
             
       if (this.deckControllers.A) this.deckControllers.A.updateTrackTime();
