@@ -661,12 +661,6 @@ class DeckController {
       clearTimeout(this.tapTimeout);
       this.tapTimeout = null;
     }
-    
-    // Remove active state from TAP button
-    const tapButton = document.getElementById(`tap${this.deckId}`);
-    if (tapButton) {
-      tapButton.classList.remove('active');
-    }
   }
 
   // Utility function for creating deck method button handlers
