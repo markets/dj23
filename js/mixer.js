@@ -10,10 +10,6 @@ class MixerController {
       A: null,
       B: null
     };
-    this.beatStates = {
-      A: { currentBeat: 0, lastBeatTime: 0 },
-      B: { currentBeat: 0, lastBeatTime: 0 }
-    };
     this.deckControllers = {};
     this.setupEventListeners();
     this.initializeVUMeters();
@@ -215,9 +211,6 @@ class MixerController {
     const beatInterval = 60 / deck.getBPM(); // Time between beats in seconds
     const timeSinceLastBeat = currentTime % beatInterval;
     const currentBeat = Math.floor(currentTime / beatInterval) % 4; // 4 beats per measure
-
-    // Update beat state
-    const beatState = this.beatStates[deckId];
     
     // Check if we're close to a beat (within 100ms)
     const isOnBeat = timeSinceLastBeat < 0.1 || timeSinceLastBeat > (beatInterval - 0.1);
