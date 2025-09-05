@@ -1340,6 +1340,43 @@ input[type="range"]::-moz-range-thumb {
   text-shadow: 0 0 4px rgba(78, 205, 196, 0.5);
 }
 
+.zoom-controls {
+  position: absolute;
+  top: var(--spacing-xs);
+  right: var(--spacing-xs);
+  z-index: 15;
+  display: flex;
+  gap: 4px;
+}
+
+.zoom-btn {
+  background: rgba(0, 0, 0, 0.7);
+  border: none;
+  color: var(--color-primary);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition-normal);
+  text-shadow: 0 0 4px rgba(78, 205, 196, 0.5);
+  min-width: 24px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.zoom-btn:hover {
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.zoom-btn:active {
+  transform: translateY(0);
+}
+
 .beat-waveform-wrapper {
   position: relative;
   flex: 1;
@@ -1366,7 +1403,7 @@ input[type="range"]::-moz-range-thumb {
 .beat-waveform-wrapper-fullwidth {
   position: relative;
   width: 100%;
-  height: 60px;
+  height: 65px;
   background: linear-gradient(145deg, var(--bg-secondary), var(--bg-primary));
   border-radius: 0;
   overflow: hidden;
