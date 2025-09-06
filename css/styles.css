@@ -381,9 +381,9 @@ body {
 }
 
 .eq-kill-btn {
-  background: #ff4444;
-  border: 1px solid #ff2222;
-  color: white;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--color-secondary);
+  color: var(--text-secondary);
   border-radius: var(--radius-full);
   width: 16px;
   height: 16px;
@@ -402,15 +402,17 @@ body {
 }
 
 .eq-kill-btn:hover {
-  background: #ff6666;
-  box-shadow: 0 0px 8px #ff4444;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border-color: var(--color-secondary);
   transform: translateY(-50%) scale(1.1);
 }
 
 .eq-kill-btn:active,
 .eq-kill-btn.active {
-  background: #cc0000;
-  box-shadow: 0 0px 12px #ff0000;
+  background: var(--color-secondary);
+  color: var(--bg-primary);
+  border-color: var(--color-secondary);
   transform: translateY(-50%) scale(0.95);
 }
 
