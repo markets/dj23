@@ -401,10 +401,8 @@ body {
 }
 
 .eq-kill-btn:hover {
-  background: var(--bg-surface);
-  color: var(--text-primary);
-  border-color: var(--color-secondary);
-  transform: translateY(-50%);
+  background: linear-gradient(145deg, var(--border-secondary), var(--border-primary));
+  transform: translateY(-50%) translateY(-1px);
 }
 
 .eq-kill-btn:active {
@@ -412,9 +410,8 @@ body {
 }
 
 .eq-kill-btn.active {
-  background: var(--color-secondary);
-  color: var(--bg-primary);
-  border-color: var(--color-secondary);
+  background: var(--gradient-primary) !important;
+  box-shadow: var(--shadow-primary) !important;
   transform: translateY(-50%);
 }
 
