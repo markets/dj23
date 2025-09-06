@@ -761,8 +761,60 @@ class DeckController {
           }
           // Update display manually
           const slider = document.getElementById(`${band}${this.deckId}`);
-          if (slider && slider.nextElementSibling) {
-            slider.nextElementSibling.textContent = value;
+          if (slider && slider.parentNode && slider.parentNode.nextElementSibling) {
+            slider.parentNode.nextElementSibling.textContent = value;
+          }
+        }
+      });
+
+      // EQ KILL button - press and hold behavior
+      window.buttonHandler.createPressAndHoldHandler(
+        `${band}Kill${this.deckId}`,
+        () => {
+          const deck = window.audioEngine.getDeck(this.deckId);
+          const slider = document.getElementById(`${band}${this.deckId}`);
+          if (deck && slider) {
+            // Store original value before killing
+            slider.dataset.originalValue = slider.value;
+            // Set to minimum value (-20) to "kill" the band
+            slider.value = -20;
+            deck.setEQ(band, -20);
+            // Update display
+            if (slider.parentNode && slider.parentNode.nextElementSibling) {
+              slider.parentNode.nextElementSibling.textContent = '-20';
+            }
+          }
+        },
+        () => {
+          const deck = window.audioEngine.getDeck(this.deckId);
+          const slider = document.getElementById(`${band}${this.deckId}`);
+          if (deck && slider && slider.dataset.originalValue !== undefined) {
+            // Restore original value when kill button is released
+            const originalValue = parseInt(slider.dataset.originalValue);
+            slider.value = originalValue;
+            deck.setEQ(band, originalValue);
+            // Update display
+            if (slider.parentNode && slider.parentNode.nextElementSibling) {
+              slider.parentNode.nextElementSibling.textContent = originalValue.toString();
+            }
+            // Clean up stored value
+            delete slider.dataset.originalValue;
+          }
+        },
+        { updateActiveState: true }
+      );
+
+      // EQ RESET button - click behavior
+      window.buttonHandler.createClickHandler(`${band}Reset${this.deckId}`, () => {
+        const deck = window.audioEngine.getDeck(this.deckId);
+        const slider = document.getElementById(`${band}${this.deckId}`);
+        if (deck && slider) {
+          // Reset to 0
+          slider.value = 0;
+          deck.setEQ(band, 0);
+          // Update display
+          if (slider.parentNode && slider.parentNode.nextElementSibling) {
+            slider.parentNode.nextElementSibling.textContent = '0';
           }
         }
       });
