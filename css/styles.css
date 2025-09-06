@@ -1592,8 +1592,20 @@ input[type="range"]::-moz-range-thumb {
 
 .deck.drag-invalid .track-info::after {
   content: 'Invalid file type - audio files only';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   background: var(--color-secondary);
+  color: white;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  font-size: 1.1rem;
+  z-index: 10;
+  box-shadow: var(--shadow-lg);
   animation: dragShake 0.5s ease-in-out;
+  pointer-events: none;
   white-space: nowrap;
   text-align: center;
 }
