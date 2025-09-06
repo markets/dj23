@@ -382,11 +382,12 @@ body {
 
 .eq-kill-btn {
   background: var(--bg-tertiary);
-  border: 1px solid var(--color-secondary);
+  border: 1px solid var(--border-secondary);
   color: var(--text-secondary);
-  border-radius: var(--radius-full);
-  width: 16px;
-  height: 16px;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 500;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -396,24 +397,25 @@ body {
   top: 50%;
   transform: translateY(-50%);
   z-index: 10;
-  font-size: 0.7rem;
-  font-weight: 600;
-  transition: var(--transition-normal);
+  transition: var(--transition-fast);
 }
 
 .eq-kill-btn:hover {
   background: var(--bg-surface);
   color: var(--text-primary);
   border-color: var(--color-secondary);
-  transform: translateY(-50%) scale(1.1);
+  transform: translateY(-50%);
 }
 
-.eq-kill-btn:active,
+.eq-kill-btn:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
 .eq-kill-btn.active {
   background: var(--color-secondary);
   color: var(--bg-primary);
   border-color: var(--color-secondary);
-  transform: translateY(-50%) scale(0.95);
+  transform: translateY(-50%);
 }
 
 .eq-reset-btn {
