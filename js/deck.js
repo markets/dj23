@@ -720,6 +720,9 @@ class DeckController {
       }
     });
 
+    // Drag and drop functionality
+    this.setupDragAndDrop();
+
     // Transport controls
     this.createControllerMethodHandler('play', 'play');
     this.createControllerMethodHandler('pause', 'pause');
@@ -941,6 +944,99 @@ class DeckController {
         if (deck) {
           deck.stopScratch();
         }
+      }
+    });
+  }
+
+  setupDragAndDrop() {
+    const deckElement = document.getElementById(`deck${this.deckId}`);
+    if (!deckElement) return;
+
+    // Helper function to check if file is audio
+    const isAudioFile = (file) => {
+      return file && file.type && file.type.startsWith('audio/');
+    };
+
+    // Prevent default drag behaviors
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      deckElement.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+    });
+
+    // Handle drag enter
+    deckElement.addEventListener('dragenter', (e) => {
+      // Check if dragged item contains files
+      if (e.dataTransfer && e.dataTransfer.types.includes('Files')) {
+        deckElement.classList.add('drag-active');
+      }
+    });
+
+    // Handle drag over (hovering)
+    deckElement.addEventListener('dragover', (e) => {
+      if (e.dataTransfer && e.dataTransfer.types.includes('Files')) {
+        // Check if the files appear to be audio (we can't fully validate without dropping)
+        const hasValidFile = Array.from(e.dataTransfer.items || []).some(item => 
+          item.kind === 'file' && item.type.startsWith('audio/')
+        );
+        
+        if (hasValidFile) {
+          deckElement.classList.add('drag-over');
+          deckElement.classList.remove('drag-invalid');
+        } else if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+          // Has files but not audio
+          deckElement.classList.add('drag-invalid');
+          deckElement.classList.remove('drag-over');
+        }
+      }
+    });
+
+    // Handle drag leave
+    deckElement.addEventListener('dragleave', (e) => {
+      // Only remove classes if we're leaving the deck element itself
+      // (not just moving between child elements)
+      if (!deckElement.contains(e.relatedTarget)) {
+        deckElement.classList.remove('drag-active', 'drag-over', 'drag-invalid');
+      }
+    });
+
+    // Handle file drop
+    deckElement.addEventListener('drop', async (e) => {
+      // Remove all drag classes
+      deckElement.classList.remove('drag-active', 'drag-over', 'drag-invalid');
+      
+      const files = Array.from(e.dataTransfer.files);
+      
+      if (files.length === 0) return;
+      
+      // Find the first audio file
+      const audioFile = files.find(isAudioFile);
+      
+      if (audioFile) {
+        // Load the audio file using existing loadTrack method
+        await this.loadTrack(audioFile);
+        
+        console.log(`Deck ${this.deckId}: Successfully loaded track via drag and drop: ${audioFile.name}`);
+      } else {
+        // Show error feedback for invalid file types
+        deckElement.classList.add('drag-invalid');
+        setTimeout(() => {
+          deckElement.classList.remove('drag-invalid');
+        }, 2000);
+        
+        // Provide user-friendly error message
+        const trackInfo = document.getElementById(`trackInfo${this.deckId}`);
+        const originalContent = trackInfo.innerHTML;
+        trackInfo.style.color = '#ff6b6b';
+        trackInfo.innerHTML = '<div class="track-details"><div class="track-name">Invalid file type</div><div class="track-time">Audio files only</div></div>';
+        
+        setTimeout(() => {
+          trackInfo.style.color = '';
+          trackInfo.innerHTML = originalContent;
+        }, 3000);
+        
+        console.warn(`Deck ${this.deckId}: No valid audio files found. Supported types: audio/*. Found: ${files.map(f => f.name + ' (' + (f.type || 'unknown') + ')').join(', ')}`);
       }
     });
   }

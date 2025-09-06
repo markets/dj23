@@ -1519,6 +1519,113 @@ input[type="range"]::-moz-range-thumb {
 }
 
 /* ============================================================================
+   DRAG AND DROP STYLES
+   ============================================================================ */
+.deck {
+  transition: var(--transition-normal);
+}
+
+.deck.drag-over {
+  border: 2px dashed var(--color-primary);
+  box-shadow: 0 0 20px rgba(78, 205, 196, 0.4);
+  background: linear-gradient(145deg, 
+    color-mix(in srgb, var(--bg-secondary) 90%, var(--color-primary) 10%), 
+    color-mix(in srgb, var(--bg-tertiary) 90%, var(--color-primary) 10%)
+  );
+  transform: scale(1.02);
+}
+
+.deck.drag-active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(78, 205, 196, 0.1);
+  z-index: 1;
+  pointer-events: none;
+  border-radius: var(--radius-xl);
+}
+
+.deck.drag-active .track-info::after {
+  content: 'Drop audio file here to load track';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--gradient-primary);
+  color: white;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  font-size: 1.1rem;
+  z-index: 10;
+  box-shadow: var(--shadow-lg);
+  animation: dragPulse 1.5s ease-in-out infinite;
+  pointer-events: none;
+  white-space: nowrap;
+  text-align: center;
+}
+
+@keyframes dragPulse {
+  0%, 100% { 
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1);
+    box-shadow: var(--shadow-lg);
+  }
+  50% { 
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.05);
+    box-shadow: 0 0 25px rgba(78, 205, 196, 0.6);
+  }
+}
+
+.deck.drag-invalid {
+  border: 2px dashed var(--color-secondary);
+  box-shadow: 0 0 20px rgba(255, 107, 107, 0.4);
+  background: linear-gradient(145deg, 
+    color-mix(in srgb, var(--bg-secondary) 90%, var(--color-secondary) 10%), 
+    color-mix(in srgb, var(--bg-tertiary) 90%, var(--color-secondary) 10%)
+  );
+}
+
+.deck.drag-invalid .track-info::after {
+  content: 'Invalid file type - audio files only';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--color-secondary);
+  color: white;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  font-size: 1.1rem;
+  z-index: 10;
+  box-shadow: var(--shadow-lg);
+  animation: dragShake 0.5s ease-in-out;
+  pointer-events: none;
+  white-space: nowrap;
+  text-align: center;
+}
+
+@keyframes dragShake {
+  0%, 100% { transform: translate(-50%, -50%); }
+  25% { transform: translate(-55%, -50%); }
+  75% { transform: translate(-45%, -50%); }
+}
+
+/* Make sure deck containers are positioned for overlay effects */
+.deck {
+  position: relative;
+}
+
+.track-info {
+  position: relative;
+}
+
+/* ============================================================================
    CUSTOM SCROLLBAR & GLOBAL STYLES
    ============================================================================ */
 ::-webkit-scrollbar {
