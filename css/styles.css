@@ -1604,22 +1604,6 @@ input[type="range"]::-moz-range-thumb {
   75% { transform: translate(-45%, -50%); }
 }
 
-/* Success animation for completed drops */
-@keyframes dropSuccess {
-  0% { 
-    box-shadow: 0 0 30px rgba(78, 205, 196, 0.8);
-    transform: scale(1.02);
-  }
-  50% { 
-    box-shadow: 0 0 40px rgba(78, 205, 196, 1);
-    transform: scale(1.03);
-  }
-  100% { 
-    box-shadow: none;
-    transform: scale(1);
-  }
-}
-
 /* Make sure deck containers are positioned for overlay effects */
 .deck {
   position: relative;

@@ -1017,27 +1017,6 @@ class DeckController {
         // Load the audio file using existing loadTrack method
         await this.loadTrack(audioFile);
         
-        // Provide success feedback with enhanced animation
-        deckElement.style.animation = 'dropSuccess 1s ease-out';
-        
-        // Show success message briefly
-        const trackInfo = document.getElementById(`trackInfo${this.deckId}`);
-        const trackName = trackInfo.querySelector('.track-name');
-        if (trackName) {
-          const originalColor = trackName.style.color;
-          trackName.style.color = 'var(--color-primary)';
-          trackName.style.fontWeight = '600';
-          
-          setTimeout(() => {
-            trackName.style.color = originalColor;
-            trackName.style.fontWeight = '';
-          }, 2000);
-        }
-        
-        setTimeout(() => {
-          deckElement.style.animation = '';
-        }, 1000);
-        
         console.log(`Deck ${this.deckId}: Successfully loaded track via drag and drop: ${audioFile.name}`);
       } else {
         // Show error feedback for invalid file types
