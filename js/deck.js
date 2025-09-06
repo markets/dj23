@@ -1017,11 +1017,28 @@ class DeckController {
         // Load the audio file using existing loadTrack method
         await this.loadTrack(audioFile);
         
-        // Provide success feedback
-        deckElement.style.boxShadow = '0 0 30px rgba(78, 205, 196, 0.6)';
+        // Provide success feedback with enhanced animation
+        deckElement.style.animation = 'dropSuccess 1s ease-out';
+        
+        // Show success message briefly
+        const trackInfo = document.getElementById(`trackInfo${this.deckId}`);
+        const trackName = trackInfo.querySelector('.track-name');
+        if (trackName) {
+          const originalColor = trackName.style.color;
+          trackName.style.color = 'var(--color-primary)';
+          trackName.style.fontWeight = '600';
+          
+          setTimeout(() => {
+            trackName.style.color = originalColor;
+            trackName.style.fontWeight = '';
+          }, 2000);
+        }
+        
         setTimeout(() => {
-          deckElement.style.boxShadow = '';
+          deckElement.style.animation = '';
         }, 1000);
+        
+        console.log(`Deck ${this.deckId}: Successfully loaded track via drag and drop: ${audioFile.name}`);
       } else {
         // Show error feedback for invalid file types
         deckElement.classList.add('drag-invalid');
@@ -1029,7 +1046,18 @@ class DeckController {
           deckElement.classList.remove('drag-invalid');
         }, 2000);
         
-        console.warn(`No valid audio files found. Supported types: ${files.map(f => f.type).join(', ')}`);
+        // Provide user-friendly error message
+        const trackInfo = document.getElementById(`trackInfo${this.deckId}`);
+        const originalContent = trackInfo.innerHTML;
+        trackInfo.style.color = '#ff6b6b';
+        trackInfo.innerHTML = '<div class="track-details"><div class="track-name">Invalid file type</div><div class="track-time">Audio files only</div></div>';
+        
+        setTimeout(() => {
+          trackInfo.style.color = '';
+          trackInfo.innerHTML = originalContent;
+        }, 3000);
+        
+        console.warn(`Deck ${this.deckId}: No valid audio files found. Supported types: audio/*. Found: ${files.map(f => f.name + ' (' + (f.type || 'unknown') + ')').join(', ')}`);
       }
     });
   }
