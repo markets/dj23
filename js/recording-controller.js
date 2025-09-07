@@ -87,9 +87,16 @@ class RecordingController {
   }
 
   updateTimerDisplay(seconds) {
-    const mins = Math.floor(seconds / 60);
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    const timeString = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    
+    let timeString;
+    if (hours > 0) {
+      timeString = `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    } else {
+      timeString = `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
     
     if (this.recordingTime) {
       this.recordingTime.textContent = timeString;
