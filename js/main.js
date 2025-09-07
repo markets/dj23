@@ -36,3 +36,26 @@ window.addEventListener('error', (e) => {
 window.addEventListener('unhandledrejection', (e) => {
   console.error('Unhandled promise rejection:', e.reason);
 });
+
+// Prevent accidental tab closure or navigation away from the page
+window.addEventListener('beforeunload', (e) => {
+  // Check if there's an active session (audio loaded or playing)
+  const hasActiveSession = () => {
+    if (!window.audioEngine || !window.audioEngine.isInitialized) return false;
+    
+    const deckA = window.audioEngine.getDeck('A');
+    const deckB = window.audioEngine.getDeck('B');
+    
+    // Check if any deck has audio loaded or is playing
+    return (deckA && (deckA.audioBuffer || deckA.isPlaying)) || 
+           (deckB && (deckB.audioBuffer || deckB.isPlaying));
+  };
+  
+  if (hasActiveSession()) {
+    // Show confirmation dialog
+    const message = 'Are you sure you want to leave? Your current DJ session will be lost.';
+    e.preventDefault();
+    e.returnValue = message; // For compatibility with some browsers
+    return message;
+  }
+});
