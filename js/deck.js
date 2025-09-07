@@ -1500,7 +1500,12 @@ class DeckController {
     
     // For small number of intervals, use simple average
     if (intervals.length < 4) {
-      const avgInterval = intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
+      // Optimized: calculate average without reduce
+      let sum = 0;
+      for (let i = 0; i < intervals.length; i++) {
+        sum += intervals[i];
+      }
+      const avgInterval = sum / intervals.length;
       return Math.round(60000 / avgInterval);
     }
     

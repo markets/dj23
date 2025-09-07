@@ -117,15 +117,27 @@ class BPMAnalyzer {
           bpm: refinedBPM
         });
         
-        // Keep only recent history (last 1 minute)
-        this.bpmAnalysisHistory = this.bpmAnalysisHistory.filter(
-          entry => currentTime - entry.time <= 60
-        );
+        // Keep only recent history (last 1 minute) - optimized to avoid creating new array
+        let writeIndex = 0;
+        for (let i = 0; i < this.bpmAnalysisHistory.length; i++) {
+          if (currentTime - this.bpmAnalysisHistory[i].time <= 60) {
+            if (writeIndex !== i) {
+              this.bpmAnalysisHistory[writeIndex] = this.bpmAnalysisHistory[i];
+            }
+            writeIndex++;
+          }
+        }
+        this.bpmAnalysisHistory.length = writeIndex;
         
         // Update BPM if we have enough data and there's a consistent change
         if (this.bpmAnalysisHistory.length >= 3) {
-          const recentBPMs = this.bpmAnalysisHistory.slice(-3).map(entry => entry.bpm);
-          const avgRecentBPM = recentBPMs.reduce((sum, bpm) => sum + bpm, 0) / recentBPMs.length;
+          // Optimized: calculate average without creating intermediate arrays
+          let bpmSum = 0;
+          const historyLength = this.bpmAnalysisHistory.length;
+          for (let i = historyLength - 3; i < historyLength; i++) {
+            bpmSum += this.bpmAnalysisHistory[i].bpm;
+          }
+          const avgRecentBPM = bpmSum / 3;
           
           // Adjust threshold based on BPM source - be more conservative with manual/metadata BPM
           let threshold = 3; // Default threshold
@@ -282,8 +294,20 @@ class BPMAnalyzer {
     if (spectralFlux.length === 0) return onsets;
     
     // Calculate adaptive threshold based on signal characteristics
-    const meanFlux = spectralFlux.reduce((sum, val) => sum + val, 0) / spectralFlux.length;
-    const stdFlux = Math.sqrt(spectralFlux.reduce((sum, val) => sum + Math.pow(val - meanFlux, 2), 0) / spectralFlux.length);
+    // Optimized: calculate mean and std in single pass
+    let fluxSum = 0;
+    const fluxLength = spectralFlux.length;
+    for (let i = 0; i < fluxLength; i++) {
+      fluxSum += spectralFlux[i];
+    }
+    const meanFlux = fluxSum / fluxLength;
+    
+    let stdSum = 0;
+    for (let i = 0; i < fluxLength; i++) {
+      const diff = spectralFlux[i] - meanFlux;
+      stdSum += diff * diff;
+    }
+    const stdFlux = Math.sqrt(stdSum / fluxLength);
     
     // Improved adaptive threshold calculation
     const minThreshold = 0.01;
@@ -312,13 +336,36 @@ class BPMAnalyzer {
 
   applyMovingAverage(data, windowSize) {
     const result = [];
-    for (let i = 0; i < data.length; i++) {
-      let sum = 0;
-      let count = 0;
-      for (let j = Math.max(0, i - windowSize); j <= Math.min(data.length - 1, i + windowSize); j++) {
-        sum += data[j];
+    if (data.length === 0) return result;
+    
+    // Optimized sliding window approach - O(n) instead of O(n²)
+    let sum = 0;
+    let count = 0;
+    
+    // Initialize window for first element
+    for (let j = 0; j <= Math.min(data.length - 1, windowSize); j++) {
+      sum += data[j];
+      count++;
+    }
+    result.push(sum / count);
+    
+    // Slide the window for remaining elements
+    for (let i = 1; i < data.length; i++) {
+      const leftEdge = i - windowSize - 1;
+      const rightEdge = i + windowSize;
+      
+      // Remove element that's no longer in window
+      if (leftEdge >= 0) {
+        sum -= data[leftEdge];
+        count--;
+      }
+      
+      // Add new element to window
+      if (rightEdge < data.length) {
+        sum += data[rightEdge];
         count++;
       }
+      
       result.push(sum / count);
     }
     return result;
@@ -348,7 +395,12 @@ class BPMAnalyzer {
     let mostLikelyBPM = 120;
     
     for (const [key, group] of histogram) {
-      const avgBpm = group.reduce((sum, bpm) => sum + bpm, 0) / group.length;
+      // Optimized: calculate average without reduce
+      let bpmSum = 0;
+      for (let i = 0; i < group.length; i++) {
+        bpmSum += group[i];
+      }
+      const avgBpm = bpmSum / group.length;
       
       // Base score from frequency
       let score = group.length;

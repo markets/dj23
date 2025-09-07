@@ -19,7 +19,12 @@ class MixerController {
 
   // Utility function to calculate average of analyser data
   getAnalyserAverage(analyserData) {
-    return analyserData.reduce((sum, value) => sum + value, 0) / analyserData.length;
+    // Optimized: calculate average without reduce for better performance
+    let sum = 0;
+    for (let i = 0; i < analyserData.length; i++) {
+      sum += analyserData[i];
+    }
+    return sum / analyserData.length;
   }
 
   // Utility function for creating slider event handlers
