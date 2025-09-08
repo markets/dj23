@@ -120,13 +120,13 @@ class RecordingController {
     
     console.log('Recording download initiated');
     
+    // Always reset for new recording after download
+    this.downloadBtn.style.display = 'none';
+    this.lastRecordedBlob = null;
+    
     // Show format info to user
     setTimeout(() => {
-      if (confirm('Recording downloaded as WebM format.\n\nTo convert to MP3, you can use online converters like:\n• CloudConvert.com\n• Convertio.co\n• Or audio software like Audacity\n\nWould you like to start a new recording?')) {
-        // Reset for new recording
-        this.downloadBtn.style.display = 'none';
-        this.lastRecordedBlob = null;
-      }
+      alert('Recording downloaded as WebM format.\n\nTo convert to MP3, you can use online converters like:\n• CloudConvert.com\n• Convertio.co\n• Or audio software like Audacity\n\nYou can now start a new recording.');
     }, 500);
   }
 

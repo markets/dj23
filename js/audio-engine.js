@@ -106,8 +106,10 @@ class AudioEngine {
     return new Promise((resolve) => {
       this.mediaRecorder.onstop = () => {
         this.isRecording = false;
+        this.recordingStartTime = null;
         const blob = new Blob(this.recordedChunks, { type: 'audio/webm' });
         this.recordedChunks = [];
+        this.mediaRecorder = null;
         console.log('Recording stopped, blob size:', blob.size);
         resolve(blob);
       };

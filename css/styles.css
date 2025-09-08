@@ -195,7 +195,6 @@ body {
 }
 
 .recording-time {
-  font-family: 'Courier New', monospace;
   font-weight: 600;
   color: var(--text-primary);
   min-width: 60px;
