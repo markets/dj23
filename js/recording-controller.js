@@ -123,11 +123,6 @@ class RecordingController {
     // Always reset for new recording after download
     this.downloadBtn.style.display = 'none';
     this.lastRecordedBlob = null;
-    
-    // Show format info to user
-    setTimeout(() => {
-      alert('Recording downloaded as WebM format.\n\nTo convert to MP3, you can use online converters like:\n• CloudConvert.com\n• Convertio.co\n• Or audio software like Audacity\n\nYou can now start a new recording.');
-    }, 500);
   }
 
   // Method to get current recording state for external use
