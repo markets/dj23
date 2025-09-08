@@ -48,7 +48,6 @@ class Recording {
       this.recordingStatus.style.display = 'flex';
       this.downloadBtn.style.display = 'none';
       
-      // Start the timer
       this.startTimer();
     } else {
       alert('Failed to start recording. Please check your browser permissions.');
@@ -65,7 +64,6 @@ class Recording {
       this.downloadBtn.style.display = 'inline-block';
       this.lastRecordedBlob = blob;
       
-      // Stop the timer
       this.stopTimer();
       
       console.log('Recording completed, size:', blob.size, 'bytes');
@@ -124,16 +122,6 @@ class Recording {
     this.downloadBtn.style.display = 'none';
     this.lastRecordedBlob = null;
   }
-
-  // Method to get current recording state for external use
-  getRecordingState() {
-    return {
-      isRecording: window.audioEngine ? window.audioEngine.isCurrentlyRecording() : false,
-      duration: window.audioEngine ? window.audioEngine.getRecordingDuration() : 0,
-      hasRecording: !!this.lastRecordedBlob
-    };
-  }
 }
 
-// Initialize the recording
 window.recordingController = new Recording();
