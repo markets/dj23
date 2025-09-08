@@ -179,7 +179,7 @@ class KeyboardShortcuts {
       
       // Show shortcuts modal
       'Slash': () => {
-        if (e.shiftKey) this.showModal();
+        if (e.shiftKey || e.key === '?') this.showModal();
       }
     };
 
