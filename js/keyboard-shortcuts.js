@@ -101,8 +101,7 @@ class KeyboardShortcuts {
       'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'
     ];
     
-    if (shortcuts.includes(e.code) || e.key === '?' ||
-        (e.ctrlKey && ['KeyS', 'KeyD', 'KeyO', 'KeyP'].includes(e.code))) {
+    if (shortcuts.includes(e.code) || e.key === '?' || (e.ctrlKey && ['KeyS', 'KeyD', 'KeyO', 'KeyP'].includes(e.code))) {
       e.preventDefault();
     }
 
