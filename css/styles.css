@@ -204,19 +204,18 @@ body {
 .download-button {
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-lg);
-  background: var(--gradient-primary);
-  border: 2px solid transparent;
-  color: white;
+  background: transparent;
+  border: none;
+  color: var(--color-primary);
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
   transition: var(--transition-normal);
-  box-shadow: var(--shadow-sm);
 }
 
 .download-button:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  color: var(--text-primary);
+  transform: translateY(-1px);
 }
 
 .download-button:active {
