@@ -46,16 +46,11 @@ window.addEventListener('beforeunload', (e) => {
     const deckA = window.audioEngine.getDeck('A');
     const deckB = window.audioEngine.getDeck('B');
     
-    // Check if any deck has audio loaded or is playing
     return (deckA && (deckA.audioBuffer || deckA.isPlaying)) || 
            (deckB && (deckB.audioBuffer || deckB.isPlaying));
   };
   
   if (hasActiveSession()) {
-    // Show confirmation dialog
-    const message = 'Are you sure you want to leave? Your current DJ session will be lost.';
     e.preventDefault();
-    e.returnValue = message; // For compatibility with some browsers
-    return message;
   }
 });
