@@ -98,11 +98,10 @@ class KeyboardShortcuts {
       'KeyU', 'KeyI', 'KeyO', 'KeyP', 'KeyJ', 'KeyK', 'KeyL',
       'KeyZ', 'KeyX', 'KeyN', 'KeyM',
       'Digit1', 'Digit2', 'Digit8', 'Digit9',
-      'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
-      'Slash'
+      'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'
     ];
     
-    if (shortcuts.includes(e.code) || 
+    if (shortcuts.includes(e.code) || e.key === '?' ||
         (e.ctrlKey && ['KeyS', 'KeyD', 'KeyO', 'KeyP'].includes(e.code))) {
       e.preventDefault();
     }
@@ -128,6 +127,12 @@ class KeyboardShortcuts {
   }
 
   handleRegularShortcuts(e) {
+    // Handle help modal shortcut first - make "?" the exclusive trigger
+    if (e.key === '?') {
+      this.showModal();
+      return;
+    }
+
     // Define keyboard mappings with logical left/right split
     const shortcuts = {
       // General controls
@@ -175,12 +180,7 @@ class KeyboardShortcuts {
       'ArrowLeft': () => this.adjustCrossfader(-5),
       'ArrowRight': () => this.adjustCrossfader(5),
       'ArrowUp': () => this.adjustMasterVolume(5),
-      'ArrowDown': () => this.adjustMasterVolume(-5),
-      
-      // Show shortcuts modal
-      'Slash': () => {
-        if (e.key === '?' && !e.shiftKey) this.showModal();
-      }
+      'ArrowDown': () => this.adjustMasterVolume(-5)
     };
 
     const action = shortcuts[e.code];
