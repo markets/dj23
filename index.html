@@ -16,6 +16,19 @@
         <button id="showShortcutsBtn" class="help-button" title="Keyboard Shortcuts (?)">
           <span>?</span>
         </button>
+        <div class="recording-controls">
+          <button id="recordBtn" class="record-button" title="Start/Stop Recording">
+            <span class="record-icon">⏺</span>
+            <span class="record-text">REC</span>
+          </button>
+          <div class="recording-status" id="recordingStatus" style="display: none;">
+            <span class="recording-indicator">●</span>
+            <span class="recording-time" id="recordingTime">0:00</span>
+          </div>
+          <button id="downloadBtn" class="download-button" title="Download Recording" style="display: none;">
+            <span>⬇ Download</span>
+          </button>
+        </div>
         <div class="master-controls">
           <div class="master-volume">
             <label>Master</label>
@@ -683,6 +696,7 @@
   <script src="js/keyboard-shortcuts.js"></script>
   <script src="js/mixer.js"></script>
   <script src="js/sound-pad.js"></script>
+  <script src="js/recording.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>
