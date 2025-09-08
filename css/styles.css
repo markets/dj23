@@ -148,6 +148,7 @@ body {
   border: 2px solid var(--border-secondary);
   color: var(--text-primary);
   font-weight: 600;
+  font-size: 1rem;
   cursor: pointer;
   transition: var(--transition-normal);
   box-shadow: var(--shadow-sm);
@@ -175,7 +176,7 @@ body {
 }
 
 .record-text {
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 
 .recording-status {
@@ -204,9 +205,10 @@ body {
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-lg);
   background: var(--gradient-primary);
-  border: none;
+  border: 2px solid transparent;
   color: white;
   font-weight: 600;
+  font-size: 1rem;
   cursor: pointer;
   transition: var(--transition-normal);
   box-shadow: var(--shadow-sm);

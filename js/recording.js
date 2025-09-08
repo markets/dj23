@@ -1,4 +1,4 @@
-class RecordingController {
+class Recording {
   constructor() {
     this.recordBtn = null;
     this.downloadBtn = null;
@@ -135,5 +135,5 @@ class RecordingController {
   }
 }
 
-// Initialize the recording controller
-window.recordingController = new RecordingController();
+// Initialize the recording
+window.recordingController = new Recording();
