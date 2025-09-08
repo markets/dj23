@@ -282,26 +282,6 @@ body {
   color: var(--text-primary);
 }
 
-/* ============================================================================
-   BUTTON STYLES
-   ============================================================================ */
-.btn {
-  border: none;
-  border-radius: var(--radius-lg);
-  cursor: pointer;
-  font-weight: 500;
-  transition: var(--transition-normal);
-  font-size: 0.9rem;
-}
-
-.btn:hover {
-  transform: translateY(-2px);
-}
-
-.btn:active {
-  transform: translateY(0);
-}
-
 .file-input {
   display: none;
 }
