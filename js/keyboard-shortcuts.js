@@ -142,7 +142,6 @@ class KeyboardShortcuts {
       'KeyW': () => this.controlDeck('A', 'pause'),
       'KeyE': () => this.controlDeck('A', 'stop'),
       'KeyR': () => this.handleCuePress('A', 'KeyR'),
-      'KeyF': () => this.clickButton('backSpinA'),
       
       // LEFT SIDE - Deck A Cue Points (1-2)
       'Digit1': () => this.handleCuePoint(e, 'A', 1),
@@ -162,7 +161,6 @@ class KeyboardShortcuts {
       'KeyI': () => this.controlDeck('B', 'pause'),
       'KeyO': () => this.controlDeck('B', 'stop'),
       'KeyP': () => this.handleCuePress('B', 'KeyP'),
-      'Semicolon': () => this.clickButton('backSpinB'),
       
       // RIGHT SIDE - Deck B Cue Points (8-9)
       'Digit8': () => this.handleCuePoint(e, 'B', 1),

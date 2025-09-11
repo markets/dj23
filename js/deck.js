@@ -629,10 +629,10 @@ class Deck {
     this.originalPlaybackRateBeforeBackSpin = this.playbackRate;
     this.isBackSpinning = true;
 
-    // Start with fast reverse playback (vinyl back-spin effect)
-    let currentBackSpinRate = -3.0; // Start with fast reverse (negative = backwards)
-    const decelerationRate = 0.88; // How quickly the reverse speed decreases (faster than before)
-    const minSpeed = 0.08; // Minimum speed threshold before stopping
+    // Start with moderate reverse playback (vinyl back-spin effect)
+    let currentBackSpinRate = -1.5; // Start with moderate reverse (less aggressive)
+    const decelerationRate = 0.92; // Slower deceleration for more gradual effect
+    const minSpeed = 0.02; // Lower minimum speed threshold for longer effect
 
     this.backSpinInterval = setInterval(() => {
       if (!this.source || !this.source.playbackRate) {
@@ -651,7 +651,7 @@ class Deck {
         this.stop();
         this.stopBackSpin();
       }
-    }, 40); // Update every 40ms for smoother effect
+    }, 50); // Update every 50ms for smoother but less frequent updates
 
     console.log(`Deck ${this.deckId}: Back-spin started with reverse rate ${currentBackSpinRate}`);
   }
