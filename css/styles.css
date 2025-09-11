@@ -854,7 +854,7 @@ body {
 .beat-bars {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr;
-  grid-template-rows: 1fr;
+  grid-template-rows: 1fr 1fr;
   gap: var(--spacing-sm);
   width: fit-content;
 }
