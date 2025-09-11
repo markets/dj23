@@ -53,6 +53,11 @@ class Deck {
     this.setupAudioNodes();
   }
 
+  // Getter for the deck controller to avoid repetitive code
+  get controller() {
+    return window.mixerController.deckControllers[this.deckId];
+  }
+
   setupAudioNodes() {
     this.gainNode = this.audioContext.createGain();
     this.gainNode.gain.value = this.volume;
@@ -335,10 +340,7 @@ class Deck {
     this.loopLengthPercentage = 100;
     
     // Update UI to reflect cleared loop state
-    const controller = window.mixerController?.deckControllers[this.deckId];
-    if (controller) {
-      controller.updateLoopState(false);
-    }
+    this.controller.updateLoopState(false);
     
     console.log(`Deck ${this.deckId}: Loop points reset`);
   }
@@ -389,10 +391,7 @@ class Deck {
     this.play();
     
     // Update CUE button visual state
-    const controller = window.mixerController?.deckControllers[this.deckId];
-    if (controller) {
-      controller.updateCueState(true);
-    }
+    this.controller.updateCueState(true);
     
     console.log(`Deck ${this.deckId}: CUE mode started`);
   }
@@ -417,10 +416,7 @@ class Deck {
     this.isCueActive = false;
     
     // Update CUE button visual state
-    const controller = window.mixerController?.deckControllers[this.deckId];
-    if (controller) {
-      controller.updateCueState(false);
-    }
+    this.controller.updateCueState(false);
     
     console.log(`Deck ${this.deckId}: CUE mode stopped`);
   }
@@ -431,10 +427,7 @@ class Deck {
     console.log(`Deck ${this.deckId}: Loop IN set at ${this.loopStart}s`);
     
     // Update UI to show IN button as active
-    const controller = window.mixerController?.deckControllers[this.deckId];
-    if (controller) {
-      controller.updateLoopInState(true);
-    }
+    this.controller.updateLoopInState(true);
   }
 
   setLoopOut() {
@@ -444,10 +437,7 @@ class Deck {
     console.log(`Deck ${this.deckId}: Loop OUT set at ${this.loopEnd}s`);
     
     // Update UI to show OUT button as active
-    const controller = window.mixerController?.deckControllers[this.deckId];
-    if (controller) {
-      controller.updateLoopOutState(true);
-    }
+    this.controller.updateLoopOutState(true);
   }
 
   setLoopLength(percentage) {
@@ -677,12 +667,7 @@ class Deck {
     setTimeout(() => {
       this.isBackSpinning = false;
       // Call controller's pause method to properly update UI state
-      const controller = window.mixerController?.deckControllers[this.deckId];
-      if (controller) {
-        controller.pause();
-      } else {
-        this.pause();
-      }
+      this.controller.pause();
     }, duration * 1000);
   }
 
