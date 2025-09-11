@@ -429,6 +429,12 @@ class Deck {
   setLoopIn() {
     this.loopStart = this.getCurrentTime();
     console.log(`Deck ${this.deckId}: Loop IN set at ${this.loopStart}s`);
+    
+    // Update UI to show IN button as active
+    const controller = window.mixerController?.deckControllers[this.deckId];
+    if (controller) {
+      controller.updateLoopInState(true);
+    }
   }
 
   setLoopOut() {
@@ -436,6 +442,12 @@ class Deck {
     this.originalLoopEnd = this.loopEnd; // Store original loop end
     this.loopLengthPercentage = 100; // Reset to 100% when setting new loop out
     console.log(`Deck ${this.deckId}: Loop OUT set at ${this.loopEnd}s`);
+    
+    // Update UI to show OUT button as active
+    const controller = window.mixerController?.deckControllers[this.deckId];
+    if (controller) {
+      controller.updateLoopOutState(true);
+    }
   }
 
   setLoopLength(percentage) {
@@ -1379,6 +1391,12 @@ class DeckController {
       if (this.vinylElement) {
         this.vinylElement.classList.remove('spinning');
       }
+      // Reset loop state when stopping
+      if (deck.isLooping) {
+        deck.isLooping = false;
+        deck.stopLoopMonitoring();
+        this.updateLoopState(false);
+      }
       // Force waveform update to show position at beginning
       if (window.waveformRenderers && window.waveformRenderers[this.deckId]) {
         window.waveformRenderers[this.deckId].updatePlayhead();
@@ -1426,11 +1444,37 @@ class DeckController {
 
   updateLoopState(isLooping) {
     const loopToggleButton = document.getElementById(`loopToggle${this.deckId}`);
+    const loopInButton = document.getElementById(`loopIn${this.deckId}`);
+    const loopOutButton = document.getElementById(`loopOut${this.deckId}`);
     
     if (isLooping) {
       loopToggleButton.classList.add('active');
+      loopInButton.classList.add('active');
+      loopOutButton.classList.add('active');
     } else {
       loopToggleButton.classList.remove('active');
+      loopInButton.classList.remove('active');
+      loopOutButton.classList.remove('active');
+    }
+  }
+
+  updateLoopInState(hasLoopStart) {
+    const loopInButton = document.getElementById(`loopIn${this.deckId}`);
+    
+    if (hasLoopStart) {
+      loopInButton.classList.add('active');
+    } else {
+      loopInButton.classList.remove('active');
+    }
+  }
+
+  updateLoopOutState(hasLoopEnd) {
+    const loopOutButton = document.getElementById(`loopOut${this.deckId}`);
+    
+    if (hasLoopEnd) {
+      loopOutButton.classList.add('active');
+    } else {
+      loopOutButton.classList.remove('active');
     }
   }
 
