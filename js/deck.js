@@ -36,8 +36,6 @@ class Deck {
 
     // Back-spin properties
     this.isBackSpinning = false;
-    this.backSpinInterval = null;
-    this.originalPlaybackRateBeforeBackSpin = undefined;
 
     // CUE points
     this.cuePoints = { 1: null, 2: null };
@@ -113,9 +111,6 @@ class Deck {
   play() {
     if (!this.audioBuffer) return;
 
-    // Restore normal playback if back-spinning
-    this.restoreNormalPlayback();
-
     // Store the pauseTime before stopping, since stop() will reset it
     const resumeTime = this.isPaused ? this.pauseTime : 0;
 
@@ -125,8 +120,53 @@ class Deck {
     this.source.buffer = this.audioBuffer;
     this.source.playbackRate.value = this.playbackRate;
 
-    // Connect the audio chain
-    this.connectAudioChain();
+    // Connect the main effect chain
+    this.source.connect(this.effectNodes.filter);
+    this.effectNodes.filter.connect(this.eqNodes.low);
+    this.eqNodes.low.connect(this.eqNodes.mid);
+    this.eqNodes.mid.connect(this.eqNodes.high);
+
+    // Create a splitter for effect sends after EQ
+    const splitter = this.audioContext.createChannelSplitter(2);
+    const merger = this.audioContext.createChannelMerger(2);
+    this.eqNodes.high.connect(splitter);
+
+    // Main dry signal path
+    this.eqNodes.high.connect(this.globalGainNode);
+    this.globalGainNode.connect(this.gainNode);
+
+    // Connect reverb send (wet/dry mix)
+    splitter.connect(this.effectNodes.reverb);
+    this.effectNodes.reverb.connect(this.effectNodes.reverbGain);
+    this.effectNodes.reverbGain.connect(this.globalGainNode);
+
+    // Connect delay send
+    splitter.connect(this.effectNodes.delay);
+    this.effectNodes.delayGain.connect(this.globalGainNode);
+
+    // Connect phaser effect chain
+    if (this.effectNodes.phaser && this.effectNodes.phaser.length > 0) {
+      let phaserInput = splitter;
+
+      // Connect phaser chain
+      for (let i = 0; i < this.effectNodes.phaser.length; i++) {
+        phaserInput.connect(this.effectNodes.phaser[i]);
+        phaserInput = this.effectNodes.phaser[i];
+      }
+
+      // Connect phaser output through gain control
+      phaserInput.connect(this.effectNodes.phaserGain);
+      this.effectNodes.phaserGain.connect(this.globalGainNode);
+    }
+
+    // Connect flanger effect
+    if (this.effectNodes.flanger) {
+      splitter.connect(this.effectNodes.flanger);
+      this.effectNodes.flanger.connect(this.effectNodes.flangerGain);
+      this.effectNodes.flangerGain.connect(this.globalGainNode);
+    }
+
+    this.gainNode.connect(this.masterGain);
 
     // Start from the saved resume time
     this.source.start(0, resumeTime);
@@ -157,9 +197,6 @@ class Deck {
     }
     this.currentScratchRate = 0;
     this.scratchMomentum = 0;
-    
-    // Clean up back-spin if active
-    this.stopBackSpin();
   }
 
   stopSource() {
@@ -575,175 +612,60 @@ class Deck {
     }
   }
 
-  // Back-spin methods
-  startBackSpin() {
-    // If already back-spinning or no audio loaded, do nothing
+  // Back-spin method
+  async startBackSpin() {
     if (this.isBackSpinning || !this.audioBuffer || !this.source) return;
 
-    // Store the original playback rate and current position
-    this.originalPlaybackRateBeforeBackSpin = this.playbackRate;
-    const currentTime = this.getCurrentTime();
     this.isBackSpinning = true;
+    const currentTime = this.getCurrentTime();
 
     // Stop the current source
     this.stopSource();
 
-    // Create a reversed buffer
-    const reversedBuffer = this.createReversedBuffer(this.audioBuffer);
-    if (!reversedBuffer) {
-      this.stopBackSpin();
-      return;
+    // Create reversed buffer
+    const reversedBuffer = this.audioContext.createBuffer(
+      this.audioBuffer.numberOfChannels,
+      this.audioBuffer.length,
+      this.audioBuffer.sampleRate
+    );
+
+    for (let ch = 0; ch < this.audioBuffer.numberOfChannels; ch++) {
+      let channelData = this.audioBuffer.getChannelData(ch);
+      let reversedData = reversedBuffer.getChannelData(ch);
+      for (let i = 0; i < channelData.length; i++) {
+        reversedData[i] = channelData[channelData.length - 1 - i];
+      }
     }
 
     // Create new source for reversed playback
     this.source = this.audioContext.createBufferSource();
     this.source.buffer = reversedBuffer;
-    
-    // Connect the audio chain
-    this.connectAudioChain();
 
-    // Start with fast reverse playback (vinyl back-spin effect)
-    let currentBackSpinRate = 2.5; // Start fast for dramatic effect
-    const decelerationRate = 0.88; // Faster deceleration for realistic feel
-    const minSpeed = 0.1; // Minimum speed threshold
-
-    // Calculate where to start in the reversed buffer
-    // If we were at 30s in a 120s track, we want to start at 90s in the reversed buffer
-    const duration = this.audioBuffer.duration;
-    const reversedStartTime = Math.max(0, duration - currentTime);
-    
-    // Start playing the reversed buffer
-    this.source.start(0, reversedStartTime);
-    this.startTime = this.audioContext.currentTime - reversedStartTime;
-
-    this.backSpinInterval = setInterval(() => {
-      if (!this.source || !this.source.playbackRate) {
-        this.stopBackSpin();
-        return;
-      }
-
-      // Apply the current back-spin rate (positive for forward playback of reversed buffer)
-      this.source.playbackRate.value = currentBackSpinRate;
-
-      // Gradually slow down the reverse speed
-      currentBackSpinRate *= decelerationRate;
-
-      // If reverse speed is very low, stop the track
-      if (currentBackSpinRate < minSpeed) {
-        this.stop();
-        this.stopBackSpin();
-      }
-    }, 40); // Update every 40ms for smooth effect
-
-    console.log(`Deck ${this.deckId}: Back-spin started from position ${currentTime.toFixed(2)}s with initial rate ${currentBackSpinRate}`);
-  }
-
-  stopBackSpin() {
-    if (!this.isBackSpinning) return;
-
-    // Clear the interval
-    if (this.backSpinInterval) {
-      clearInterval(this.backSpinInterval);
-      this.backSpinInterval = null;
-    }
-
-    this.isBackSpinning = false;
-
-    console.log(`Deck ${this.deckId}: Back-spin stopped`);
-  }
-
-  // Method to restore normal playback rate (called when other transport controls are used)
-  restoreNormalPlayback() {
-    if (this.isBackSpinning) {
-      this.stopBackSpin();
-      
-      // Restore the original playback rate if it was stored
-      if (this.originalPlaybackRateBeforeBackSpin !== undefined) {
-        this.playbackRate = this.originalPlaybackRateBeforeBackSpin;
-        if (this.source && this.source.playbackRate) {
-          this.source.playbackRate.value = this.playbackRate;
-        }
-        this.originalPlaybackRateBeforeBackSpin = undefined;
-      }
-    }
-  }
-
-  // Helper method to create a reversed audio buffer
-  createReversedBuffer(originalBuffer) {
-    try {
-      const reversedBuffer = this.audioContext.createBuffer(
-        originalBuffer.numberOfChannels,
-        originalBuffer.length,
-        originalBuffer.sampleRate
-      );
-
-      // Reverse each channel
-      for (let channel = 0; channel < originalBuffer.numberOfChannels; channel++) {
-        const originalData = originalBuffer.getChannelData(channel);
-        const reversedData = reversedBuffer.getChannelData(channel);
-        
-        // Copy data in reverse order
-        for (let i = 0; i < originalData.length; i++) {
-          reversedData[i] = originalData[originalData.length - 1 - i];
-        }
-      }
-
-      return reversedBuffer;
-    } catch (error) {
-      console.error(`Deck ${this.deckId}: Error creating reversed buffer:`, error);
-      return null;
-    }
-  }
-
-  // Helper method to connect the audio chain (extracted from play method)
-  connectAudioChain() {
-    // Connect the main effect chain
+    // Connect audio chain
     this.source.connect(this.effectNodes.filter);
     this.effectNodes.filter.connect(this.eqNodes.low);
     this.eqNodes.low.connect(this.eqNodes.mid);
     this.eqNodes.mid.connect(this.eqNodes.high);
-
-    // Create a splitter for effect sends after EQ
-    const splitter = this.audioContext.createChannelSplitter(2);
-    const merger = this.audioContext.createChannelMerger(2);
-    this.eqNodes.high.connect(splitter);
-
-    // Main dry signal path
     this.eqNodes.high.connect(this.globalGainNode);
     this.globalGainNode.connect(this.gainNode);
-
-    // Connect reverb send (wet/dry mix)
-    splitter.connect(this.effectNodes.reverb);
-    this.effectNodes.reverb.connect(this.effectNodes.reverbGain);
-    this.effectNodes.reverbGain.connect(this.globalGainNode);
-
-    // Connect delay send
-    splitter.connect(this.effectNodes.delay);
-    this.effectNodes.delayGain.connect(this.globalGainNode);
-
-    // Connect phaser effect chain
-    if (this.effectNodes.phaser && this.effectNodes.phaser.length > 0) {
-      let phaserInput = splitter;
-
-      // Connect phaser chain
-      for (let i = 0; i < this.effectNodes.phaser.length; i++) {
-        phaserInput.connect(this.effectNodes.phaser[i]);
-        phaserInput = this.effectNodes.phaser[i];
-      }
-
-      // Connect phaser output through gain control
-      phaserInput.connect(this.effectNodes.phaserGain);
-      this.effectNodes.phaserGain.connect(this.globalGainNode);
-    }
-
-    // Connect flanger effect
-    if (this.effectNodes.flanger) {
-      splitter.connect(this.effectNodes.flanger);
-      this.effectNodes.flanger.connect(this.effectNodes.flangerGain);
-      this.effectNodes.flangerGain.connect(this.globalGainNode);
-    }
-
     this.gainNode.connect(this.masterGain);
+
+    // Start with fast reverse playback then slow down
+    const now = this.audioContext.currentTime;
+    const duration = 3.0; // 3 second back-spin effect
+    
+    this.source.playbackRate.setValueAtTime(2.5, now);
+    this.source.playbackRate.exponentialRampToValueAtTime(0.2, now + duration);
+
+    // Start from current position in reversed buffer
+    const reversedStartTime = Math.max(0, reversedBuffer.duration - currentTime);
+    this.source.start(now, reversedStartTime, duration);
+
+    // Stop and pause after effect
+    setTimeout(() => {
+      this.isBackSpinning = false;
+      this.pause();
+    }, duration * 1000);
   }
 
   getDuration() {
