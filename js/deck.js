@@ -445,6 +445,8 @@ class Deck {
     // Only allow setting OUT if IN is already set
     if (this.loopStart === null) {
       console.log(`Deck ${this.deckId}: Cannot set Loop OUT - Loop IN must be set first`);
+      // Ensure UI state remains correct when validation fails
+      this.controller.updateLoopOutState(false);
       return;
     }
     
