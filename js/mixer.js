@@ -95,6 +95,9 @@ class MixerController {
         pitchSlider.value = pitchAdjustment;
         pitchDisplay.textContent = `${pitchAdjustment.toFixed(1)}%`;
 
+        // Update BPM display after pitch adjustment
+        this.deckControllers[targetDeck].updateBPMDisplay();
+
         // Match the beat timing
         this.syncBeatTiming(source, target);
         

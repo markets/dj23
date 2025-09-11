@@ -12,6 +12,7 @@
     "postcss-cli": "^11.0.0"
   },
   "dependencies": {
-    "jsmediatags": "^3.9.7"
+    "jsmediatags": "^3.9.7",
+    "music-tempo": "^1.0.3"
   }
 }

@@ -1169,12 +1169,6 @@ class DeckController {
           const title = tags.title || '';
           const album = tags.album || '';
           
-          // Try to extract BPM from metadata using BPM analyzer
-          const metadataBPM = deck.bpmAnalyzer.extractBPMFromTags(tags);
-          if (metadataBPM) {
-            deck.bpmAnalyzer.setMetadataBPM(metadataBPM, deck.audioBuffer);
-          }
-          
           // Format display title
           if (artist && title) {
             displayTitle = `${artist} - ${title}`;
@@ -1381,12 +1375,6 @@ class DeckController {
     const trackTimeElement = document.getElementById(`trackInfo${this.deckId}`).querySelector('.track-time');
     
     trackTimeElement.textContent = `${this.formatTime(currentTime)} / ${this.formatTime(duration)}`;
-    
-    // Continuously refine BPM during playback
-    if (deck.isPlaying) {
-      deck.bpmAnalyzer.refineBPMDuringPlayback(deck.audioBuffer, currentTime, deck.isPlaying);
-      this.updateBPMDisplay(); // Update display in case BPM was refined
-    }
     
     // Auto-stop when track reaches end (only if playing and not looping)
     if (deck.isPlaying && !deck.isLooping && duration > 0 && currentTime >= duration) {
