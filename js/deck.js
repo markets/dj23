@@ -394,10 +394,7 @@ class Deck {
     this.play();
     
     // Update CUE button visual state
-    const controller = window.mixerController?.deckControllers[this.deckId];
-    if (controller) {
-      controller.updateCueState(true);
-    }
+    this.controller.updateCueState(true);
     
     console.log(`Deck ${this.deckId}: CUE mode started`);
   }
@@ -422,10 +419,7 @@ class Deck {
     this.isCueActive = false;
     
     // Update CUE button visual state
-    const controller = window.mixerController?.deckControllers[this.deckId];
-    if (controller) {
-      controller.updateCueState(false);
-    }
+    this.controller.updateCueState(false);
     
     console.log(`Deck ${this.deckId}: CUE mode stopped`);
   }
@@ -700,12 +694,7 @@ class Deck {
     setTimeout(() => {
       this.isBackSpinning = false;
       // Call controller's pause method to properly update UI state
-      const controller = window.mixerController?.deckControllers[this.deckId];
-      if (controller) {
-        controller.pause();
-      } else {
-        this.pause();
-      }
+      this.controller.pause();
     }, duration * 1000);
   }
 
