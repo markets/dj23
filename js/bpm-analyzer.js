@@ -92,17 +92,46 @@ class BPMAnalyzer {
       const mt = new MusicTempo(audioData);
       const detectedBPM = mt.tempo;
       
-      // Use detected BPM directly without validation/correction
-      const finalBPM = detectedBPM && detectedBPM > 0 ? Math.round(detectedBPM) : 120;
+      // Validate and correct BPM if needed
+      const validatedBPM = this.validateAndCorrectBPM(detectedBPM);
       
-      console.log(`BPM Analyzer: Detected ${detectedBPM} -> Final ${finalBPM} BPM for deck ${this.deckId}`);
-      this.baseBPM = finalBPM;
+      console.log(`BPM Analyzer: Detected ${detectedBPM} -> Validated ${validatedBPM} BPM for deck ${this.deckId}`);
+      this.baseBPM = validatedBPM;
       this.bpmSource = 'auto-detected';
-      return finalBPM;
+      return validatedBPM;
     } catch (error) {
       console.error(`BPM Analyzer: Detection failed for deck ${this.deckId}:`, error);
       return 120; // Default fallback
     }
+  }
+
+  // Consolidated BPM validation with genre-aware correction
+  validateAndCorrectBPM(detectedBPM) {
+    if (!detectedBPM || detectedBPM <= 0) return 120;
+    
+    let validatedBPM = detectedBPM;
+    
+    // Handle extreme cases with smart correction
+    if (detectedBPM < 60) {
+      validatedBPM = detectedBPM * 2; // Likely half-time detection
+    } else if (detectedBPM > 200) {
+      validatedBPM = detectedBPM / 2; // Likely double-time detection
+    }
+    
+    // Additional check for common double-time patterns in faster genres
+    if (validatedBPM > 160) {
+      const halfTime = validatedBPM / 2;
+      // Prefer half-time if it falls in common DJ music range
+      if (halfTime >= 80 && halfTime <= 140) {
+        validatedBPM = halfTime;
+      }
+    }
+    
+    // Final bounds check
+    if (validatedBPM < 50) validatedBPM = 120;
+    if (validatedBPM > 250) validatedBPM = 120;
+    
+    return Math.round(validatedBPM);
   }
 
   // Public methods to access BPM information
