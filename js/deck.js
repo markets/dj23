@@ -629,9 +629,10 @@ class Deck {
     this.originalPlaybackRateBeforeBackSpin = this.playbackRate;
     this.isBackSpinning = true;
 
-    // Start the back-spin deceleration effect
-    const decelerationRate = 0.92; // How quickly it slows down (higher = slower deceleration)
-    const minSpeed = 0.01; // Minimum speed threshold before stopping
+    // Start with fast reverse playback (vinyl back-spin effect)
+    let currentBackSpinRate = -3.0; // Start with fast reverse (negative = backwards)
+    const decelerationRate = 0.88; // How quickly the reverse speed decreases (faster than before)
+    const minSpeed = 0.08; // Minimum speed threshold before stopping
 
     this.backSpinInterval = setInterval(() => {
       if (!this.source || !this.source.playbackRate) {
@@ -639,20 +640,20 @@ class Deck {
         return;
       }
 
-      // Apply deceleration to current playback rate
-      this.playbackRate *= decelerationRate;
+      // Apply the current back-spin rate (negative for reverse)
+      this.source.playbackRate.value = currentBackSpinRate;
 
-      // If speed is very low, stop the track
-      if (this.playbackRate < minSpeed) {
+      // Gradually slow down the reverse speed
+      currentBackSpinRate *= decelerationRate;
+
+      // If reverse speed is very low, stop the track
+      if (Math.abs(currentBackSpinRate) < minSpeed) {
         this.stop();
         this.stopBackSpin();
-      } else {
-        // Continue applying the decelerating rate
-        this.source.playbackRate.value = this.playbackRate;
       }
-    }, 50); // Update every 50ms for smooth deceleration
+    }, 40); // Update every 40ms for smoother effect
 
-    console.log(`Deck ${this.deckId}: Back-spin started from rate ${this.originalPlaybackRateBeforeBackSpin}`);
+    console.log(`Deck ${this.deckId}: Back-spin started with reverse rate ${currentBackSpinRate}`);
   }
 
   stopBackSpin() {
