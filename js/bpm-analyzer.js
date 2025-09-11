@@ -73,7 +73,6 @@ class BPMAnalyzer {
     }
     
     try {
-      // Prepare audio data for music-tempo library
       let audioData = [];
       
       // Take the average of the two channels if stereo, otherwise use mono
@@ -88,7 +87,6 @@ class BPMAnalyzer {
         audioData = audioBuffer.getChannelData(0);
       }
       
-      // Use music-tempo library for BPM detection
       const mt = new MusicTempo(audioData);
       const detectedBPM = mt.tempo;
       
