@@ -425,25 +425,55 @@ class Deck {
 
   // Loop methods
   setLoopIn() {
-    this.loopStart = this.getCurrentTime();
-    console.log(`Deck ${this.deckId}: Loop IN set at ${this.loopStart}s`);
-    
-    // Clear any previous loop states and show only IN as active
-    this.controller.updateLoopInState(true);
-    this.controller.updateLoopOutState(false);
-    this.controller.updateLoopToggleState(false);
+    // Toggle behavior: if loop start is already set, clear it
+    if (this.loopStart !== null) {
+      this.loopStart = null;
+      console.log(`Deck ${this.deckId}: Loop IN cleared`);
+      
+      // Deactivate IN button and stop any active loop
+      this.controller.updateLoopInState(false);
+      if (this.isLooping) {
+        this.isLooping = false;
+        this.stopLoopMonitoring();
+        this.controller.updateLoopToggleState(false);
+      }
+    } else {
+      this.loopStart = this.getCurrentTime();
+      console.log(`Deck ${this.deckId}: Loop IN set at ${this.loopStart}s`);
+      
+      // Clear any previous loop states and show only IN as active
+      this.controller.updateLoopInState(true);
+      this.controller.updateLoopOutState(false);
+      this.controller.updateLoopToggleState(false);
+    }
   }
 
   setLoopOut() {
-    this.loopEnd = this.getCurrentTime();
-    this.originalLoopEnd = this.loopEnd; // Store original loop end
-    this.loopLengthPercentage = 100; // Reset to 100% when setting new loop out
-    console.log(`Deck ${this.deckId}: Loop OUT set at ${this.loopEnd}s`);
-    
-    // Clear IN state and show only OUT as active
-    this.controller.updateLoopInState(false);
-    this.controller.updateLoopOutState(true);
-    this.controller.updateLoopToggleState(false);
+    // Toggle behavior: if loop end is already set, clear it
+    if (this.loopEnd !== null) {
+      this.loopEnd = null;
+      this.originalLoopEnd = null;
+      this.loopLengthPercentage = 100;
+      console.log(`Deck ${this.deckId}: Loop OUT cleared`);
+      
+      // Deactivate OUT button and stop any active loop
+      this.controller.updateLoopOutState(false);
+      if (this.isLooping) {
+        this.isLooping = false;
+        this.stopLoopMonitoring();
+        this.controller.updateLoopToggleState(false);
+      }
+    } else {
+      this.loopEnd = this.getCurrentTime();
+      this.originalLoopEnd = this.loopEnd; // Store original loop end
+      this.loopLengthPercentage = 100; // Reset to 100% when setting new loop out
+      console.log(`Deck ${this.deckId}: Loop OUT set at ${this.loopEnd}s`);
+      
+      // Clear IN state and show only OUT as active
+      this.controller.updateLoopInState(false);
+      this.controller.updateLoopOutState(true);
+      this.controller.updateLoopToggleState(false);
+    }
   }
 
   setLoopLength(percentage) {
