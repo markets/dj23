@@ -94,8 +94,8 @@ class KeyboardShortcuts {
 
     // Prevent default for our shortcuts
     const shortcuts = [
-      'Space', 'KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyF', 'KeyA', 'KeyS', 'KeyD', 
-      'KeyU', 'KeyI', 'KeyO', 'KeyP', 'Semicolon', 'KeyJ', 'KeyK', 'KeyL',
+      'Space', 'KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyA', 'KeyS', 'KeyD',
+      'KeyU', 'KeyI', 'KeyO', 'KeyP', 'KeyJ', 'KeyK', 'KeyL',
       'KeyZ', 'KeyX', 'KeyN', 'KeyM',
       'Digit1', 'Digit2', 'Digit8', 'Digit9',
       'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'

@@ -652,10 +652,10 @@ class Deck {
 
     // Start with fast reverse playback then slow down
     const now = this.audioContext.currentTime;
-    const duration = 3.0; // 3 second back-spin effect
+    const duration = 3.5; // 3 second back-spin effect
     
     this.source.playbackRate.setValueAtTime(2.5, now);
-    this.source.playbackRate.exponentialRampToValueAtTime(0.2, now + duration);
+    this.source.playbackRate.exponentialRampToValueAtTime(0.15, now + duration);
 
     // Start from current position in reversed buffer
     const reversedStartTime = Math.max(0, reversedBuffer.duration - currentTime);
