@@ -844,12 +844,12 @@ class DeckController {
           if (deck && slider) {
             // Store original value before killing
             slider.dataset.originalValue = slider.value;
-            // Set to minimum value (-20) to "kill" the band
-            slider.value = -20;
-            deck.setEQ(band, -20);
+            // Set to minimum value (-25) to "kill" the band
+            slider.value = -25;
+            deck.setEQ(band, -25);
             // Update display
             if (slider.parentNode && slider.parentNode.nextElementSibling) {
-              slider.parentNode.nextElementSibling.textContent = '-20';
+              slider.parentNode.nextElementSibling.textContent = '-25';
             }
           }
         },
