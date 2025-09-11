@@ -664,7 +664,13 @@ class Deck {
     // Stop and pause after effect
     setTimeout(() => {
       this.isBackSpinning = false;
-      this.pause();
+      // Call controller's pause method to properly update UI state
+      const controller = window.mixerController?.deckControllers[this.deckId];
+      if (controller) {
+        controller.pause();
+      } else {
+        this.pause();
+      }
     }, duration * 1000);
   }
 
