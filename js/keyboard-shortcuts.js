@@ -94,8 +94,8 @@ class KeyboardShortcuts {
 
     // Prevent default for our shortcuts
     const shortcuts = [
-      'Space', 'KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyA', 'KeyS', 'KeyD', 
-      'KeyU', 'KeyI', 'KeyO', 'KeyP', 'KeyJ', 'KeyK', 'KeyL',
+      'Space', 'KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyF', 'KeyA', 'KeyS', 'KeyD', 
+      'KeyU', 'KeyI', 'KeyO', 'KeyP', 'Semicolon', 'KeyJ', 'KeyK', 'KeyL',
       'KeyZ', 'KeyX', 'KeyN', 'KeyM',
       'Digit1', 'Digit2', 'Digit8', 'Digit9',
       'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'
@@ -142,6 +142,7 @@ class KeyboardShortcuts {
       'KeyW': () => this.controlDeck('A', 'pause'),
       'KeyE': () => this.controlDeck('A', 'stop'),
       'KeyR': () => this.handleCuePress('A', 'KeyR'),
+      'KeyF': () => this.clickButton('backSpinA'),
       
       // LEFT SIDE - Deck A Cue Points (1-2)
       'Digit1': () => this.handleCuePoint(e, 'A', 1),
@@ -161,6 +162,7 @@ class KeyboardShortcuts {
       'KeyI': () => this.controlDeck('B', 'pause'),
       'KeyO': () => this.controlDeck('B', 'stop'),
       'KeyP': () => this.handleCuePress('B', 'KeyP'),
+      'Semicolon': () => this.clickButton('backSpinB'),
       
       // RIGHT SIDE - Deck B Cue Points (8-9)
       'Digit8': () => this.handleCuePoint(e, 'B', 1),

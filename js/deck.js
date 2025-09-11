@@ -34,6 +34,11 @@ class Deck {
     this.isPitchBending = false;
     this.originalPitchBeforeBend = undefined;
 
+    // Back-spin properties
+    this.isBackSpinning = false;
+    this.backSpinInterval = null;
+    this.originalPlaybackRateBeforeBackSpin = undefined;
+
     // CUE points
     this.cuePoints = { 1: null, 2: null };
     this.isCueActive = false; // Track if CUE is currently being held/active
@@ -107,6 +112,9 @@ class Deck {
 
   play() {
     if (!this.audioBuffer) return;
+
+    // Restore normal playback if back-spinning
+    this.restoreNormalPlayback();
 
     // Store the pauseTime before stopping, since stop() will reset it
     const resumeTime = this.isPaused ? this.pauseTime : 0;
@@ -194,6 +202,9 @@ class Deck {
     }
     this.currentScratchRate = 0;
     this.scratchMomentum = 0;
+    
+    // Clean up back-spin if active
+    this.stopBackSpin();
   }
 
   stopSource() {
@@ -609,6 +620,71 @@ class Deck {
     }
   }
 
+  // Back-spin methods
+  startBackSpin() {
+    // If already back-spinning or no audio loaded, do nothing
+    if (this.isBackSpinning || !this.audioBuffer || !this.source) return;
+
+    // Store the original playback rate
+    this.originalPlaybackRateBeforeBackSpin = this.playbackRate;
+    this.isBackSpinning = true;
+
+    // Start the back-spin deceleration effect
+    const decelerationRate = 0.92; // How quickly it slows down (higher = slower deceleration)
+    const minSpeed = 0.01; // Minimum speed threshold before stopping
+
+    this.backSpinInterval = setInterval(() => {
+      if (!this.source || !this.source.playbackRate) {
+        this.stopBackSpin();
+        return;
+      }
+
+      // Apply deceleration to current playback rate
+      this.playbackRate *= decelerationRate;
+
+      // If speed is very low, stop the track
+      if (this.playbackRate < minSpeed) {
+        this.stop();
+        this.stopBackSpin();
+      } else {
+        // Continue applying the decelerating rate
+        this.source.playbackRate.value = this.playbackRate;
+      }
+    }, 50); // Update every 50ms for smooth deceleration
+
+    console.log(`Deck ${this.deckId}: Back-spin started from rate ${this.originalPlaybackRateBeforeBackSpin}`);
+  }
+
+  stopBackSpin() {
+    if (!this.isBackSpinning) return;
+
+    // Clear the interval
+    if (this.backSpinInterval) {
+      clearInterval(this.backSpinInterval);
+      this.backSpinInterval = null;
+    }
+
+    this.isBackSpinning = false;
+
+    console.log(`Deck ${this.deckId}: Back-spin stopped`);
+  }
+
+  // Method to restore normal playback rate (called when other transport controls are used)
+  restoreNormalPlayback() {
+    if (this.isBackSpinning) {
+      this.stopBackSpin();
+      
+      // Restore the original playback rate if it was stored
+      if (this.originalPlaybackRateBeforeBackSpin !== undefined) {
+        this.playbackRate = this.originalPlaybackRateBeforeBackSpin;
+        if (this.source && this.source.playbackRate) {
+          this.source.playbackRate.value = this.playbackRate;
+        }
+        this.originalPlaybackRateBeforeBackSpin = undefined;
+      }
+    }
+  }
+
   getDuration() {
     return this.audioBuffer ? this.audioBuffer.duration : 0;
   }
@@ -727,6 +803,9 @@ class DeckController {
     this.createControllerMethodHandler('play', 'play');
     this.createControllerMethodHandler('pause', 'pause');
     this.createControllerMethodHandler('stop', 'stop');
+
+    // Back-spin button
+    this.createDeckMethodHandler('backSpin', 'startBackSpin');
 
     // CUE button - press and hold behavior
     window.buttonHandler.createPressAndHoldHandler(
