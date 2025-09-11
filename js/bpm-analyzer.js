@@ -169,12 +169,4 @@ class BPMAnalyzer {
       this.lastManualTapTime = currentTime;
     }
   }
-
-  // Get information about current BPM source
-  getBPMInfo() {
-    return {
-      bpm: this.baseBPM,
-      source: this.bpmSource
-    };
-  }
 }
