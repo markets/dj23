@@ -339,8 +339,10 @@ class Deck {
     this.originalLoopEnd = null;
     this.loopLengthPercentage = 100;
     
-    // Update UI to reflect cleared loop state
+    // Clear all loop button states
     this.controller.updateLoopState(false);
+    this.controller.updateLoopInState(false);
+    this.controller.updateLoopOutState(false);
     
     console.log(`Deck ${this.deckId}: Loop points reset`);
   }
@@ -426,8 +428,10 @@ class Deck {
     this.loopStart = this.getCurrentTime();
     console.log(`Deck ${this.deckId}: Loop IN set at ${this.loopStart}s`);
     
-    // Update UI to show IN button as active
+    // Clear any previous loop states and show only IN as active
     this.controller.updateLoopInState(true);
+    this.controller.updateLoopOutState(false);
+    this.controller.updateLoopToggleState(false);
   }
 
   setLoopOut() {
@@ -436,8 +440,10 @@ class Deck {
     this.loopLengthPercentage = 100; // Reset to 100% when setting new loop out
     console.log(`Deck ${this.deckId}: Loop OUT set at ${this.loopEnd}s`);
     
-    // Update UI to show OUT button as active
+    // Clear IN state and show only OUT as active
+    this.controller.updateLoopInState(false);
     this.controller.updateLoopOutState(true);
+    this.controller.updateLoopToggleState(false);
   }
 
   setLoopLength(percentage) {
@@ -1428,18 +1434,25 @@ class DeckController {
   }
 
   updateLoopState(isLooping) {
-    const loopToggleButton = document.getElementById(`loopToggle${this.deckId}`);
-    const loopInButton = document.getElementById(`loopIn${this.deckId}`);
-    const loopOutButton = document.getElementById(`loopOut${this.deckId}`);
-    
     if (isLooping) {
+      // When loop is active, clear IN/OUT states and show only LOOP as active
+      this.updateLoopInState(false);
+      this.updateLoopOutState(false);
+      this.updateLoopToggleState(true);
+    } else {
+      // When loop is not active, only clear the LOOP button
+      this.updateLoopToggleState(false);
+      // Keep IN/OUT states as they were - don't clear them when disabling loop
+    }
+  }
+
+  updateLoopToggleState(isActive) {
+    const loopToggleButton = document.getElementById(`loopToggle${this.deckId}`);
+    
+    if (isActive) {
       loopToggleButton.classList.add('active');
-      loopInButton.classList.add('active');
-      loopOutButton.classList.add('active');
     } else {
       loopToggleButton.classList.remove('active');
-      loopInButton.classList.remove('active');
-      loopOutButton.classList.remove('active');
     }
   }
 
