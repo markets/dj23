@@ -213,7 +213,7 @@ class MixerController {
     const currentTime = deck.getCurrentTime();
     const beatInterval = 60 / deck.getBPM(); // Time between beats in seconds
     const timeSinceLastBeat = currentTime % beatInterval;
-    const currentBeat = Math.floor(currentTime / beatInterval) % 4; // 4 beats per measure
+    const currentBeat = Math.floor(currentTime / beatInterval) % 8; // 8 beats per measure
     
     // Check if we're close to a beat (within 100ms)
     const isOnBeat = timeSinceLastBeat < 0.1 || timeSinceLastBeat > (beatInterval - 0.1);
