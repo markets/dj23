@@ -1417,34 +1417,18 @@ class DeckController {
   updatePlayingState(isPlaying) {
     const deckElement = document.getElementById(`deck${this.deckId}`);
     const playButton = document.getElementById(`play${this.deckId}`);
-    
-    if (isPlaying) {
-      deckElement.classList.add('playing');
-      playButton.classList.add('active');
-    } else {
-      deckElement.classList.remove('playing');
-      playButton.classList.remove('active');
-    }
+    deckElement.classList.toggle('playing', isPlaying);
+    playButton.classList.toggle('active', isPlaying);
   }
 
   updatePauseState(isPaused) {
     const pauseButton = document.getElementById(`pause${this.deckId}`);
-    
-    if (isPaused) {
-      pauseButton.classList.add('active');
-    } else {
-      pauseButton.classList.remove('active');
-    }
+    pauseButton.classList.toggle('active', isPaused);
   }
 
   updateCueState(isCueActive) {
     const cueButton = document.getElementById(`cue${this.deckId}`);
-    
-    if (isCueActive) {
-      cueButton.classList.add('active');
-    } else {
-      cueButton.classList.remove('active');
-    }
+    cueButton.classList.toggle('active', isCueActive);
   }
 
   updateTrackTime() {
