@@ -34,6 +34,9 @@ class Deck {
     this.isPitchBending = false;
     this.originalPitchBeforeBend = undefined;
 
+    // Back-spin properties
+    this.isBackSpinning = false;
+
     // CUE points
     this.cuePoints = { 1: null, 2: null };
     this.isCueActive = false; // Track if CUE is currently being held/active
@@ -609,6 +612,68 @@ class Deck {
     }
   }
 
+  // Back-spin method
+  async startBackSpin() {
+    if (this.isBackSpinning || !this.audioBuffer || !this.source) return;
+
+    this.isBackSpinning = true;
+    const currentTime = this.getCurrentTime();
+
+    // Stop the current source
+    this.stopSource();
+
+    // Create reversed buffer
+    const reversedBuffer = this.audioContext.createBuffer(
+      this.audioBuffer.numberOfChannels,
+      this.audioBuffer.length,
+      this.audioBuffer.sampleRate
+    );
+
+    for (let ch = 0; ch < this.audioBuffer.numberOfChannels; ch++) {
+      let channelData = this.audioBuffer.getChannelData(ch);
+      let reversedData = reversedBuffer.getChannelData(ch);
+      for (let i = 0; i < channelData.length; i++) {
+        reversedData[i] = channelData[channelData.length - 1 - i];
+      }
+    }
+
+    // Create new source for reversed playback
+    this.source = this.audioContext.createBufferSource();
+    this.source.buffer = reversedBuffer;
+
+    // Connect audio chain
+    this.source.connect(this.effectNodes.filter);
+    this.effectNodes.filter.connect(this.eqNodes.low);
+    this.eqNodes.low.connect(this.eqNodes.mid);
+    this.eqNodes.mid.connect(this.eqNodes.high);
+    this.eqNodes.high.connect(this.globalGainNode);
+    this.globalGainNode.connect(this.gainNode);
+    this.gainNode.connect(this.masterGain);
+
+    // Start with fast reverse playback then slow down
+    const now = this.audioContext.currentTime;
+    const duration = 3.5; // 3 second back-spin effect
+    
+    this.source.playbackRate.setValueAtTime(2.5, now);
+    this.source.playbackRate.exponentialRampToValueAtTime(0.15, now + duration);
+
+    // Start from current position in reversed buffer
+    const reversedStartTime = Math.max(0, reversedBuffer.duration - currentTime);
+    this.source.start(now, reversedStartTime, duration);
+
+    // Stop and pause after effect
+    setTimeout(() => {
+      this.isBackSpinning = false;
+      // Call controller's pause method to properly update UI state
+      const controller = window.mixerController?.deckControllers[this.deckId];
+      if (controller) {
+        controller.pause();
+      } else {
+        this.pause();
+      }
+    }, duration * 1000);
+  }
+
   getDuration() {
     return this.audioBuffer ? this.audioBuffer.duration : 0;
   }
@@ -727,6 +792,9 @@ class DeckController {
     this.createControllerMethodHandler('play', 'play');
     this.createControllerMethodHandler('pause', 'pause');
     this.createControllerMethodHandler('stop', 'stop');
+
+    // Back-spin button
+    this.createDeckMethodHandler('backSpin', 'startBackSpin');
 
     // CUE button - press and hold behavior
     window.buttonHandler.createPressAndHoldHandler(
