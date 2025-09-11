@@ -1644,48 +1644,23 @@ class DeckController {
   // Loop button state management methods
   updateLoopToggleState(isActive) {
     const loopToggleButton = document.getElementById(`loopToggle${this.deckId}`);
-    
-    if (isActive) {
-      loopToggleButton.classList.add('active');
-    } else {
-      loopToggleButton.classList.remove('active');
-    }
+    loopToggleButton.classList.toggle('active', isActive);
   }
 
   updateLoopInState(isActive) {
     const loopInButton = document.getElementById(`loopIn${this.deckId}`);
-    
-    if (isActive) {
-      loopInButton.classList.add('active');
-    } else {
-      loopInButton.classList.remove('active');
-    }
+    loopInButton.classList.toggle('active', isActive);
   }
 
   updateLoopOutState(isActive) {
     const loopOutButton = document.getElementById(`loopOut${this.deckId}`);
-    
-    if (isActive) {
-      loopOutButton.classList.add('active');
-    } else {
-      loopOutButton.classList.remove('active');
-    }
+    loopOutButton.classList.toggle('active', isActive);
   }
 
   updateLoopButtonsDisabledState(disabled) {
     const loopInButton = document.getElementById(`loopIn${this.deckId}`);
     const loopOutButton = document.getElementById(`loopOut${this.deckId}`);
-    
-    if (disabled) {
-      loopInButton.style.opacity = '0.5';
-      loopInButton.style.pointerEvents = 'none';
-      loopOutButton.style.opacity = '0.5';
-      loopOutButton.style.pointerEvents = 'none';
-    } else {
-      loopInButton.style.opacity = '';
-      loopInButton.style.pointerEvents = '';
-      loopOutButton.style.opacity = '';
-      loopOutButton.style.pointerEvents = '';
-    }
+    loopInButton.classList.toggle('disabled', disabled);
+    loopOutButton.classList.toggle('disabled', disabled);
   }
 }
