@@ -23,19 +23,17 @@ class AudioEngine {
       this.channelSplitter = this.audioContext.createChannelSplitter(2);
       this.channelMerger = this.audioContext.createChannelMerger(2);
       
-      // Create separate gain nodes for CUE and MAIN outputs
+      // Create separate gain node for CUE output only
       this.cueGain = this.audioContext.createGain();
-      this.mainGain = this.audioContext.createGain();
       this.masterGain = this.audioContext.createGain();
       
       // Set initial volumes
       this.cueGain.gain.value = 0.75;   // CUE volume
-      this.mainGain.gain.value = 0.75;  // MAIN volume
       this.masterGain.gain.value = 0.75; // Master volume
       
-      // Route CUE to left channel, MAIN to right channel
+      // Route CUE to left channel, MAIN (master output) to right channel
       this.cueGain.connect(this.channelMerger, 0, 0);   // CUE -> Left
-      this.mainGain.connect(this.channelMerger, 0, 1);  // MAIN -> Right
+      this.masterGain.connect(this.channelMerger, 0, 1);  // MAIN -> Right
       this.channelMerger.connect(this.masterGain);
       this.masterGain.connect(this.audioContext.destination);
 
@@ -43,8 +41,8 @@ class AudioEngine {
       this.mediaStreamDestination = this.audioContext.createMediaStreamDestination();
       this.masterGain.connect(this.mediaStreamDestination);
 
-      this.decks.A = new Deck(this.audioContext, this.mainGain, this.cueGain, 'A');
-      this.decks.B = new Deck(this.audioContext, this.mainGain, this.cueGain, 'B');
+      this.decks.A = new Deck(this.audioContext, this.masterGain, this.cueGain, 'A');
+      this.decks.B = new Deck(this.audioContext, this.masterGain, this.cueGain, 'B');
 
       // Set initial deck volumes
       this.decks.A.setVolume(100);
@@ -52,7 +50,7 @@ class AudioEngine {
 
       console.log('Audio engine initialized with CUE/MAIN split routing');
       console.log('CUE output (left channel):', this.cueGain);
-      console.log('MAIN output (right channel):', this.mainGain);
+      console.log('MAIN output (right channel):', this.masterGain);
 
       this.isInitialized = true;
     } catch (error) {
@@ -78,11 +76,7 @@ class AudioEngine {
     }
   }
 
-  setMainVolume(value) {
-    if (this.mainGain) {
-      this.mainGain.gain.value = value / 100;
-    }
-  }
+
 
   getMasterVolume() {
     return this.masterGain ? this.masterGain.gain.value : 0.75;
@@ -92,9 +86,7 @@ class AudioEngine {
     return this.cueGain ? this.cueGain.gain.value : 0.75;
   }
 
-  getMainVolume() {
-    return this.mainGain ? this.mainGain.gain.value : 0.75;
-  }
+
 
   getDeck(deckId) {
     return this.decks[deckId];

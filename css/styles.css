@@ -251,16 +251,10 @@ body {
   gap: var(--spacing-sm);
 }
 
-.main-volume {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
+
 
 .master-volume label,
-.cue-volume label,
-.main-volume label {
+.cue-volume label {
   font-weight: 600;
   font-size: 0.9rem;
   color: var(--text-secondary);
@@ -976,10 +970,7 @@ body {
   width: 150px;
 }
 
-.main-volume-slider {
-  height: 4px;
-  width: 150px;
-}
+
 
 .volume-controls {
   display: flex;

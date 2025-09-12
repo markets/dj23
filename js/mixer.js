@@ -53,10 +53,6 @@ class MixerController {
       window.audioEngine.setCueVolume(value);
     }, { suffix: '%' });
 
-    // MAIN volume control
-    this.createSliderHandler('mainVolume', (value) => {
-      window.audioEngine.setMainVolume(value);
-    }, { suffix: '%' });
 
     const crossfader = document.getElementById('crossfader');
     crossfader.addEventListener('input', (e) => {
@@ -102,17 +98,17 @@ class MixerController {
     const bothCued = deckA.isPreListenEnabled && deckB.isPreListenEnabled;
     
     if (bothCued) {
-      // When both decks are pre-listening, mix them down (equal levels)
-      deckA.cueGainNode.gain.value = deckA.volume * 0.5;
-      deckB.cueGainNode.gain.value = deckB.volume * 0.5;
+      // When both decks are pre-listening, mix them down at equal levels to avoid clipping
+      deckA.cueGainNode.gain.value = 0.5;
+      deckB.cueGainNode.gain.value = 0.5;
     } else if (deckA.isPreListenEnabled) {
-      // Only deck A is pre-listening
-      deckA.cueGainNode.gain.value = deckA.volume;
+      // Only deck A is pre-listening - full volume
+      deckA.cueGainNode.gain.value = 1.0;
       deckB.cueGainNode.gain.value = 0;
     } else if (deckB.isPreListenEnabled) {
-      // Only deck B is pre-listening
+      // Only deck B is pre-listening - full volume
       deckA.cueGainNode.gain.value = 0;
-      deckB.cueGainNode.gain.value = deckB.volume;
+      deckB.cueGainNode.gain.value = 1.0;
     } else {
       // No decks are pre-listening
       deckA.cueGainNode.gain.value = 0;
