@@ -1173,6 +1173,11 @@ body {
   box-shadow: var(--shadow-primary) !important;
 }
 
+.loop-btn.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
 .loop-control .loop-length-value {
   font-size: 0.9rem;
   color: var(--text-secondary);

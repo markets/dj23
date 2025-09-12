@@ -53,6 +53,10 @@ class Deck {
     this.setupAudioNodes();
   }
 
+  get controller() {
+    return window.mixerController.deckControllers[this.deckId];
+  }
+
   setupAudioNodes() {
     this.gainNode = this.audioContext.createGain();
     this.gainNode.gain.value = this.volume;
@@ -335,10 +339,10 @@ class Deck {
     this.loopLengthPercentage = 100;
     
     // Update UI to reflect cleared loop state
-    const controller = window.mixerController?.deckControllers[this.deckId];
-    if (controller) {
-      controller.updateLoopState(false);
-    }
+    this.controller.updateLoopToggleState(false);
+    this.controller.updateLoopInState(false);
+    this.controller.updateLoopOutState(false);
+    this.controller.updateLoopButtonsDisabledState(false);
     
     console.log(`Deck ${this.deckId}: Loop points reset`);
   }
@@ -389,10 +393,7 @@ class Deck {
     this.play();
     
     // Update CUE button visual state
-    const controller = window.mixerController?.deckControllers[this.deckId];
-    if (controller) {
-      controller.updateCueState(true);
-    }
+    this.controller.updateCueState(true);
     
     console.log(`Deck ${this.deckId}: CUE mode started`);
   }
@@ -417,10 +418,7 @@ class Deck {
     this.isCueActive = false;
     
     // Update CUE button visual state
-    const controller = window.mixerController?.deckControllers[this.deckId];
-    if (controller) {
-      controller.updateCueState(false);
-    }
+    this.controller.updateCueState(false);
     
     console.log(`Deck ${this.deckId}: CUE mode stopped`);
   }
@@ -429,13 +427,31 @@ class Deck {
   setLoopIn() {
     this.loopStart = this.getCurrentTime();
     console.log(`Deck ${this.deckId}: Loop IN set at ${this.loopStart}s`);
+    
+    // Show only IN as active
+    this.controller.updateLoopInState(true);
+    this.controller.updateLoopOutState(false);
+    this.controller.updateLoopToggleState(false);
   }
 
   setLoopOut() {
+    // Only allow setting OUT if IN is already set
+    if (this.loopStart === null) {
+      console.log(`Deck ${this.deckId}: Cannot set Loop OUT - Loop IN must be set first`);
+      // Ensure UI state remains correct when validation fails
+      this.controller.updateLoopOutState(false);
+      return;
+    }
+    
     this.loopEnd = this.getCurrentTime();
     this.originalLoopEnd = this.loopEnd; // Store original loop end
     this.loopLengthPercentage = 100; // Reset to 100% when setting new loop out
     console.log(`Deck ${this.deckId}: Loop OUT set at ${this.loopEnd}s`);
+    
+    // Show only OUT as active (indicates you have a saved loop)
+    this.controller.updateLoopInState(false);
+    this.controller.updateLoopOutState(true);
+    this.controller.updateLoopToggleState(false);
   }
 
   setLoopLength(percentage) {
@@ -455,9 +471,20 @@ class Deck {
       if (this.isLooping) {
         this.startLoopMonitoring();
         console.log(`Deck ${this.deckId}: Loop enabled`);
+        
+        // When loop is active: only LOOP button is active, IN/OUT are disabled
+        this.controller.updateLoopToggleState(true);
+        this.controller.updateLoopInState(false);
+        this.controller.updateLoopOutState(false);
+        this.controller.updateLoopButtonsDisabledState(true);
       } else {
         this.stopLoopMonitoring();
         console.log(`Deck ${this.deckId}: Loop disabled`);
+        
+        // When loop is disabled: restore IN/OUT to their normal state
+        this.controller.updateLoopToggleState(false);
+        this.controller.updateLoopButtonsDisabledState(false);
+        this.controller.updateLoopOutState(false);
       }
     } else {
       console.log(`Deck ${this.deckId}: Cannot loop - loop points not set`);
@@ -665,12 +692,7 @@ class Deck {
     setTimeout(() => {
       this.isBackSpinning = false;
       // Call controller's pause method to properly update UI state
-      const controller = window.mixerController?.deckControllers[this.deckId];
-      if (controller) {
-        controller.pause();
-      } else {
-        this.pause();
-      }
+      this.controller.pause();
     }, duration * 1000);
   }
 
@@ -936,11 +958,10 @@ class DeckController {
     // Loop controls
     this.createDeckMethodHandler('loopIn', 'setLoopIn');
     this.createDeckMethodHandler('loopOut', 'setLoopOut');
-    // Custom handler for loop toggle to update UI state
+    // Custom handler for loop toggle
     window.buttonHandler.createClickHandler(`loopToggle${this.deckId}`, () => {
       const deck = window.audioEngine.getDeck(this.deckId);
       deck.toggleLoop();
-      this.updateLoopState(deck.isLooping);
     });
     this.createSliderHandler(`loopLength${this.deckId}`, 'setLoopLength', {
       displayElement: document.getElementById(`loopLengthValue${this.deckId}`),
@@ -1394,44 +1415,18 @@ class DeckController {
   updatePlayingState(isPlaying) {
     const deckElement = document.getElementById(`deck${this.deckId}`);
     const playButton = document.getElementById(`play${this.deckId}`);
-    
-    if (isPlaying) {
-      deckElement.classList.add('playing');
-      playButton.classList.add('active');
-    } else {
-      deckElement.classList.remove('playing');
-      playButton.classList.remove('active');
-    }
+    deckElement.classList.toggle('playing', isPlaying);
+    playButton.classList.toggle('active', isPlaying);
   }
 
   updatePauseState(isPaused) {
     const pauseButton = document.getElementById(`pause${this.deckId}`);
-    
-    if (isPaused) {
-      pauseButton.classList.add('active');
-    } else {
-      pauseButton.classList.remove('active');
-    }
+    pauseButton.classList.toggle('active', isPaused);
   }
 
   updateCueState(isCueActive) {
     const cueButton = document.getElementById(`cue${this.deckId}`);
-    
-    if (isCueActive) {
-      cueButton.classList.add('active');
-    } else {
-      cueButton.classList.remove('active');
-    }
-  }
-
-  updateLoopState(isLooping) {
-    const loopToggleButton = document.getElementById(`loopToggle${this.deckId}`);
-    
-    if (isLooping) {
-      loopToggleButton.classList.add('active');
-    } else {
-      loopToggleButton.classList.remove('active');
-    }
+    cueButton.classList.toggle('active', isCueActive);
   }
 
   updateTrackTime() {
@@ -1615,5 +1610,27 @@ class DeckController {
     } else {
       return sortedArray[Math.floor(length / 2)];
     }
+  }
+
+  updateLoopToggleState(isActive) {
+    const loopToggleButton = document.getElementById(`loopToggle${this.deckId}`);
+    loopToggleButton.classList.toggle('active', isActive);
+  }
+
+  updateLoopInState(isActive) {
+    const loopInButton = document.getElementById(`loopIn${this.deckId}`);
+    loopInButton.classList.toggle('active', isActive);
+  }
+
+  updateLoopOutState(isActive) {
+    const loopOutButton = document.getElementById(`loopOut${this.deckId}`);
+    loopOutButton.classList.toggle('active', isActive);
+  }
+
+  updateLoopButtonsDisabledState(disabled) {
+    const loopInButton = document.getElementById(`loopIn${this.deckId}`);
+    const loopOutButton = document.getElementById(`loopOut${this.deckId}`);
+    loopInButton.classList.toggle('disabled', disabled);
+    loopOutButton.classList.toggle('disabled', disabled);
   }
 }
