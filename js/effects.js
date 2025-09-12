@@ -32,7 +32,7 @@ class EffectsEngine {
     
     // Add feedback for more character
     this.effectNodes.phaserFeedback = this.audioContext.createGain();
-    this.effectNodes.phaserFeedback.gain.value = 0.3; // Moderate feedback for warmth
+    this.effectNodes.phaserFeedback.gain.value = 0.2; // Reduced for clipping prevention
     
     // Use 6 filters with more musical frequency distribution
     // Based on common phaser pedal designs - covering a wider frequency range
@@ -56,7 +56,7 @@ class EffectsEngine {
     this.effectNodes.flangerGain = this.audioContext.createGain();
     this.effectNodes.flangerGain.gain.value = 0;
     this.effectNodes.flangerFeedback = this.audioContext.createGain();
-    this.effectNodes.flangerFeedback.gain.value = 0.7;
+    this.effectNodes.flangerFeedback.gain.value = 0.5;
     this.effectNodes.flangerDry = this.audioContext.createGain();
     this.effectNodes.flangerDry.gain.value = 1;
 
@@ -141,9 +141,10 @@ class EffectsEngine {
   // Effect parameter control methods
   setReverb(value) {
     if (this.effectNodes.reverbGain) {
-      const wetLevel = Math.pow(value / 100, 0.7) * 1.2; // Exponential curve, max 120%
-      this.effectNodes.reverbGain.gain.value = Math.min(wetLevel, 1.2);
-      this.effectNodes.reverbDry.gain.value = Math.max(1 - (wetLevel * 0.8), 0.2); // Keep some dry signal
+      // Limit reverb to prevent clipping - max 80% instead of 120%
+      const wetLevel = Math.pow(value / 100, 0.7) * 0.8;
+      this.effectNodes.reverbGain.gain.value = Math.min(wetLevel, 0.8);
+      this.effectNodes.reverbDry.gain.value = Math.max(1 - (wetLevel * 0.8), 0.3);
     }
   }
 
@@ -170,7 +171,8 @@ class EffectsEngine {
       
       // Dynamic feedback based on effect intensity for more character
       if (this.effectNodes.phaserFeedback) {
-        const feedbackAmount = (value / 100) * 0.4; // Increase feedback with effect intensity
+        // Reduced max feedback to prevent clipping (was 0.4)
+        const feedbackAmount = (value / 100) * 0.25;
         this.effectNodes.phaserFeedback.gain.value = feedbackAmount;
       }
       

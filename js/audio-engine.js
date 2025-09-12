@@ -20,7 +20,9 @@ class AudioEngine {
       this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
       this.masterGain = this.audioContext.createGain();
       this.masterGain.connect(this.audioContext.destination);
-      this.masterGain.gain.value = 0.75;
+      // Apply -3dB attenuation for headroom safety (0.75 * 0.707 ≈ 0.53)
+      // This prevents clipping when effects are applied
+      this.masterGain.gain.value = 0.53;
 
       // Create a media stream destination for recording
       this.mediaStreamDestination = this.audioContext.createMediaStreamDestination();
@@ -47,12 +49,13 @@ class AudioEngine {
 
   setMasterVolume(value) {
     if (this.masterGain) {
-      this.masterGain.gain.value = value / 100;
+      // Map 0-100% UI range to 0-0.53 actual range for -3dB headroom
+      this.masterGain.gain.value = (value / 100) * 0.53;
     }
   }
 
   getMasterVolume() {
-    return this.masterGain ? this.masterGain.gain.value : 0.75;
+    return this.masterGain ? this.masterGain.gain.value : 0.53;
   }
 
   getDeck(deckId) {

@@ -233,9 +233,11 @@ class Deck {
 
   setEQ(band, value) {
     if (band === 'gain') {
-      // Handle global gain - convert dB to linear gain
+      // Handle global gain - convert dB to linear gain with limiting
       if (this.globalGainNode) {
-        const gainValue = Math.pow(10, value / 20);
+        // Limit gain to +12dB maximum to prevent clipping (was unlimited)
+        const clampedValue = Math.max(-25, Math.min(12, value));
+        const gainValue = Math.pow(10, clampedValue / 20);
         this.globalGainNode.gain.value = gainValue;
       }
     } else if (this.eqNodes[band]) {
