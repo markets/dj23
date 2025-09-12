@@ -18,16 +18,33 @@ class AudioEngine {
 
     try {
       this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      
+      // Create stereo channel splitter for CUE (left) and MAIN (right) outputs
+      this.channelSplitter = this.audioContext.createChannelSplitter(2);
+      this.channelMerger = this.audioContext.createChannelMerger(2);
+      
+      // Create separate gain nodes for CUE and MAIN outputs
+      this.cueGain = this.audioContext.createGain();
+      this.mainGain = this.audioContext.createGain();
       this.masterGain = this.audioContext.createGain();
+      
+      // Set initial volumes
+      this.cueGain.gain.value = 0.75;   // CUE volume
+      this.mainGain.gain.value = 0.75;  // MAIN volume
+      this.masterGain.gain.value = 0.75; // Master volume
+      
+      // Route CUE to left channel, MAIN to right channel
+      this.cueGain.connect(this.channelMerger, 0, 0);   // CUE -> Left
+      this.mainGain.connect(this.channelMerger, 0, 1);  // MAIN -> Right
+      this.channelMerger.connect(this.masterGain);
       this.masterGain.connect(this.audioContext.destination);
-      this.masterGain.gain.value = 0.75;
 
       // Create a media stream destination for recording
       this.mediaStreamDestination = this.audioContext.createMediaStreamDestination();
       this.masterGain.connect(this.mediaStreamDestination);
 
-      this.decks.A = new Deck(this.audioContext, this.masterGain, 'A');
-      this.decks.B = new Deck(this.audioContext, this.masterGain, 'B');
+      this.decks.A = new Deck(this.audioContext, this.mainGain, this.cueGain, 'A');
+      this.decks.B = new Deck(this.audioContext, this.mainGain, this.cueGain, 'B');
 
       // Set initial deck volumes
       this.decks.A.setVolume(100);
@@ -51,8 +68,28 @@ class AudioEngine {
     }
   }
 
+  setCueVolume(value) {
+    if (this.cueGain) {
+      this.cueGain.gain.value = value / 100;
+    }
+  }
+
+  setMainVolume(value) {
+    if (this.mainGain) {
+      this.mainGain.gain.value = value / 100;
+    }
+  }
+
   getMasterVolume() {
     return this.masterGain ? this.masterGain.gain.value : 0.75;
+  }
+
+  getCueVolume() {
+    return this.cueGain ? this.cueGain.gain.value : 0.75;
+  }
+
+  getMainVolume() {
+    return this.mainGain ? this.mainGain.gain.value : 0.75;
   }
 
   getDeck(deckId) {

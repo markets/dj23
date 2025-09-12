@@ -48,6 +48,16 @@ class MixerController {
       window.audioEngine.setMasterVolume(value);
     }, { suffix: '%' });
 
+    // CUE volume control
+    this.createSliderHandler('cueVolume', (value) => {
+      window.audioEngine.setCueVolume(value);
+    }, { suffix: '%' });
+
+    // MAIN volume control
+    this.createSliderHandler('mainVolume', (value) => {
+      window.audioEngine.setMainVolume(value);
+    }, { suffix: '%' });
+
     const crossfader = document.getElementById('crossfader');
     crossfader.addEventListener('input', (e) => {
       this.crossfaderValue = parseInt(e.target.value);

@@ -1,12 +1,14 @@
 class Deck {
-  constructor(audioContext, masterGain, deckId) {
+  constructor(audioContext, mainOutput, cueOutput, deckId) {
     this.audioContext = audioContext;
-    this.masterGain = masterGain;
+    this.mainOutput = mainOutput;
+    this.cueOutput = cueOutput;
     this.deckId = deckId;
 
     this.audioBuffer = null;
     this.source = null;
     this.gainNode = null;
+    this.cueGainNode = null;
     this.eqNodes = {};
     this.effectNodes = {};
 
@@ -16,6 +18,9 @@ class Deck {
     this.pauseTime = 0;
     this.playbackRate = 1;
     this.volume = 0.75;
+
+    // Pre-listen/cue functionality
+    this.isCueEnabled = false; // Track if pre-listen is enabled
 
     // Initialize BPM analyzer
     this.bpmAnalyzer = new BPMAnalyzer(audioContext, deckId);
@@ -58,8 +63,13 @@ class Deck {
   }
 
   setupAudioNodes() {
+    // Main output gain node
     this.gainNode = this.audioContext.createGain();
     this.gainNode.gain.value = this.volume;
+
+    // Cue output gain node
+    this.cueGainNode = this.audioContext.createGain();
+    this.cueGainNode.gain.value = 0; // Start with cue disabled
 
     this.globalGainNode = this.audioContext.createGain();
     this.globalGainNode.gain.value = 1.0;
@@ -170,7 +180,12 @@ class Deck {
       this.effectNodes.flangerGain.connect(this.globalGainNode);
     }
 
-    this.gainNode.connect(this.masterGain);
+    // Route to both main and cue outputs
+    this.globalGainNode.connect(this.gainNode);
+    this.globalGainNode.connect(this.cueGainNode);
+    
+    this.gainNode.connect(this.mainOutput);
+    this.cueGainNode.connect(this.cueOutput);
 
     // Start from the saved resume time
     this.source.start(0, resumeTime);
@@ -221,6 +236,10 @@ class Deck {
     this.volume = value / 100;
     if (this.gainNode) {
       this.gainNode.gain.value = this.volume;
+    }
+    // Update cue volume if cue is enabled
+    if (this.cueGainNode && this.isCueEnabled) {
+      this.cueGainNode.gain.value = this.volume;
     }
   }
 
@@ -421,6 +440,33 @@ class Deck {
     this.controller.updateCueState(false);
     
     console.log(`Deck ${this.deckId}: CUE mode stopped`);
+  }
+
+  // Pre-listen/cue functionality
+  enableCue() {
+    this.isCueEnabled = true;
+    if (this.cueGainNode) {
+      this.cueGainNode.gain.value = this.volume; // Use deck volume for cue
+    }
+    console.log(`Deck ${this.deckId}: Pre-listen enabled`);
+    this.controller.updateCueButtonState(true);
+  }
+
+  disableCue() {
+    this.isCueEnabled = false;
+    if (this.cueGainNode) {
+      this.cueGainNode.gain.value = 0; // Mute cue output
+    }
+    console.log(`Deck ${this.deckId}: Pre-listen disabled`);
+    this.controller.updateCueButtonState(false);
+  }
+
+  toggleCue() {
+    if (this.isCueEnabled) {
+      this.disableCue();
+    } else {
+      this.enableCue();
+    }
   }
 
   // Loop methods
@@ -818,14 +864,11 @@ class DeckController {
     // Back-spin button
     this.createDeckMethodHandler('backSpin', 'startBackSpin');
 
-    // CUE button - press and hold behavior
-    window.buttonHandler.createPressAndHoldHandler(
+    // CUE button - toggle pre-listen
+    window.buttonHandler.createClickHandler(
       `cue${this.deckId}`,
       () => {
-        window.buttonHandler.callDeckMethod(this.deckId, 'startCueMode');
-      },
-      () => {
-        window.buttonHandler.callDeckMethod(this.deckId, 'stopCueMode');
+        window.buttonHandler.callDeckMethod(this.deckId, 'toggleCue');
       }
     );
 
@@ -1427,6 +1470,11 @@ class DeckController {
   updateCueState(isCueActive) {
     const cueButton = document.getElementById(`cue${this.deckId}`);
     cueButton.classList.toggle('active', isCueActive);
+  }
+
+  updateCueButtonState(isCueEnabled) {
+    const cueButton = document.getElementById(`cue${this.deckId}`);
+    cueButton.classList.toggle('active', isCueEnabled);
   }
 
   updateTrackTime() {
