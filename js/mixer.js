@@ -80,9 +80,39 @@ class MixerController {
       const fadeA = Math.cos((this.crossfaderValue / 100) * Math.PI / 2);
       const fadeB = Math.sin((this.crossfaderValue / 100) * Math.PI / 2);
             
-      // Apply crossfader curve
+      // Apply crossfader curve to MAIN output only
       deckA.gainNode.gain.value = deckA.volume * fadeA;
       deckB.gainNode.gain.value = deckB.volume * fadeB;
+
+      // Handle CUE output mixdown logic
+      this.updateCueMixdown();
+    }
+  }
+
+  updateCueMixdown() {
+    const deckA = window.audioEngine.getDeck('A');
+    const deckB = window.audioEngine.getDeck('B');
+    
+    if (!deckA || !deckB) return;
+
+    const bothCued = deckA.isCueEnabled && deckB.isCueEnabled;
+    
+    if (bothCued) {
+      // When both decks are cued, mix them down (equal levels)
+      deckA.cueGainNode.gain.value = deckA.volume * 0.5;
+      deckB.cueGainNode.gain.value = deckB.volume * 0.5;
+    } else if (deckA.isCueEnabled) {
+      // Only deck A is cued
+      deckA.cueGainNode.gain.value = deckA.volume;
+      deckB.cueGainNode.gain.value = 0;
+    } else if (deckB.isCueEnabled) {
+      // Only deck B is cued
+      deckA.cueGainNode.gain.value = 0;
+      deckB.cueGainNode.gain.value = deckB.volume;
+    } else {
+      // No decks are cued
+      deckA.cueGainNode.gain.value = 0;
+      deckB.cueGainNode.gain.value = 0;
     }
   }
 

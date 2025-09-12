@@ -237,9 +237,9 @@ class Deck {
     if (this.gainNode) {
       this.gainNode.gain.value = this.volume;
     }
-    // Update cue volume if cue is enabled
-    if (this.cueGainNode && this.isCueEnabled) {
-      this.cueGainNode.gain.value = this.volume;
+    // Update cue mixdown when volume changes
+    if (window.mixerController) {
+      window.mixerController.updateCueMixdown();
     }
   }
 
@@ -445,20 +445,18 @@ class Deck {
   // Pre-listen/cue functionality
   enableCue() {
     this.isCueEnabled = true;
-    if (this.cueGainNode) {
-      this.cueGainNode.gain.value = this.volume; // Use deck volume for cue
-    }
     console.log(`Deck ${this.deckId}: Pre-listen enabled`);
     this.controller.updateCueButtonState(true);
+    // Update the cue mixdown
+    window.mixerController.updateCueMixdown();
   }
 
   disableCue() {
     this.isCueEnabled = false;
-    if (this.cueGainNode) {
-      this.cueGainNode.gain.value = 0; // Mute cue output
-    }
     console.log(`Deck ${this.deckId}: Pre-listen disabled`);
     this.controller.updateCueButtonState(false);
+    // Update the cue mixdown
+    window.mixerController.updateCueMixdown();
   }
 
   toggleCue() {
