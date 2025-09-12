@@ -19,8 +19,8 @@ class Deck {
     this.playbackRate = 1;
     this.volume = 0.75;
 
-    // Pre-listen/cue functionality
-    this.isCueEnabled = false; // Track if pre-listen is enabled
+    // Pre-listen functionality
+    this.isPreListenEnabled = false;
 
     // Initialize BPM analyzer
     this.bpmAnalyzer = new BPMAnalyzer(audioContext, deckId);
@@ -69,7 +69,7 @@ class Deck {
 
     // Cue output gain node
     this.cueGainNode = this.audioContext.createGain();
-    this.cueGainNode.gain.value = 0; // Start with cue disabled
+    this.cueGainNode.gain.value = 0; // Start with pre-listen disabled
 
     this.globalGainNode = this.audioContext.createGain();
     this.globalGainNode.gain.value = 1.0;
@@ -240,6 +240,34 @@ class Deck {
     // Update cue mixdown when volume changes
     if (window.mixerController) {
       window.mixerController.updateCueMixdown();
+    }
+  }
+
+  // Pre-listen functionality
+  enablePreListen() {
+    this.isPreListenEnabled = true;
+    console.log(`Deck ${this.deckId}: Pre-listen enabled`);
+    // Update the cue mixdown
+    if (window.mixerController) {
+      window.mixerController.updateCueMixdown();
+    }
+  }
+
+  disablePreListen() {
+    this.isPreListenEnabled = false;
+    console.log(`Deck ${this.deckId}: Pre-listen disabled`);
+    // Update the cue mixdown
+    if (window.mixerController) {
+      window.mixerController.updateCueMixdown();
+    }
+  }
+
+  togglePreListen() {
+    console.log(`Deck ${this.deckId}: Toggle Pre-listen - current state:`, this.isPreListenEnabled);
+    if (this.isPreListenEnabled) {
+      this.disablePreListen();
+    } else {
+      this.enablePreListen();
     }
   }
 
@@ -440,32 +468,6 @@ class Deck {
     this.controller.updateCueState(false);
     
     console.log(`Deck ${this.deckId}: CUE mode stopped`);
-  }
-
-  // Pre-listen/cue functionality
-  enableCue() {
-    this.isCueEnabled = true;
-    console.log(`Deck ${this.deckId}: Pre-listen enabled`);
-    this.controller.updateCueButtonState(true);
-    // Update the cue mixdown
-    window.mixerController.updateCueMixdown();
-  }
-
-  disableCue() {
-    this.isCueEnabled = false;
-    console.log(`Deck ${this.deckId}: Pre-listen disabled`);
-    this.controller.updateCueButtonState(false);
-    // Update the cue mixdown
-    window.mixerController.updateCueMixdown();
-  }
-
-  toggleCue() {
-    console.log(`Deck ${this.deckId}: Toggle CUE - current state:`, this.isCueEnabled);
-    if (this.isCueEnabled) {
-      this.disableCue();
-    } else {
-      this.enableCue();
-    }
   }
 
   // Loop methods
@@ -720,7 +722,7 @@ class Deck {
     this.eqNodes.mid.connect(this.eqNodes.high);
     this.eqNodes.high.connect(this.globalGainNode);
     this.globalGainNode.connect(this.gainNode);
-    this.gainNode.connect(this.masterGain);
+    this.gainNode.connect(this.mainOutput);
 
     // Start with fast reverse playback then slow down
     const now = this.audioContext.currentTime;
@@ -863,11 +865,14 @@ class DeckController {
     // Back-spin button
     this.createDeckMethodHandler('backSpin', 'startBackSpin');
 
-    // CUE button - toggle pre-listen
-    window.buttonHandler.createClickHandler(
+    // CUE button - press and hold behavior
+    window.buttonHandler.createPressAndHoldHandler(
       `cue${this.deckId}`,
       () => {
-        window.buttonHandler.callDeckMethod(this.deckId, 'toggleCue');
+        window.buttonHandler.callDeckMethod(this.deckId, 'startCueMode');
+      },
+      () => {
+        window.buttonHandler.callDeckMethod(this.deckId, 'stopCueMode');
       }
     );
 
@@ -1469,11 +1474,6 @@ class DeckController {
   updateCueState(isCueActive) {
     const cueButton = document.getElementById(`cue${this.deckId}`);
     cueButton.classList.toggle('active', isCueActive);
-  }
-
-  updateCueButtonState(isCueEnabled) {
-    const cueButton = document.getElementById(`cue${this.deckId}`);
-    cueButton.classList.toggle('active', isCueEnabled);
   }
 
   updateTrackTime() {

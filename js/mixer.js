@@ -70,6 +70,10 @@ class MixerController {
     // Sync buttons
     window.buttonHandler.createClickHandler('syncAB', () => this.syncDecks('A', 'B'));
     window.buttonHandler.createClickHandler('syncBA', () => this.syncDecks('B', 'A'));
+
+    // PRE-LISTEN buttons
+    window.buttonHandler.createClickHandler('preListenA', () => this.togglePreListen('A'));
+    window.buttonHandler.createClickHandler('preListenB', () => this.togglePreListen('B'));
   }
 
   updateCrossfader() {
@@ -95,22 +99,22 @@ class MixerController {
     
     if (!deckA || !deckB) return;
 
-    const bothCued = deckA.isCueEnabled && deckB.isCueEnabled;
+    const bothCued = deckA.isPreListenEnabled && deckB.isPreListenEnabled;
     
     if (bothCued) {
-      // When both decks are cued, mix them down (equal levels)
+      // When both decks are pre-listening, mix them down (equal levels)
       deckA.cueGainNode.gain.value = deckA.volume * 0.5;
       deckB.cueGainNode.gain.value = deckB.volume * 0.5;
-    } else if (deckA.isCueEnabled) {
-      // Only deck A is cued
+    } else if (deckA.isPreListenEnabled) {
+      // Only deck A is pre-listening
       deckA.cueGainNode.gain.value = deckA.volume;
       deckB.cueGainNode.gain.value = 0;
-    } else if (deckB.isCueEnabled) {
-      // Only deck B is cued
+    } else if (deckB.isPreListenEnabled) {
+      // Only deck B is pre-listening
       deckA.cueGainNode.gain.value = 0;
       deckB.cueGainNode.gain.value = deckB.volume;
     } else {
-      // No decks are cued
+      // No decks are pre-listening
       deckA.cueGainNode.gain.value = 0;
       deckB.cueGainNode.gain.value = 0;
     }
@@ -324,6 +328,21 @@ class MixerController {
     };
         
     updateVU();
+  }
+
+  togglePreListen(deckId) {
+    const deck = window.audioEngine.getDeck(deckId);
+    if (deck) {
+      deck.togglePreListen();
+      this.updatePreListenButtonState(deckId, deck.isPreListenEnabled);
+    }
+  }
+
+  updatePreListenButtonState(deckId, isEnabled) {
+    const button = document.getElementById(`preListen${deckId}`);
+    if (button) {
+      button.classList.toggle('active', isEnabled);
+    }
   }
 }
 
