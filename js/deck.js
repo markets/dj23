@@ -53,7 +53,6 @@ class Deck {
     this.setupAudioNodes();
   }
 
-  // Getter for the deck controller to avoid repetitive code
   get controller() {
     return window.mixerController.deckControllers[this.deckId];
   }
@@ -485,8 +484,7 @@ class Deck {
         // When loop is disabled: restore IN/OUT to their normal state
         this.controller.updateLoopToggleState(false);
         this.controller.updateLoopButtonsDisabledState(false);
-        // Restore the saved loop state (OUT should be active since we have a saved loop)
-        this.controller.updateLoopOutState(true);
+        this.controller.updateLoopOutState(false);
       }
     } else {
       console.log(`Deck ${this.deckId}: Cannot loop - loop points not set`);
@@ -1614,7 +1612,6 @@ class DeckController {
     }
   }
 
-  // Loop button state management methods
   updateLoopToggleState(isActive) {
     const loopToggleButton = document.getElementById(`loopToggle${this.deckId}`);
     loopToggleButton.classList.toggle('active', isActive);
