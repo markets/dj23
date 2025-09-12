@@ -50,6 +50,10 @@ class AudioEngine {
       this.decks.A.setVolume(100);
       this.decks.B.setVolume(0);
 
+      console.log('Audio engine initialized with CUE/MAIN split routing');
+      console.log('CUE output (left channel):', this.cueGain);
+      console.log('MAIN output (right channel):', this.mainGain);
+
       this.isInitialized = true;
     } catch (error) {
       console.error('Failed to initialize audio context:', error);

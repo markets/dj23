@@ -460,6 +460,7 @@ class Deck {
   }
 
   toggleCue() {
+    console.log(`Deck ${this.deckId}: Toggle CUE - current state:`, this.isCueEnabled);
     if (this.isCueEnabled) {
       this.disableCue();
     } else {
