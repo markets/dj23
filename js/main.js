@@ -18,11 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.soundPad = new SoundPad(window.audioEngine);
 
   window.keyboardShortcuts = new KeyboardShortcuts();
-  
-  // Icon selector button handler
-  document.getElementById('iconSelectorBtn')?.addEventListener('click', () => {
-    window.open('icon-selector.html', '_blank');
-  });
+
     
   console.log('✅ Ready to mix!');
     

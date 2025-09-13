@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-  <!-- Professional/Studio - More detailed, realistic studio headphones -->
-  <path d="M12 1.5C6.75 1.5 2.5 5.75 2.5 11v6.5c0 1.38 1.12 2.5 2.5 2.5h1.5c.83 0 1.5-.67 1.5-1.5v-5c0-.83-.67-1.5-1.5-1.5H5V11c0-3.86 3.14-7 7-7s7 3.14 7 7v1h-1.5c-.83 0-1.5.67-1.5 1.5v5c0 .83.67 1.5 1.5 1.5H19c1.38 0 2.5-1.12 2.5-2.5V11c0-5.25-4.25-9.5-9.5-9.5z"/>
-  <circle cx="6.5" cy="15.5" r="1"/>
-  <circle cx="17.5" cy="15.5" r="1"/>
-  <path d="M7 4.5h10c.28 0 .5.22.5.5s-.22.5-.5.5H7c-.28 0-.5-.22-.5-.5s.22-.5.5-.5z"/>
-</svg>
