@@ -3,6 +3,7 @@ class KeyboardShortcuts {
     this.modalElement = null;
     this.isModalOpen = false;
     this.cueKeysPressed = new Set(); // Track which CUE keys are currently pressed
+    this.pitchBendKeysPressed = new Set(); // Track which pitch bend keys are currently pressed
     this.initialize();
   }
 
@@ -53,6 +54,28 @@ class KeyboardShortcuts {
     const deck = window.audioEngine.getDeck(deckId);
     if (deck) {
       deck.stopCueMode();
+    }
+  }
+
+  // Helper function for pitch bend press-and-hold behavior
+  handlePitchBendPress(deckId, keyCode, direction) {
+    if (this.pitchBendKeysPressed.has(keyCode)) return; // Already pressed
+
+    this.pitchBendKeysPressed.add(keyCode);
+    const deck = window.audioEngine.getDeck(deckId);
+    if (deck) {
+      deck.pitchBend(direction);
+    }
+  }
+
+  // Helper function for pitch bend release
+  handlePitchBendRelease(deckId, keyCode) {
+    if (!this.pitchBendKeysPressed.has(keyCode)) return; // Not pressed
+
+    this.pitchBendKeysPressed.delete(keyCode);
+    const deck = window.audioEngine.getDeck(deckId);
+    if (deck) {
+      deck.stopPitchBend();
     }
   }
 
@@ -153,8 +176,8 @@ class KeyboardShortcuts {
       'KeyD': () => this.clickButton('loopToggleA'),
       
       // LEFT SIDE - Deck A Pitch Bend
-      'KeyZ': () => this.clickButton('pitchBendMinusA'),
-      'KeyX': () => this.clickButton('pitchBendPlusA'),
+      'KeyZ': () => this.handlePitchBendPress('A', 'KeyZ', -1),
+      'KeyX': () => this.handlePitchBendPress('A', 'KeyX', 1),
       
       // RIGHT SIDE - Deck B Controls
       'KeyU': () => this.controlDeck('B', 'play'),
@@ -172,8 +195,8 @@ class KeyboardShortcuts {
       'KeyL': () => this.clickButton('loopToggleB'),
       
       // RIGHT SIDE - Deck B Pitch Bend
-      'KeyN': () => this.clickButton('pitchBendMinusB'),
-      'KeyM': () => this.clickButton('pitchBendPlusB'),
+      'KeyN': () => this.handlePitchBendPress('B', 'KeyN', -1),
+      'KeyM': () => this.handlePitchBendPress('B', 'KeyM', 1),
       
       // Crossfader and Master Volume
       'ArrowLeft': () => this.adjustCrossfader(-5),
@@ -246,6 +269,19 @@ class KeyboardShortcuts {
     const deckId = cueKeyMappings[e.code];
     if (deckId) {
       this.handleCueRelease(deckId, e.code);
+    }
+
+    // Handle pitch bend key releases for press-and-hold behavior
+    const pitchBendKeyMappings = {
+      'KeyZ': 'A',
+      'KeyX': 'A',
+      'KeyN': 'B',
+      'KeyM': 'B'
+    };
+
+    const pitchBendDeckId = pitchBendKeyMappings[e.code];
+    if (pitchBendDeckId) {
+      this.handlePitchBendRelease(pitchBendDeckId, e.code);
     }
   }
 }
