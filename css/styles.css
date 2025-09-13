@@ -957,7 +957,7 @@ body {
    ============================================================================ */
 .master-volume-slider, .cue-volume-slider {
   height: 4px;
-  width: 150px;
+  width: 140px;
 }
 
 .volume-controls {
