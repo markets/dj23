@@ -40,10 +40,8 @@ class KeyboardShortcuts {
     if (this.cueKeysPressed.has(keyCode)) return; // Already pressed
 
     this.cueKeysPressed.add(keyCode);
-    const deck = window.audioEngine.getDeck(deckId);
-    if (deck) {
-      deck.startCueMode();
-    }
+    const deck = this.getDeck(deckId);
+    deck.startCueMode();
   }
 
   // Helper function for CUE release
@@ -51,10 +49,8 @@ class KeyboardShortcuts {
     if (!this.cueKeysPressed.has(keyCode)) return; // Not pressed
 
     this.cueKeysPressed.delete(keyCode);
-    const deck = window.audioEngine.getDeck(deckId);
-    if (deck) {
-      deck.stopCueMode();
-    }
+    const deck = this.getDeck(deckId);
+    deck.stopCueMode();
   }
 
   // Helper function for pitch bend press-and-hold behavior
@@ -62,10 +58,8 @@ class KeyboardShortcuts {
     if (this.pitchBendKeysPressed.has(keyCode)) return; // Already pressed
 
     this.pitchBendKeysPressed.add(keyCode);
-    const deck = window.audioEngine.getDeck(deckId);
-    if (deck) {
-      deck.pitchBend(direction);
-    }
+    const deck = this.getDeck(deckId);
+    deck.pitchBend(direction);
   }
 
   // Helper function for pitch bend release
@@ -73,15 +67,26 @@ class KeyboardShortcuts {
     if (!this.pitchBendKeysPressed.has(keyCode)) return; // Not pressed
 
     this.pitchBendKeysPressed.delete(keyCode);
-    const deck = window.audioEngine.getDeck(deckId);
-    if (deck) {
-      deck.stopPitchBend();
-    }
+    const deck = this.getDeck(deckId);
+    deck.stopPitchBend();
   }
 
   // Helper function for button clicks
   clickButton(buttonId) {
     document.getElementById(buttonId)?.click();
+  }
+
+  // Helper function to get deck with null safety
+  getDeck(deckId) {
+    const actualDeck = window.audioEngine.getDeck(deckId);
+    
+    // Return a proxy object that handles null checks
+    return {
+      startCueMode: () => actualDeck?.startCueMode(),
+      stopCueMode: () => actualDeck?.stopCueMode(),
+      pitchBend: (direction) => actualDeck?.pitchBend(direction),
+      stopPitchBend: () => actualDeck?.stopPitchBend()
+    };
   }
 
   setupModal() {
@@ -119,7 +124,7 @@ class KeyboardShortcuts {
     const shortcuts = [
       'Space', 'KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyA', 'KeyS', 'KeyD',
       'KeyU', 'KeyI', 'KeyO', 'KeyP', 'KeyJ', 'KeyK', 'KeyL',
-      'KeyZ', 'KeyX', 'KeyN', 'KeyM',
+      'KeyZ', 'KeyX', 'KeyC', 'KeyN', 'KeyM', 'Comma',
       'Digit1', 'Digit2', 'Digit8', 'Digit9',
       'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'
     ];
@@ -170,14 +175,15 @@ class KeyboardShortcuts {
       'Digit1': () => this.handleCuePoint(e, 'A', 1),
       'Digit2': () => this.handleCuePoint(e, 'A', 2),
       
-      // LEFT SIDE - Deck A Loop Controls
-      'KeyA': () => this.clickButton('loopInA'),
-      'KeyS': () => this.clickButton('loopOutA'),
-      'KeyD': () => this.clickButton('loopToggleA'),
+      // LEFT SIDE - Deck A Pitch Bend (moved from Z/X to A/S)
+      'KeyA': () => this.handlePitchBendPress('A', 'KeyA', -1),
+      'KeyS': () => this.handlePitchBendPress('A', 'KeyS', 1),
+      'KeyD': () => {}, // Reserved for future use
       
-      // LEFT SIDE - Deck A Pitch Bend
-      'KeyZ': () => this.handlePitchBendPress('A', 'KeyZ', -1),
-      'KeyX': () => this.handlePitchBendPress('A', 'KeyX', 1),
+      // LEFT SIDE - Deck A Loop Controls (moved from A/S/D to Z/X/C)
+      'KeyZ': () => this.clickButton('loopInA'),
+      'KeyX': () => this.clickButton('loopOutA'),
+      'KeyC': () => this.clickButton('loopToggleA'),
       
       // RIGHT SIDE - Deck B Controls
       'KeyU': () => this.controlDeck('B', 'play'),
@@ -189,14 +195,15 @@ class KeyboardShortcuts {
       'Digit8': () => this.handleCuePoint(e, 'B', 1),
       'Digit9': () => this.handleCuePoint(e, 'B', 2),
       
-      // RIGHT SIDE - Deck B Loop Controls
-      'KeyJ': () => this.clickButton('loopInB'),
-      'KeyK': () => this.clickButton('loopOutB'),
-      'KeyL': () => this.clickButton('loopToggleB'),
+      // RIGHT SIDE - Deck B Pitch Bend (moved from N/M to J/K)
+      'KeyJ': () => this.handlePitchBendPress('B', 'KeyJ', -1),
+      'KeyK': () => this.handlePitchBendPress('B', 'KeyK', 1),
+      'KeyL': () => {}, // Reserved for future use
       
-      // RIGHT SIDE - Deck B Pitch Bend
-      'KeyN': () => this.handlePitchBendPress('B', 'KeyN', -1),
-      'KeyM': () => this.handlePitchBendPress('B', 'KeyM', 1),
+      // RIGHT SIDE - Deck B Loop Controls (moved from J/K/L to N/M/,)
+      'KeyN': () => this.clickButton('loopInB'),
+      'KeyM': () => this.clickButton('loopOutB'),
+      'Comma': () => this.clickButton('loopToggleB'),
       
       // Crossfader and Master Volume
       'ArrowLeft': () => this.adjustCrossfader(-5),
@@ -273,10 +280,10 @@ class KeyboardShortcuts {
 
     // Handle pitch bend key releases for press-and-hold behavior
     const pitchBendKeyMappings = {
-      'KeyZ': 'A',
-      'KeyX': 'A',
-      'KeyN': 'B',
-      'KeyM': 'B'
+      'KeyA': 'A',
+      'KeyS': 'A',
+      'KeyJ': 'B',
+      'KeyK': 'B'
     };
 
     const pitchBendDeckId = pitchBendKeyMappings[e.code];
