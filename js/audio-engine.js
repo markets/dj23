@@ -18,16 +18,29 @@ class AudioEngine {
 
     try {
       this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      
+      // Create stereo channel merger for CUE (left) and MAIN (right) outputs
+      this.channelMerger = this.audioContext.createChannelMerger(2);
+      
+      // Create separate gain nodes for CUE and MAIN outputs
+      this.cueGain = this.audioContext.createGain();
       this.masterGain = this.audioContext.createGain();
-      this.masterGain.connect(this.audioContext.destination);
-      this.masterGain.gain.value = 0.75;
+      
+      // Set initial volumes
+      this.cueGain.gain.value = 0.5;   // CUE volume
+      this.masterGain.gain.value = 0.75; // Master volume
+      
+      // Route CUE to left channel, MAIN to right channel of final output
+      this.cueGain.connect(this.channelMerger, 0, 0);   // CUE -> Left channel
+      this.masterGain.connect(this.channelMerger, 0, 1);  // MAIN -> Right channel
+      this.channelMerger.connect(this.audioContext.destination);
 
       // Create a media stream destination for recording
       this.mediaStreamDestination = this.audioContext.createMediaStreamDestination();
-      this.masterGain.connect(this.mediaStreamDestination);
+      this.channelMerger.connect(this.mediaStreamDestination);
 
-      this.decks.A = new Deck(this.audioContext, this.masterGain, 'A');
-      this.decks.B = new Deck(this.audioContext, this.masterGain, 'B');
+      this.decks.A = new Deck(this.audioContext, this.masterGain, this.cueGain, 'A');
+      this.decks.B = new Deck(this.audioContext, this.masterGain, this.cueGain, 'B');
 
       // Set initial deck volumes
       this.decks.A.setVolume(100);
@@ -51,8 +64,18 @@ class AudioEngine {
     }
   }
 
+  setCueVolume(value) {
+    if (this.cueGain) {
+      this.cueGain.gain.value = value / 100;
+    }
+  }
+
   getMasterVolume() {
     return this.masterGain ? this.masterGain.gain.value : 0.75;
+  }
+
+  getCueVolume() {
+    return this.cueGain ? this.cueGain.gain.value : 0.75;
   }
 
   getDeck(deckId) {

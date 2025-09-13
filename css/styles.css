@@ -237,7 +237,7 @@ body {
   gap: var(--spacing-xl);
 }
 
-.master-volume {
+.master-volume, .cue-volume {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -249,6 +249,11 @@ body {
   font-size: 0.9rem;
   color: var(--text-secondary);
   margin-bottom: var(--spacing-sm);
+}
+
+.cue-volume label {
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-xs);
 }
 
 /* ============================================================================
@@ -950,9 +955,9 @@ body {
 /* ============================================================================
    VOLUME CONTROLS
    ============================================================================ */
-.master-volume-slider {
+.master-volume-slider, .cue-volume-slider {
   height: 4px;
-  width: 150px;
+  width: 140px;
 }
 
 .volume-controls {
@@ -1018,6 +1023,37 @@ body {
   font-size: 0.8rem;
   color: var(--text-muted);
   margin-top: var(--spacing-xs);
+}
+
+.prelisten-btn {
+  background: var(--gradient-surface);
+  border: 1px solid var(--border-secondary);
+  color: white;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.8rem;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  width: 50px;
+  height: 30px;
+  margin-bottom: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-normal);
+}
+
+.prelisten-btn:hover {
+  background: linear-gradient(145deg, var(--border-secondary), var(--border-primary));
+}
+
+.prelisten-btn.active {
+  background: var(--gradient-primary) !important;
+  box-shadow: var(--shadow-primary) !important;
+}
+
+.prelisten-btn:active {
+  transform: translateY(1px);
 }
 
 /* ============================================================================

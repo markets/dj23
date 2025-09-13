@@ -48,6 +48,11 @@ class MixerController {
       window.audioEngine.setMasterVolume(value);
     }, { suffix: '%' });
 
+    // CUE volume control
+    this.createSliderHandler('cueVolume', (value) => {
+      window.audioEngine.setCueVolume(value);
+    }, { suffix: '%' });
+
     const crossfader = document.getElementById('crossfader');
     crossfader.addEventListener('input', (e) => {
       this.crossfaderValue = parseInt(e.target.value);
@@ -60,6 +65,10 @@ class MixerController {
     // Sync buttons
     window.buttonHandler.createClickHandler('syncAB', () => this.syncDecks('A', 'B'));
     window.buttonHandler.createClickHandler('syncBA', () => this.syncDecks('B', 'A'));
+
+    // PRE-LISTEN buttons
+    window.buttonHandler.createClickHandler('preListenA', () => this.togglePreListen('A'));
+    window.buttonHandler.createClickHandler('preListenB', () => this.togglePreListen('B'));
   }
 
   updateCrossfader() {
@@ -70,9 +79,39 @@ class MixerController {
       const fadeA = Math.cos((this.crossfaderValue / 100) * Math.PI / 2);
       const fadeB = Math.sin((this.crossfaderValue / 100) * Math.PI / 2);
             
-      // Apply crossfader curve
+      // Apply crossfader curve to MAIN output only
       deckA.gainNode.gain.value = deckA.volume * fadeA;
       deckB.gainNode.gain.value = deckB.volume * fadeB;
+
+      // Handle CUE output mixdown logic
+      this.updateCueMixdown();
+    }
+  }
+
+  updateCueMixdown() {
+    const deckA = window.audioEngine.getDeck('A');
+    const deckB = window.audioEngine.getDeck('B');
+    
+    if (!deckA || !deckB) return;
+
+    const bothCued = deckA.isPreListenEnabled && deckB.isPreListenEnabled;
+    
+    if (bothCued) {
+      // When both decks are pre-listening, mix them down at equal levels to avoid clipping
+      deckA.cueGainNode.gain.value = 0.5;
+      deckB.cueGainNode.gain.value = 0.5;
+    } else if (deckA.isPreListenEnabled) {
+      // Only deck A is pre-listening - full volume
+      deckA.cueGainNode.gain.value = 1.0;
+      deckB.cueGainNode.gain.value = 0;
+    } else if (deckB.isPreListenEnabled) {
+      // Only deck B is pre-listening - full volume
+      deckA.cueGainNode.gain.value = 0;
+      deckB.cueGainNode.gain.value = 1.0;
+    } else {
+      // No decks are pre-listening
+      deckA.cueGainNode.gain.value = 0;
+      deckB.cueGainNode.gain.value = 0;
     }
   }
 
@@ -296,6 +335,19 @@ class MixerController {
     };
         
     updateVU();
+  }
+
+  togglePreListen(deckId) {
+    const deck = window.audioEngine.getDeck(deckId);
+    if (deck) {
+      deck.togglePreListen();
+      this.updatePreListenButtonState(deckId, deck.isPreListenEnabled);
+    }
+  }
+
+  updatePreListenButtonState(deckId, isEnabled) {
+    const button = document.getElementById(`preListen${deckId}`);
+    button.classList.toggle('active', isEnabled);
   }
 }
 

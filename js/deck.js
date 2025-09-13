@@ -1,12 +1,14 @@
 class Deck {
-  constructor(audioContext, masterGain, deckId) {
+  constructor(audioContext, mainOutput, cueOutput, deckId) {
     this.audioContext = audioContext;
-    this.masterGain = masterGain;
+    this.mainOutput = mainOutput;
+    this.cueOutput = cueOutput;
     this.deckId = deckId;
 
     this.audioBuffer = null;
     this.source = null;
     this.gainNode = null;
+    this.cueGainNode = null;
     this.eqNodes = {};
     this.effectNodes = {};
 
@@ -16,6 +18,9 @@ class Deck {
     this.pauseTime = 0;
     this.playbackRate = 1;
     this.volume = 0.75;
+
+    // Pre-listen functionality
+    this.isPreListenEnabled = false;
 
     // Initialize BPM analyzer
     this.bpmAnalyzer = new BPMAnalyzer(audioContext, deckId);
@@ -58,8 +63,13 @@ class Deck {
   }
 
   setupAudioNodes() {
+    // Main output gain node
     this.gainNode = this.audioContext.createGain();
     this.gainNode.gain.value = this.volume;
+
+    // Cue output gain node
+    this.cueGainNode = this.audioContext.createGain();
+    this.cueGainNode.gain.value = 0; // Start with pre-listen disabled
 
     this.globalGainNode = this.audioContext.createGain();
     this.globalGainNode.gain.value = 1.0;
@@ -172,7 +182,12 @@ class Deck {
       this.effectNodes.flangerGain.connect(this.globalGainNode);
     }
 
-    this.gainNode.connect(this.masterGain);
+    // Route to both main and cue outputs
+    this.globalGainNode.connect(this.gainNode);
+    this.globalGainNode.connect(this.cueGainNode);
+    
+    this.gainNode.connect(this.mainOutput);
+    this.cueGainNode.connect(this.cueOutput);
 
     // Start from the saved resume time
     this.source.start(0, resumeTime);
@@ -255,6 +270,38 @@ class Deck {
     this.volume = value / 100;
     if (this.gainNode) {
       this.gainNode.gain.value = this.volume;
+    }
+    // Update cue mixdown when volume changes
+    if (window.mixerController) {
+      window.mixerController.updateCueMixdown();
+    }
+  }
+
+  // Pre-listen functionality
+  enablePreListen() {
+    this.isPreListenEnabled = true;
+    console.log(`Deck ${this.deckId}: Pre-listen enabled`);
+    // Update the cue mixdown
+    if (window.mixerController) {
+      window.mixerController.updateCueMixdown();
+    }
+  }
+
+  disablePreListen() {
+    this.isPreListenEnabled = false;
+    console.log(`Deck ${this.deckId}: Pre-listen disabled`);
+    // Update the cue mixdown
+    if (window.mixerController) {
+      window.mixerController.updateCueMixdown();
+    }
+  }
+
+  togglePreListen() {
+    console.log(`Deck ${this.deckId}: Toggle Pre-listen - current state:`, this.isPreListenEnabled);
+    if (this.isPreListenEnabled) {
+      this.disablePreListen();
+    } else {
+      this.enablePreListen();
     }
   }
 
@@ -709,7 +756,7 @@ class Deck {
     this.eqNodes.mid.connect(this.eqNodes.high);
     this.eqNodes.high.connect(this.globalGainNode);
     this.globalGainNode.connect(this.gainNode);
-    this.gainNode.connect(this.masterGain);
+    this.gainNode.connect(this.mainOutput);
 
     // Start with fast reverse playback then slow down
     const now = this.audioContext.currentTime;
