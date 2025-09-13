@@ -110,8 +110,8 @@ class KeyboardShortcuts {
 
     // Prevent default for our shortcuts
     const shortcuts = [
-      'Space', 'KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyA', 'KeyS', 'KeyD',
-      'KeyU', 'KeyI', 'KeyO', 'KeyP', 'KeyJ', 'KeyK', 'KeyL',
+      'Space', 'KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyA', 'KeyS',
+      'KeyU', 'KeyI', 'KeyO', 'KeyP', 'KeyJ', 'KeyK',
       'KeyZ', 'KeyX', 'KeyC', 'KeyN', 'KeyM', 'Comma',
       'Digit1', 'Digit2', 'Digit8', 'Digit9',
       'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'
@@ -163,12 +163,11 @@ class KeyboardShortcuts {
       'Digit1': () => this.handleCuePoint(e, 'A', 1),
       'Digit2': () => this.handleCuePoint(e, 'A', 2),
       
-      // LEFT SIDE - Deck A Pitch Bend (moved from Z/X to A/S)
+      // LEFT SIDE - Deck A Pitch Bend
       'KeyA': () => this.handlePitchBendPress('A', 'KeyA', -1),
       'KeyS': () => this.handlePitchBendPress('A', 'KeyS', 1),
-      'KeyD': () => {}, // Reserved for future use
       
-      // LEFT SIDE - Deck A Loop Controls (moved from A/S/D to Z/X/C)
+      // LEFT SIDE - Deck A Loop Controls
       'KeyZ': () => this.clickButton('loopInA'),
       'KeyX': () => this.clickButton('loopOutA'),
       'KeyC': () => this.clickButton('loopToggleA'),
@@ -183,12 +182,11 @@ class KeyboardShortcuts {
       'Digit8': () => this.handleCuePoint(e, 'B', 1),
       'Digit9': () => this.handleCuePoint(e, 'B', 2),
       
-      // RIGHT SIDE - Deck B Pitch Bend (moved from N/M to J/K)
+      // RIGHT SIDE - Deck B Pitch Bend
       'KeyJ': () => this.handlePitchBendPress('B', 'KeyJ', -1),
       'KeyK': () => this.handlePitchBendPress('B', 'KeyK', 1),
-      'KeyL': () => {}, // Reserved for future use
       
-      // RIGHT SIDE - Deck B Loop Controls (moved from J/K/L to N/M/,)
+      // RIGHT SIDE - Deck B Loop Controls
       'KeyN': () => this.clickButton('loopInB'),
       'KeyM': () => this.clickButton('loopOutB'),
       'Comma': () => this.clickButton('loopToggleB'),
