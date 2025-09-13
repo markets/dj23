@@ -32,7 +32,7 @@ class EffectsEngine {
     
     // Add feedback for more character
     this.effectNodes.phaserFeedback = this.audioContext.createGain();
-    this.effectNodes.phaserFeedback.gain.value = 0.2; // Reduced for clipping prevention
+    this.effectNodes.phaserFeedback.gain.value = 0.3; // Moderate feedback for warmth
     
     // Use 6 filters with more musical frequency distribution
     // Based on common phaser pedal designs - covering a wider frequency range
@@ -56,7 +56,7 @@ class EffectsEngine {
     this.effectNodes.flangerGain = this.audioContext.createGain();
     this.effectNodes.flangerGain.gain.value = 0;
     this.effectNodes.flangerFeedback = this.audioContext.createGain();
-    this.effectNodes.flangerFeedback.gain.value = 0.5;
+    this.effectNodes.flangerFeedback.gain.value = 0.7;
     this.effectNodes.flangerDry = this.audioContext.createGain();
     this.effectNodes.flangerDry.gain.value = 1;
 
@@ -141,10 +141,9 @@ class EffectsEngine {
   // Effect parameter control methods
   setReverb(value) {
     if (this.effectNodes.reverbGain) {
-      // Limit reverb to prevent clipping - max 80% instead of 120%
-      const wetLevel = Math.pow(value / 100, 0.7) * 0.8;
-      this.effectNodes.reverbGain.gain.value = Math.min(wetLevel, 0.8);
-      this.effectNodes.reverbDry.gain.value = Math.max(1 - (wetLevel * 0.8), 0.3);
+      const wetLevel = Math.pow(value / 100, 0.7) * 1.2; // Exponential curve, max 120%
+      this.effectNodes.reverbGain.gain.value = Math.min(wetLevel, 1.2);
+      this.effectNodes.reverbDry.gain.value = Math.max(1 - (wetLevel * 0.8), 0.2); // Keep some dry signal
     }
   }
 
@@ -171,8 +170,7 @@ class EffectsEngine {
       
       // Dynamic feedback based on effect intensity for more character
       if (this.effectNodes.phaserFeedback) {
-        // Reduced max feedback to prevent clipping (was 0.4)
-        const feedbackAmount = (value / 100) * 0.25;
+        const feedbackAmount = (value / 100) * 0.4; // Increase feedback with effect intensity
         this.effectNodes.phaserFeedback.gain.value = feedbackAmount;
       }
       
@@ -189,55 +187,6 @@ class EffectsEngine {
     if (this.effectNodes.flangerGain) {
       this.effectNodes.flangerGain.gain.value = value / 100;
       this.effectNodes.flangerDry.gain.value = 1 - (value / 100);
-    }
-  }
-
-  // Clear internal buffers of delay-based effects to prevent audio artifacts when loading new tracks
-  clearEffectBuffers() {
-    try {
-      // Clear delay effect buffer by recreating the delay node
-      if (this.effectNodes.delay) {
-        const oldDelay = this.effectNodes.delay;
-        const delayTime = oldDelay.delayTime.value;
-        
-        // Disconnect old delay from feedback loop
-        oldDelay.disconnect();
-        this.effectNodes.delayFeedback.disconnect(oldDelay);
-        
-        // Create new delay node
-        this.effectNodes.delay = this.audioContext.createDelay(1);
-        this.effectNodes.delay.delayTime.value = delayTime;
-        
-        // Reconnect delay feedback loop
-        this.effectNodes.delay.connect(this.effectNodes.delayFeedback);
-        this.effectNodes.delayFeedback.connect(this.effectNodes.delay);
-        this.effectNodes.delay.connect(this.effectNodes.delayGain);
-      }
-      
-      // Clear flanger effect buffer by recreating the delay node
-      if (this.effectNodes.flanger) {
-        const oldFlanger = this.effectNodes.flanger;
-        const delayTime = oldFlanger.delayTime.value;
-        
-        // Disconnect old flanger from feedback loop
-        oldFlanger.disconnect();
-        this.effectNodes.flangerFeedback.disconnect(oldFlanger);
-        
-        // Create new flanger delay node
-        this.effectNodes.flanger = this.audioContext.createDelay(0.02);
-        this.effectNodes.flanger.delayTime.value = delayTime;
-        
-        // Reconnect flanger feedback loop
-        this.effectNodes.flanger.connect(this.effectNodes.flangerFeedback);
-        this.effectNodes.flangerFeedback.connect(this.effectNodes.flanger);
-        
-        // Reconnect LFO modulation
-        this.effectNodes.flangerLFOGain.connect(this.effectNodes.flanger.delayTime);
-      }
-      
-      console.log('Effect buffers cleared successfully');
-    } catch (error) {
-      console.error('Error clearing effect buffers:', error);
     }
   }
 

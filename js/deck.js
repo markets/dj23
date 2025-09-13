@@ -210,6 +210,15 @@ class Deck {
       this.source = null;
     }
     
+    // Disconnect all gain nodes to prevent multiple connections accumulating
+    // This prevents audio degradation when loading new tracks after using gain controls
+    if (this.globalGainNode) {
+      this.globalGainNode.disconnect();
+    }
+    if (this.gainNode) {
+      this.gainNode.disconnect();
+    }
+    
     // Also clean up scratch deceleration when source is stopped
     if (this.scratchDecelerationInterval) {
       clearInterval(this.scratchDecelerationInterval);
@@ -233,11 +242,9 @@ class Deck {
 
   setEQ(band, value) {
     if (band === 'gain') {
-      // Handle global gain - convert dB to linear gain with limiting
+      // Handle global gain - convert dB to linear gain
       if (this.globalGainNode) {
-        // Limit gain to +12dB maximum to prevent clipping (was unlimited)
-        const clampedValue = Math.max(-25, Math.min(12, value));
-        const gainValue = Math.pow(10, clampedValue / 20);
+        const gainValue = Math.pow(10, value / 20);
         this.globalGainNode.gain.value = gainValue;
       }
     } else if (this.eqNodes[band]) {
@@ -347,15 +354,6 @@ class Deck {
     this.controller.updateLoopButtonsDisabledState(false);
     
     console.log(`Deck ${this.deckId}: Loop points reset`);
-  }
-
-  // Reset audio chain for new track loading to prevent audio artifacts
-  resetAudioChain() {
-    if (this.effectsEngine) {
-      // Clear internal buffers of delay-based effects
-      this.effectsEngine.clearEffectBuffers();
-    }
-    console.log(`Deck ${this.deckId}: Audio chain reset for new track`);
   }
 
   setCuePoint(cueNumber) {
@@ -1212,12 +1210,6 @@ class DeckController {
     const success = await deck.loadFile(file);
         
     if (success) {
-      // Reset audio chain to prevent artifacts from previous track
-      deck.resetAudioChain();
-      
-      // Reset effects UI and parameters
-      this.resetFilters();
-      
       // Reset cues
       deck.resetCuePoints();
       
