@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+  <!-- DJ/Street - Bold, urban look with thicker elements -->
+  <path d="M12 1C6.48 1 2 5.48 2 11v6c0 2.21 1.79 4 4 4h3c.55 0 1-.45 1-1v-7c0-.55-.45-1-1-1H4v-1c0-4.42 3.58-8 8-8s8 3.58 8 8v1h-5c-.55 0-1 .45-1 1v7c0 .55.45 1 1 1h3c2.21 0 4-1.79 4-4v-6c0-5.52-4.48-10-10-10z"/>
+  <rect x="4" y="13" width="4" height="6" rx="1"/>
+  <rect x="16" y="13" width="4" height="6" rx="1"/>
+  <path d="M8 3h8c1.1 0 2 .9 2 2s-.9 2-2 2H8C6.9 7 6 6.1 6 5s.9-2 2-2z"/>
+</svg>

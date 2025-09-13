@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Headphones Icon Variations - DJ23</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0f0f0f;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #4ecdc4;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #ccc;
+            margin-bottom: 40px;
+        }
+        
+        .variations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .variation-card {
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .variation-card:hover {
+            border-color: #4ecdc4;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(78, 205, 196, 0.2);
+        }
+        
+        .variation-card.selected {
+            border-color: #4ecdc4;
+            background: #2a2a2a;
+        }
+        
+        .icon-preview {
+            margin-bottom: 20px;
+        }
+        
+        .icon-large {
+            width: 80px;
+            height: 80px;
+            color: #4ecdc4;
+            margin-bottom: 15px;
+        }
+        
+        .icon-sizes {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .icon-small { width: 24px; height: 24px; color: #fff; }
+        .icon-medium { width: 32px; height: 32px; color: #ccc; }
+        
+        h3 {
+            color: #ffffff;
+            margin: 0 0 10px 0;
+            font-size: 1.4em;
+        }
+        
+        .description {
+            color: #888;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+        
+        .usage-preview {
+            background: #333;
+            border-radius: 5px;
+            padding: 15px;
+            font-size: 0.85em;
+        }
+        
+        .usage-title {
+            color: #4ecdc4;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .usage-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            color: #ccc;
+        }
+        
+        .usage-item svg {
+            width: 16px;
+            height: 16px;
+        }
+        
+        .apply-section {
+            text-align: center;
+            padding: 30px;
+            background: #1a1a1a;
+            border-radius: 10px;
+            border: 2px solid #333;
+        }
+        
+        .apply-btn {
+            background: #4ecdc4;
+            color: #0f0f0f;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0 10px;
+        }
+        
+        .apply-btn:hover {
+            background: #3bb3ab;
+            transform: translateY(-2px);
+        }
+        
+        .apply-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .current-selection {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 8px;
+            color: #4ecdc4;
+        }
+        
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎧 Headphones Icon Variations</h1>
+        <p class="subtitle">Choose your preferred headphones icon style for the DJ23 mixer</p>
+        
+        <div class="variations-grid">
+            <!-- Current/Original -->
+            <div class="variation-card" data-style="current">
+                <div class="icon-preview">
+                    <svg class="icon-large" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9zM7 12v6H6c-.55 0-1-.45-1-1v-5h2zm12 5c0 .55-.45 1-1 1h-1v-6h2v5z"/>
+                    </svg>
+                    <div class="icon-sizes">
+                        <svg class="icon-small" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9zM7 12v6H6c-.55 0-1-.45-1-1v-5h2zm12 5c0 .55-.45 1-1 1h-1v-6h2v5z"/>
+                        </svg>
+                        <svg class="icon-medium" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9zM7 12v6H6c-.55 0-1-.45-1-1v-5h2zm12 5c0 .55-.45 1-1 1h-1v-6h2v5z"/>
+                        </svg>
+                    </div>
+                </div>
+                <h3>Current/Original</h3>
+                <p class="description">The existing headphones icon - solid and functional design with rounded ear cups</p>
+                <div class="usage-preview">
+                    <div class="usage-title">Usage Examples:</div>
+                    <div class="usage-item">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9zM7 12v6H6c-.55 0-1-.45-1-1v-5h2zm12 5c0 .55-.45 1-1 1h-1v-6h2v5z"/>
+                        </svg>
+                        Cue Volume Control
+                    </div>
+                    <div class="usage-item">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9zM7 12v6H6c-.55 0-1-.45-1-1v-5h2zm12 5c0 .55-.45 1-1 1h-1v-6h2v5z"/>
+                        </svg>
+                        Prelisten Buttons
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modern/Minimal -->
+            <div class="variation-card" data-style="modern">
+                <div class="icon-preview">
+                    <svg class="icon-large" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C7.58 2 4 5.58 4 10v8c0 1.1.9 2 2 2h2c.55 0 1-.45 1-1v-6c0-.55-.45-1-1-1H6v-2c0-3.31 2.69-6 6-6s6 2.69 6 6v2h-2c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h2c1.1 0 2-.9 2-2v-8c0-4.42-3.58-8-8-8z"/>
+                    </svg>
+                    <div class="icon-sizes">
+                        <svg class="icon-small" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C7.58 2 4 5.58 4 10v8c0 1.1.9 2 2 2h2c.55 0 1-.45 1-1v-6c0-.55-.45-1-1-1H6v-2c0-3.31 2.69-6 6-6s6 2.69 6 6v2h-2c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h2c1.1 0 2-.9 2-2v-8c0-4.42-3.58-8-8-8z"/>
+                        </svg>
+                        <svg class="icon-medium" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C7.58 2 4 5.58 4 10v8c0 1.1.9 2 2 2h2c.55 0 1-.45 1-1v-6c0-.55-.45-1-1-1H6v-2c0-3.31 2.69-6 6-6s6 2.69 6 6v2h-2c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h2c1.1 0 2-.9 2-2v-8c0-4.42-3.58-8-8-8z"/>
+                        </svg>
+                    </div>
+                </div>
+                <h3>Modern/Minimal</h3>
+                <p class="description">Clean lines and simple geometric shapes - perfect for contemporary interfaces</p>
+                <div class="usage-preview">
+                    <div class="usage-title">Best for:</div>
+                    <div class="usage-item">• Minimal, clean UI designs</div>
+                    <div class="usage-item">• Modern applications</div>
+                    <div class="usage-item">• Professional environments</div>
+                </div>
+            </div>
+
+            <!-- Professional/Studio -->
+            <div class="variation-card" data-style="professional">
+                <div class="icon-preview">
+                    <svg class="icon-large" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 1.5C6.75 1.5 2.5 5.75 2.5 11v6.5c0 1.38 1.12 2.5 2.5 2.5h1.5c.83 0 1.5-.67 1.5-1.5v-5c0-.83-.67-1.5-1.5-1.5H5V11c0-3.86 3.14-7 7-7s7 3.14 7 7v1h-1.5c-.83 0-1.5.67-1.5 1.5v5c0 .83.67 1.5 1.5 1.5H19c1.38 0 2.5-1.12 2.5-2.5V11c0-5.25-4.25-9.5-9.5-9.5z"/>
+                        <circle cx="6.5" cy="15.5" r="1"/>
+                        <circle cx="17.5" cy="15.5" r="1"/>
+                        <path d="M7 4.5h10c.28 0 .5.22.5.5s-.22.5-.5.5H7c-.28 0-.5-.22-.5-.5s.22-.5.5-.5z"/>
+                    </svg>
+                    <div class="icon-sizes">
+                        <svg class="icon-small" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 1.5C6.75 1.5 2.5 5.75 2.5 11v6.5c0 1.38 1.12 2.5 2.5 2.5h1.5c.83 0 1.5-.67 1.5-1.5v-5c0-.83-.67-1.5-1.5-1.5H5V11c0-3.86 3.14-7 7-7s7 3.14 7 7v1h-1.5c-.83 0-1.5.67-1.5 1.5v5c0 .83.67 1.5 1.5 1.5H19c1.38 0 2.5-1.12 2.5-2.5V11c0-5.25-4.25-9.5-9.5-9.5z"/>
+                            <circle cx="6.5" cy="15.5" r="1"/>
+                            <circle cx="17.5" cy="15.5" r="1"/>
+                            <path d="M7 4.5h10c.28 0 .5.22.5.5s-.22.5-.5.5H7c-.28 0-.5-.22-.5-.5s.22-.5.5-.5z"/>
+                        </svg>
+                        <svg class="icon-medium" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 1.5C6.75 1.5 2.5 5.75 2.5 11v6.5c0 1.38 1.12 2.5 2.5 2.5h1.5c.83 0 1.5-.67 1.5-1.5v-5c0-.83-.67-1.5-1.5-1.5H5V11c0-3.86 3.14-7 7-7s7 3.14 7 7v1h-1.5c-.83 0-1.5.67-1.5 1.5v5c0 .83.67 1.5 1.5 1.5H19c1.38 0 2.5-1.12 2.5-2.5V11c0-5.25-4.25-9.5-9.5-9.5z"/>
+                            <circle cx="6.5" cy="15.5" r="1"/>
+                            <circle cx="17.5" cy="15.5" r="1"/>
+                            <path d="M7 4.5h10c.28 0 .5.22.5.5s-.22.5-.5.5H7c-.28 0-.5-.22-.5-.5s.22-.5.5-.5z"/>
+                        </svg>
+                    </div>
+                </div>
+                <h3>Professional/Studio</h3>
+                <p class="description">Detailed studio-style headphones with realistic proportions and features</p>
+                <div class="usage-preview">
+                    <div class="usage-title">Best for:</div>
+                    <div class="usage-item">• Audio production software</div>
+                    <div class="usage-item">• Professional audio tools</div>
+                    <div class="usage-item">• Studio environments</div>
+                </div>
+            </div>
+
+            <!-- DJ/Street -->
+            <div class="variation-card" data-style="dj">
+                <div class="icon-preview">
+                    <svg class="icon-large" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 1C6.48 1 2 5.48 2 11v6c0 2.21 1.79 4 4 4h3c.55 0 1-.45 1-1v-7c0-.55-.45-1-1-1H4v-1c0-4.42 3.58-8 8-8s8 3.58 8 8v1h-5c-.55 0-1 .45-1 1v7c0 .55.45 1 1 1h3c2.21 0 4-1.79 4-4v-6c0-5.52-4.48-10-10-10z"/>
+                        <rect x="4" y="13" width="4" height="6" rx="1"/>
+                        <rect x="16" y="13" width="4" height="6" rx="1"/>
+                        <path d="M8 3h8c1.1 0 2 .9 2 2s-.9 2-2 2H8C6.9 7 6 6.1 6 5s.9-2 2-2z"/>
+                    </svg>
+                    <div class="icon-sizes">
+                        <svg class="icon-small" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 1C6.48 1 2 5.48 2 11v6c0 2.21 1.79 4 4 4h3c.55 0 1-.45 1-1v-7c0-.55-.45-1-1-1H4v-1c0-4.42 3.58-8 8-8s8 3.58 8 8v1h-5c-.55 0-1 .45-1 1v7c0 .55.45 1 1 1h3c2.21 0 4-1.79 4-4v-6c0-5.52-4.48-10-10-10z"/>
+                            <rect x="4" y="13" width="4" height="6" rx="1"/>
+                            <rect x="16" y="13" width="4" height="6" rx="1"/>
+                            <path d="M8 3h8c1.1 0 2 .9 2 2s-.9 2-2 2H8C6.9 7 6 6.1 6 5s.9-2 2-2z"/>
+                        </svg>
+                        <svg class="icon-medium" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 1C6.48 1 2 5.48 2 11v6c0 2.21 1.79 4 4 4h3c.55 0 1-.45 1-1v-7c0-.55-.45-1-1-1H4v-1c0-4.42 3.58-8 8-8s8 3.58 8 8v1h-5c-.55 0-1 .45-1 1v7c0 .55.45 1 1 1h3c2.21 0 4-1.79 4-4v-6c0-5.52-4.48-10-10-10z"/>
+                            <rect x="4" y="13" width="4" height="6" rx="1"/>
+                            <rect x="16" y="13" width="4" height="6" rx="1"/>
+                            <path d="M8 3h8c1.1 0 2 .9 2 2s-.9 2-2 2H8C6.9 7 6 6.1 6 5s.9-2 2-2z"/>
+                        </svg>
+                    </div>
+                </div>
+                <h3>DJ/Street</h3>
+                <p class="description">Bold, urban-inspired design with thick elements and street credibility</p>
+                <div class="usage-preview">
+                    <div class="usage-title">Best for:</div>
+                    <div class="usage-item">• DJ software and mixers</div>
+                    <div class="usage-item">• Urban/street aesthetics</div>
+                    <div class="usage-item">• Bold, expressive interfaces</div>
+                </div>
+            </div>
+
+            <!-- Retro/Vintage -->
+            <div class="variation-card" data-style="retro">
+                <div class="icon-preview">
+                    <svg class="icon-large" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2c-4.97 0-9 4.03-9 9v6c0 1.66 1.34 3 3 3h2.5c.83 0 1.5-.67 1.5-1.5v-4c0-.83-.67-1.5-1.5-1.5H6v-2c0-3.31 2.69-6 6-6s6 2.69 6 6v2h-2.5c-.83 0-1.5.67-1.5 1.5v4c0 .83.67 1.5 1.5 1.5H18c1.66 0 3-1.34 3-3v-6c0-4.97-4.03-9-9-9z"/>
+                        <circle cx="7" cy="15" r="2.5" fill="none" stroke="currentColor" stroke-width="0.5"/>
+                        <circle cx="17" cy="15" r="2.5" fill="none" stroke="currentColor" stroke-width="0.5"/>
+                        <path d="M9 3.5c0-.28.22-.5.5-.5h5c.28 0 .5.22.5.5v1c0 .28-.22.5-.5.5h-5c-.28 0-.5-.22-.5-.5v-1z"/>
+                        <path d="M8.5 4h7c.28 0 .5.22.5.5s-.22.5-.5.5h-7c-.28 0-.5-.22-.5-.5s.22-.5.5-.5z"/>
+                    </svg>
+                    <div class="icon-sizes">
+                        <svg class="icon-small" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2c-4.97 0-9 4.03-9 9v6c0 1.66 1.34 3 3 3h2.5c.83 0 1.5-.67 1.5-1.5v-4c0-.83-.67-1.5-1.5-1.5H6v-2c0-3.31 2.69-6 6-6s6 2.69 6 6v2h-2.5c-.83 0-1.5.67-1.5 1.5v4c0 .83.67 1.5 1.5 1.5H18c1.66 0 3-1.34 3-3v-6c0-4.97-4.03-9-9-9z"/>
+                            <circle cx="7" cy="15" r="2.5" fill="none" stroke="currentColor" stroke-width="0.5"/>
+                            <circle cx="17" cy="15" r="2.5" fill="none" stroke="currentColor" stroke-width="0.5"/>
+                            <path d="M9 3.5c0-.28.22-.5.5-.5h5c.28 0 .5.22.5.5v1c0 .28-.22.5-.5.5h-5c-.28 0-.5-.22-.5-.5v-1z"/>
+                            <path d="M8.5 4h7c.28 0 .5.22.5.5s-.22.5-.5.5h-7c-.28 0-.5-.22-.5-.5s.22-.5.5-.5z"/>
+                        </svg>
+                        <svg class="icon-medium" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2c-4.97 0-9 4.03-9 9v6c0 1.66 1.34 3 3 3h2.5c.83 0 1.5-.67 1.5-1.5v-4c0-.83-.67-1.5-1.5-1.5H6v-2c0-3.31 2.69-6 6-6s6 2.69 6 6v2h-2.5c-.83 0-1.5.67-1.5 1.5v4c0 .83.67 1.5 1.5 1.5H18c1.66 0 3-1.34 3-3v-6c0-4.97-4.03-9-9-9z"/>
+                            <circle cx="7" cy="15" r="2.5" fill="none" stroke="currentColor" stroke-width="0.5"/>
+                            <circle cx="17" cy="15" r="2.5" fill="none" stroke="currentColor" stroke-width="0.5"/>
+                            <path d="M9 3.5c0-.28.22-.5.5-.5h5c.28 0 .5.22.5.5v1c0 .28-.22.5-.5.5h-5c-.28 0-.5-.22-.5-.5v-1z"/>
+                            <path d="M8.5 4h7c.28 0 .5.22.5.5s-.22.5-.5.5h-7c-.28 0-.5-.22-.5-.5s.22-.5.5-.5z"/>
+                        </svg>
+                    </div>
+                </div>
+                <h3>Retro/Vintage</h3>
+                <p class="description">Classic vintage headphones with nostalgic appeal and detailed accents</p>
+                <div class="usage-preview">
+                    <div class="usage-title">Best for:</div>
+                    <div class="usage-item">• Vintage-themed interfaces</div>
+                    <div class="usage-item">• Classic audio equipment</div>
+                    <div class="usage-item">• Nostalgic designs</div>
+                </div>
+            </div>
+
+            <!-- Gaming/Futuristic -->
+            <div class="variation-card" data-style="futuristic">
+                <div class="icon-preview">
+                    <svg class="icon-large" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 1l-2 2H6l-4 4v6l2 2h2l2 2v4h2v-4l2-2h2l2-2v-6l-4-4h-4L12 1z"/>
+                        <path d="M4 10v6l1 1h2v-8H6l-2 2z"/>
+                        <path d="M20 10l-2-2h-1v8h2l1-1v-6z"/>
+                        <polygon points="12,2 10,4 14,4"/>
+                        <polygon points="7,14 9,16 7,18 5,16"/>
+                        <polygon points="17,14 19,16 17,18 15,16"/>
+                        <path d="M8 4h8l1 1v1H7V5l1-1z"/>
+                    </svg>
+                    <div class="icon-sizes">
+                        <svg class="icon-small" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 1l-2 2H6l-4 4v6l2 2h2l2 2v4h2v-4l2-2h2l2-2v-6l-4-4h-4L12 1z"/>
+                            <path d="M4 10v6l1 1h2v-8H6l-2 2z"/>
+                            <path d="M20 10l-2-2h-1v8h2l1-1v-6z"/>
+                            <polygon points="12,2 10,4 14,4"/>
+                            <polygon points="7,14 9,16 7,18 5,16"/>
+                            <polygon points="17,14 19,16 17,18 15,16"/>
+                            <path d="M8 4h8l1 1v1H7V5l1-1z"/>
+                        </svg>
+                        <svg class="icon-medium" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 1l-2 2H6l-4 4v6l2 2h2l2 2v4h2v-4l2-2h2l2-2v-6l-4-4h-4L12 1z"/>
+                            <path d="M4 10v6l1 1h2v-8H6l-2 2z"/>
+                            <path d="M20 10l-2-2h-1v8h2l1-1v-6z"/>
+                            <polygon points="12,2 10,4 14,4"/>
+                            <polygon points="7,14 9,16 7,18 5,16"/>
+                            <polygon points="17,14 19,16 17,18 15,16"/>
+                            <path d="M8 4h8l1 1v1H7V5l1-1z"/>
+                        </svg>
+                    </div>
+                </div>
+                <h3>Gaming/Futuristic</h3>
+                <p class="description">Angular, tech-inspired design with geometric shapes and futuristic appeal</p>
+                <div class="usage-preview">
+                    <div class="usage-title">Best for:</div>
+                    <div class="usage-item">• Gaming interfaces</div>
+                    <div class="usage-item">• Sci-fi/tech themes</div>
+                    <div class="usage-item">• Modern gaming setups</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="apply-section">
+            <div class="current-selection" id="currentSelection">
+                Please select a style from the options above
+            </div>
+            <button class="apply-btn" id="applyBtn" disabled onclick="applyStyle()">
+                Apply Selected Style
+            </button>
+            <button class="apply-btn" onclick="goBackToMixer()" style="background: #666; margin-left: 10px;">
+                Back to Mixer
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let selectedStyle = null;
+
+        // Add click handlers to variation cards
+        document.querySelectorAll('.variation-card').forEach(card => {
+            card.addEventListener('click', () => {
+                // Remove selected class from all cards
+                document.querySelectorAll('.variation-card').forEach(c => c.classList.remove('selected'));
+                
+                // Add selected class to clicked card
+                card.classList.add('selected');
+                
+                // Update selection
+                selectedStyle = card.dataset.style;
+                document.getElementById('currentSelection').textContent = 
+                    `Selected: ${card.querySelector('h3').textContent}`;
+                document.getElementById('applyBtn').disabled = false;
+            });
+        });
+
+        function applyStyle() {
+            if (!selectedStyle) return;
+            
+            // Store the selection in localStorage
+            localStorage.setItem('selectedHeadphonesStyle', selectedStyle);
+            
+            // Show confirmation
+            alert(`✅ ${selectedStyle.charAt(0).toUpperCase() + selectedStyle.slice(1)} style applied! 
+            
+The new headphones icons will be used throughout the DJ23 mixer interface.`);
+            
+            // Optionally redirect back to main mixer
+            goBackToMixer();
+        }
+
+        function goBackToMixer() {
+            window.location.href = 'index.html';
+        }
+
+        // Check if there's a previously selected style
+        const savedStyle = localStorage.getItem('selectedHeadphonesStyle');
+        if (savedStyle) {
+            const savedCard = document.querySelector(`[data-style="${savedStyle}"]`);
+            if (savedCard) {
+                savedCard.click();
+            }
+        }
+    </script>
+</body>
+</html>

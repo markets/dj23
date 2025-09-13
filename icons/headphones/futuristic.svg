@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+  <!-- Gaming/Futuristic - Angular, tech-inspired design -->
+  <path d="M12 1l-2 2H6l-4 4v6l2 2h2l2 2v4h2v-4l2-2h2l2-2v-6l-4-4h-4L12 1z"/>
+  <path d="M4 10v6l1 1h2v-8H6l-2 2z"/>
+  <path d="M20 10l-2-2h-1v8h2l1-1v-6z"/>
+  <polygon points="12,2 10,4 14,4"/>
+  <polygon points="7,14 9,16 7,18 5,16"/>
+  <polygon points="17,14 19,16 17,18 15,16"/>
+  <path d="M8 4h8l1 1v1H7V5l1-1z"/>
+</svg>
