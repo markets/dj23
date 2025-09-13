@@ -18,7 +18,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.soundPad = new SoundPad(window.audioEngine);
 
   window.keyboardShortcuts = new KeyboardShortcuts();
-
     
   console.log('✅ Ready to mix!');
     
