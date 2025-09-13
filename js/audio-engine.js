@@ -19,11 +19,10 @@ class AudioEngine {
     try {
       this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
       
-      // Create stereo channel splitter for CUE (left) and MAIN (right) outputs
-      this.channelSplitter = this.audioContext.createChannelSplitter(2);
+      // Create stereo channel merger for CUE (left) and MAIN (right) outputs
       this.channelMerger = this.audioContext.createChannelMerger(2);
       
-      // Create separate gain node for CUE output only
+      // Create separate gain nodes for CUE and MAIN outputs
       this.cueGain = this.audioContext.createGain();
       this.masterGain = this.audioContext.createGain();
       
@@ -31,15 +30,14 @@ class AudioEngine {
       this.cueGain.gain.value = 0.5;   // CUE volume
       this.masterGain.gain.value = 0.75; // Master volume
       
-      // Route CUE to left channel, MAIN (master output) to right channel
-      this.cueGain.connect(this.channelMerger, 0, 0);   // CUE -> Left
-      this.masterGain.connect(this.channelMerger, 0, 1);  // MAIN -> Right
-      this.channelMerger.connect(this.masterGain);
-      this.masterGain.connect(this.audioContext.destination);
+      // Route CUE to left channel, MAIN to right channel of final output
+      this.cueGain.connect(this.channelMerger, 0, 0);   // CUE -> Left channel
+      this.masterGain.connect(this.channelMerger, 0, 1);  // MAIN -> Right channel
+      this.channelMerger.connect(this.audioContext.destination);
 
       // Create a media stream destination for recording
       this.mediaStreamDestination = this.audioContext.createMediaStreamDestination();
-      this.masterGain.connect(this.mediaStreamDestination);
+      this.channelMerger.connect(this.mediaStreamDestination);
 
       this.decks.A = new Deck(this.audioContext, this.masterGain, this.cueGain, 'A');
       this.decks.B = new Deck(this.audioContext, this.masterGain, this.cueGain, 'B');
