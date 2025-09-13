@@ -219,6 +219,10 @@ class Deck {
     }
     if (this.gainNode) {
       this.gainNode.disconnect();
+      // Reconnect analyser if it exists (for VU meters)
+      if (this.analyser) {
+        this.gainNode.connect(this.analyser);
+      }
     }
     
     // Disconnect EQ nodes which also connect to gain nodes
