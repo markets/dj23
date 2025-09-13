@@ -220,9 +220,7 @@ class Deck {
     if (this.gainNode) {
       this.gainNode.disconnect();
       // Reconnect analyser if it exists (for VU meters)
-      if (this.analyser) {
-        this.gainNode.connect(this.analyser);
-      }
+      if (this.analyser) this.gainNode.connect(this.analyser);
     }
     
     // Disconnect EQ nodes which also connect to gain nodes
@@ -234,15 +232,10 @@ class Deck {
     }
     
     // Disconnect the splitter which is the source of multiple effect connections
-    if (this.splitter) {
-      this.splitter.disconnect();
-    }
-    if (this.merger) {
-      this.merger.disconnect();
-    }
-    
-    // Disconnect only the output effect nodes that connect to gain nodes
-    // Don't disconnect internal effect connections (feedback loops, LFOs) 
+    if (this.splitter) this.splitter.disconnect();
+    if (this.merger) this.merger.disconnect();
+
+    // Disconnect the output effect nodes that connect to gain nodes
     if (this.effectNodes) {
       if (this.effectNodes.filter) this.effectNodes.filter.disconnect();
       if (this.effectNodes.reverbGain) this.effectNodes.reverbGain.disconnect();
