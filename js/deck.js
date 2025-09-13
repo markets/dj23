@@ -64,6 +64,10 @@ class Deck {
     this.globalGainNode = this.audioContext.createGain();
     this.globalGainNode.gain.value = 1.0;
 
+    // Create splitter and merger nodes that will be reused
+    this.splitter = this.audioContext.createChannelSplitter(2);
+    this.merger = this.audioContext.createChannelMerger(2);
+
     this.eqNodes.high = this.audioContext.createBiquadFilter();
     this.eqNodes.high.type = 'highshelf';
     this.eqNodes.high.frequency.value = 8000;
@@ -130,27 +134,25 @@ class Deck {
     this.eqNodes.low.connect(this.eqNodes.mid);
     this.eqNodes.mid.connect(this.eqNodes.high);
 
-    // Create a splitter for effect sends after EQ
-    const splitter = this.audioContext.createChannelSplitter(2);
-    const merger = this.audioContext.createChannelMerger(2);
-    this.eqNodes.high.connect(splitter);
+    // Use the persistent splitter and merger nodes
+    this.eqNodes.high.connect(this.splitter);
 
     // Main dry signal path
     this.eqNodes.high.connect(this.globalGainNode);
     this.globalGainNode.connect(this.gainNode);
 
     // Connect reverb send (wet/dry mix)
-    splitter.connect(this.effectNodes.reverb);
+    this.splitter.connect(this.effectNodes.reverb);
     this.effectNodes.reverb.connect(this.effectNodes.reverbGain);
     this.effectNodes.reverbGain.connect(this.globalGainNode);
 
     // Connect delay send
-    splitter.connect(this.effectNodes.delay);
+    this.splitter.connect(this.effectNodes.delay);
     this.effectNodes.delayGain.connect(this.globalGainNode);
 
     // Connect phaser effect chain
     if (this.effectNodes.phaser && this.effectNodes.phaser.length > 0) {
-      let phaserInput = splitter;
+      let phaserInput = this.splitter;
 
       // Connect phaser chain
       for (let i = 0; i < this.effectNodes.phaser.length; i++) {
@@ -165,7 +167,7 @@ class Deck {
 
     // Connect flanger effect
     if (this.effectNodes.flanger) {
-      splitter.connect(this.effectNodes.flanger);
+      this.splitter.connect(this.effectNodes.flanger);
       this.effectNodes.flanger.connect(this.effectNodes.flangerGain);
       this.effectNodes.flangerGain.connect(this.globalGainNode);
     }
@@ -210,13 +212,39 @@ class Deck {
       this.source = null;
     }
     
-    // Disconnect all gain nodes to prevent multiple connections accumulating
+    // Disconnect all audio nodes to prevent multiple connections accumulating
     // This prevents audio degradation when loading new tracks after using gain controls
     if (this.globalGainNode) {
       this.globalGainNode.disconnect();
     }
     if (this.gainNode) {
       this.gainNode.disconnect();
+    }
+    
+    // Disconnect EQ nodes which also connect to gain nodes
+    if (this.eqNodes) {
+      if (this.eqNodes.high) this.eqNodes.high.disconnect();
+      if (this.eqNodes.mid) this.eqNodes.mid.disconnect();
+      if (this.eqNodes.low) this.eqNodes.low.disconnect();
+      if (this.eqNodes.filter) this.eqNodes.filter.disconnect();
+    }
+    
+    // Disconnect the splitter which is the source of multiple effect connections
+    if (this.splitter) {
+      this.splitter.disconnect();
+    }
+    if (this.merger) {
+      this.merger.disconnect();
+    }
+    
+    // Disconnect only the output effect nodes that connect to gain nodes
+    // Don't disconnect internal effect connections (feedback loops, LFOs) 
+    if (this.effectNodes) {
+      if (this.effectNodes.filter) this.effectNodes.filter.disconnect();
+      if (this.effectNodes.reverbGain) this.effectNodes.reverbGain.disconnect();
+      if (this.effectNodes.delayGain) this.effectNodes.delayGain.disconnect();
+      if (this.effectNodes.phaserGain) this.effectNodes.phaserGain.disconnect();
+      if (this.effectNodes.flangerGain) this.effectNodes.flangerGain.disconnect();
     }
     
     // Also clean up scratch deceleration when source is stopped
