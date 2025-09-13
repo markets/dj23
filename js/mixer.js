@@ -250,9 +250,21 @@ class MixerController {
     }
 
     const currentTime = deck.getCurrentTime();
+    const audioStartOffset = deck.getAudioStartOffset();
+    
+    // Only show beat meter if we've reached the actual audio content
+    if (currentTime < audioStartOffset) {
+      bars.forEach(bar => {
+        bar.classList.remove('active');
+      });
+      return;
+    }
+    
+    // Calculate beats relative to when the actual audio content starts
+    const adjustedTime = currentTime - audioStartOffset;
     const beatInterval = 60 / deck.getBPM(); // Time between beats in seconds
-    const timeSinceLastBeat = currentTime % beatInterval;
-    const currentBeat = Math.floor(currentTime / beatInterval) % 8; // 8 beats per measure
+    const timeSinceLastBeat = adjustedTime % beatInterval;
+    const currentBeat = Math.floor(adjustedTime / beatInterval) % 8; // 8 beats per measure
     
     // Check if we're close to a beat (within 100ms)
     const isOnBeat = timeSinceLastBeat < 0.1 || timeSinceLastBeat > (beatInterval - 0.1);
