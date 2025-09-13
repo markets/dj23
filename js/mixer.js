@@ -53,7 +53,6 @@ class MixerController {
       window.audioEngine.setCueVolume(value);
     }, { suffix: '%' });
 
-
     const crossfader = document.getElementById('crossfader');
     crossfader.addEventListener('input', (e) => {
       this.crossfaderValue = parseInt(e.target.value);
@@ -336,9 +335,7 @@ class MixerController {
 
   updatePreListenButtonState(deckId, isEnabled) {
     const button = document.getElementById(`preListen${deckId}`);
-    if (button) {
-      button.classList.toggle('active', isEnabled);
-    }
+    button.classList.toggle('active', isEnabled);
   }
 }
 

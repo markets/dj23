@@ -237,28 +237,23 @@ body {
   gap: var(--spacing-xl);
 }
 
-.master-volume {
+.master-volume, .cue-volume {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--spacing-sm);
 }
 
-.cue-volume {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-
-
-.master-volume label,
-.cue-volume label {
+.master-volume label {
   font-weight: 600;
   font-size: 0.9rem;
   color: var(--text-secondary);
   margin-bottom: var(--spacing-sm);
+}
+
+.cue-volume label {
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-xs);
 }
 
 /* ============================================================================
@@ -960,17 +955,10 @@ body {
 /* ============================================================================
    VOLUME CONTROLS
    ============================================================================ */
-.master-volume-slider {
+.master-volume-slider, .cue-volume-slider {
   height: 4px;
   width: 150px;
 }
-
-.cue-volume-slider {
-  height: 4px;
-  width: 150px;
-}
-
-
 
 .volume-controls {
   display: flex;
@@ -1037,7 +1025,6 @@ body {
   margin-top: var(--spacing-xs);
 }
 
-/* PRE-LISTEN Buttons */
 .prelisten-btn {
   background: var(--gradient-surface);
   border: 1px solid var(--border-secondary);
@@ -1067,12 +1054,6 @@ body {
 
 .prelisten-btn:active {
   transform: translateY(1px);
-}
-
-.headphones-icon {
-  width: 16px;
-  height: 16px;
-  transition: var(--transition-normal);
 }
 
 /* ============================================================================

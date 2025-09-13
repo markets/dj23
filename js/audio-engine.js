@@ -28,7 +28,7 @@ class AudioEngine {
       this.masterGain = this.audioContext.createGain();
       
       // Set initial volumes
-      this.cueGain.gain.value = 0.75;   // CUE volume
+      this.cueGain.gain.value = 0.5;   // CUE volume
       this.masterGain.gain.value = 0.75; // Master volume
       
       // Route CUE to left channel, MAIN (master output) to right channel
@@ -76,8 +76,6 @@ class AudioEngine {
     }
   }
 
-
-
   getMasterVolume() {
     return this.masterGain ? this.masterGain.gain.value : 0.75;
   }
@@ -85,8 +83,6 @@ class AudioEngine {
   getCueVolume() {
     return this.cueGain ? this.cueGain.gain.value : 0.75;
   }
-
-
 
   getDeck(deckId) {
     return this.decks[deckId];
