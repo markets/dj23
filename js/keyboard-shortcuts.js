@@ -40,8 +40,7 @@ class KeyboardShortcuts {
     if (this.cueKeysPressed.has(keyCode)) return; // Already pressed
 
     this.cueKeysPressed.add(keyCode);
-    const deck = this.getDeck(deckId);
-    deck.startCueMode();
+    this.getDeck(deckId).startCueMode();
   }
 
   // Helper function for CUE release
@@ -49,8 +48,7 @@ class KeyboardShortcuts {
     if (!this.cueKeysPressed.has(keyCode)) return; // Not pressed
 
     this.cueKeysPressed.delete(keyCode);
-    const deck = this.getDeck(deckId);
-    deck.stopCueMode();
+    this.getDeck(deckId).stopCueMode();
   }
 
   // Helper function for pitch bend press-and-hold behavior
@@ -58,8 +56,7 @@ class KeyboardShortcuts {
     if (this.pitchBendKeysPressed.has(keyCode)) return; // Already pressed
 
     this.pitchBendKeysPressed.add(keyCode);
-    const deck = this.getDeck(deckId);
-    deck.pitchBend(direction);
+    this.getDeck(deckId).pitchBend(direction);
   }
 
   // Helper function for pitch bend release
@@ -67,8 +64,7 @@ class KeyboardShortcuts {
     if (!this.pitchBendKeysPressed.has(keyCode)) return; // Not pressed
 
     this.pitchBendKeysPressed.delete(keyCode);
-    const deck = this.getDeck(deckId);
-    deck.stopPitchBend();
+    this.getDeck(deckId).stopPitchBend();
   }
 
   // Helper function for button clicks
@@ -76,17 +72,9 @@ class KeyboardShortcuts {
     document.getElementById(buttonId)?.click();
   }
 
-  // Helper function to get deck with null safety
+  // Helper function to get deck
   getDeck(deckId) {
-    const actualDeck = window.audioEngine.getDeck(deckId);
-    
-    // Return a proxy object that handles null checks
-    return {
-      startCueMode: () => actualDeck?.startCueMode(),
-      stopCueMode: () => actualDeck?.stopCueMode(),
-      pitchBend: (direction) => actualDeck?.pitchBend(direction),
-      stopPitchBend: () => actualDeck?.stopPitchBend()
-    };
+    return window.audioEngine.getDeck(deckId);
   }
 
   setupModal() {
