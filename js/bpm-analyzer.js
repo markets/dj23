@@ -11,27 +11,75 @@ class BPMAnalyzer {
     // Store original BPM for pitch-adjusted calculations
     this.baseBPM = 120; // Default BPM, will be updated when track loads
     
+    // Audio start detection
+    this.audioStartOffset = 0; // Time when actual audio content starts (after silence)
+    
     // BPM source tracking for priority system
     this.bpmSource = null; // Can be: null, 'auto-detected', 'manual'
     this.lastManualTapTime = 0; // Track when user last used TAP
   }
 
+  detectAudioStart(audioBuffer) {
+    if (!audioBuffer || !audioBuffer.getChannelData) {
+      return 0;
+    }
+    
+    const channelData = audioBuffer.getChannelData(0);
+    const sampleRate = audioBuffer.sampleRate;
+    
+    // Threshold for detecting "silence" - adjust as needed
+    const silenceThreshold = 0.01; // 1% of max amplitude
+    
+    // Look for the first sample that exceeds the threshold
+    // Check samples in chunks to be more efficient
+    const chunkSize = sampleRate * 0.1; // 100ms chunks
+    
+    for (let i = 0; i < channelData.length; i += chunkSize) {
+      const chunkEnd = Math.min(i + chunkSize, channelData.length);
+      
+      // Calculate RMS for this chunk
+      let sumSquares = 0;
+      for (let j = i; j < chunkEnd; j++) {
+        sumSquares += channelData[j] * channelData[j];
+      }
+      const rms = Math.sqrt(sumSquares / (chunkEnd - i));
+      
+      // If this chunk has significant audio content
+      if (rms > silenceThreshold) {
+        // Go back and find the more precise start within this chunk
+        for (let k = i; k < chunkEnd; k++) {
+          if (Math.abs(channelData[k]) > silenceThreshold * 0.5) {
+            const startTime = k / sampleRate;
+            console.log(`Deck ${this.deckId}: Detected audio start at ${startTime.toFixed(3)}s`);
+            return startTime;
+          }
+        }
+      }
+    }
+    
+    console.log(`Deck ${this.deckId}: No significant audio detected, using time 0`);
+    return 0;
+  }
+
   generateBeatMap(audioBuffer) {
     if (!audioBuffer || this.baseBPM <= 0) return;
+    
+    // Detect when actual audio content starts
+    this.audioStartOffset = this.detectAudioStart(audioBuffer);
     
     // Calculate beat interval from BPM
     this.beatInterval = 60 / this.baseBPM;
     
-    // Generate beat positions throughout the track
+    // Generate beat positions throughout the track, starting from audio start
     this.beatPositions = [];
     const duration = audioBuffer.duration;
     
-    // Start from the first beat (we assume it starts on beat 1)
-    for (let time = 0; time < duration; time += this.beatInterval) {
+    // Start from the first beat at the audio start offset
+    for (let time = this.audioStartOffset; time < duration; time += this.beatInterval) {
       this.beatPositions.push(time);
     }
     
-    console.log(`Generated ${this.beatPositions.length} beats for ${duration.toFixed(2)}s track at ${this.baseBPM} BPM`);
+    console.log(`Generated ${this.beatPositions.length} beats for ${duration.toFixed(2)}s track at ${this.baseBPM} BPM, starting from ${this.audioStartOffset.toFixed(3)}s`);
   }
 
   // Find the nearest beat position to the current time
@@ -159,6 +207,11 @@ class BPMAnalyzer {
       this.generateBeatMap(audioBuffer);
     }
     return true;
+  }
+
+  // Get the audio start offset (time when actual content begins)
+  getAudioStartOffset() {
+    return this.audioStartOffset;
   }
 
   // Update the manual tap time (should be called with current playback time)

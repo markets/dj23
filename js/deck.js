@@ -710,6 +710,11 @@ class Deck {
     return this.bpmAnalyzer.getBaseBPM();
   }
 
+  getAudioStartOffset() {
+    // Return the time when actual audio content starts
+    return this.bpmAnalyzer.getAudioStartOffset();
+  }
+
   getAnalyserData() {
     if (!this.source) return new Uint8Array(256);
 
