@@ -506,7 +506,7 @@ class Deck {
 
   // Loop methods
   setLoopIn() {
-    this.loopStart = this.getCurrentTime();
+    this.loopStart = this.findNearestBeat(this.getCurrentTime());
     console.log(`Deck ${this.deckId}: Loop IN set at ${this.loopStart}s`);
     
     // Show only IN as active
@@ -524,7 +524,7 @@ class Deck {
       return;
     }
     
-    this.loopEnd = this.getCurrentTime();
+    this.loopEnd = this.findNearestBeat(this.getCurrentTime());
     this.originalLoopEnd = this.loopEnd; // Store original loop end
     this.loopLengthPercentage = 100; // Reset to 100% when setting new loop out
     console.log(`Deck ${this.deckId}: Loop OUT set at ${this.loopEnd}s`);
