@@ -349,6 +349,15 @@ class Deck {
     console.log(`Deck ${this.deckId}: Loop points reset`);
   }
 
+  // Reset audio chain for new track loading to prevent audio artifacts
+  resetAudioChain() {
+    if (this.effectsEngine) {
+      // Clear internal buffers of delay-based effects
+      this.effectsEngine.clearEffectBuffers();
+    }
+    console.log(`Deck ${this.deckId}: Audio chain reset for new track`);
+  }
+
   setCuePoint(cueNumber) {
     if (cueNumber === 1 || cueNumber === 2) {
       this.cuePoints[cueNumber] = this.getCurrentTime();
@@ -1203,6 +1212,12 @@ class DeckController {
     const success = await deck.loadFile(file);
         
     if (success) {
+      // Reset audio chain to prevent artifacts from previous track
+      deck.resetAudioChain();
+      
+      // Reset effects UI and parameters
+      this.resetFilters();
+      
       // Reset cues
       deck.resetCuePoints();
       

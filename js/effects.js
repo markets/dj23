@@ -192,6 +192,55 @@ class EffectsEngine {
     }
   }
 
+  // Clear internal buffers of delay-based effects to prevent audio artifacts when loading new tracks
+  clearEffectBuffers() {
+    try {
+      // Clear delay effect buffer by recreating the delay node
+      if (this.effectNodes.delay) {
+        const oldDelay = this.effectNodes.delay;
+        const delayTime = oldDelay.delayTime.value;
+        
+        // Disconnect old delay from feedback loop
+        oldDelay.disconnect();
+        this.effectNodes.delayFeedback.disconnect(oldDelay);
+        
+        // Create new delay node
+        this.effectNodes.delay = this.audioContext.createDelay(1);
+        this.effectNodes.delay.delayTime.value = delayTime;
+        
+        // Reconnect delay feedback loop
+        this.effectNodes.delay.connect(this.effectNodes.delayFeedback);
+        this.effectNodes.delayFeedback.connect(this.effectNodes.delay);
+        this.effectNodes.delay.connect(this.effectNodes.delayGain);
+      }
+      
+      // Clear flanger effect buffer by recreating the delay node
+      if (this.effectNodes.flanger) {
+        const oldFlanger = this.effectNodes.flanger;
+        const delayTime = oldFlanger.delayTime.value;
+        
+        // Disconnect old flanger from feedback loop
+        oldFlanger.disconnect();
+        this.effectNodes.flangerFeedback.disconnect(oldFlanger);
+        
+        // Create new flanger delay node
+        this.effectNodes.flanger = this.audioContext.createDelay(0.02);
+        this.effectNodes.flanger.delayTime.value = delayTime;
+        
+        // Reconnect flanger feedback loop
+        this.effectNodes.flanger.connect(this.effectNodes.flangerFeedback);
+        this.effectNodes.flangerFeedback.connect(this.effectNodes.flanger);
+        
+        // Reconnect LFO modulation
+        this.effectNodes.flangerLFOGain.connect(this.effectNodes.flanger.delayTime);
+      }
+      
+      console.log('Effect buffers cleared successfully');
+    } catch (error) {
+      console.error('Error clearing effect buffers:', error);
+    }
+  }
+
   // Get effect nodes for connection in audio chain
   getEffectNodes() {
     return this.effectNodes;
