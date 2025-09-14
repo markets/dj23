@@ -130,8 +130,8 @@ class KeyboardShortcuts {
 
   handleCtrlCombinations(e) {
     const ctrlActions = {
-      'KeyS': () => this.clickButton('syncAB'), // Sync Deck A to Deck B
-      'KeyD': () => this.clickButton('syncBA'), // Sync Deck B to Deck A
+      'KeyS': () => this.clickButton('syncAB'),
+      'KeyD': () => this.clickButton('syncBA'),
       'KeyO': () => this.clickButton('fileInputA'),
       'KeyP': () => this.clickButton('fileInputB')
     };
