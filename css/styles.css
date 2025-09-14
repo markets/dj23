@@ -1567,29 +1567,6 @@ input[type="range"]::-moz-range-thumb {
 
 .beat-waveform-wrapper {
   position: relative;
-  flex: 1;
-  height: 100px;
-  background: var(--bg-primary);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  border: 2px solid var(--border-primary);
-  cursor: pointer;
-  transition: var(--transition-normal);
-}
-
-.beat-waveform-wrapper:hover {
-  border-color: var(--color-primary);
-  box-shadow: 0 4px 15px rgba(78, 205, 196, 0.2);
-}
-
-.beat-waveform-global {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.beat-waveform-wrapper-fullwidth {
-  position: relative;
   width: 100%;
   height: 65px;
   background: linear-gradient(145deg, var(--bg-secondary), var(--bg-primary));
@@ -1603,15 +1580,15 @@ input[type="range"]::-moz-range-thumb {
   box-shadow: none;
 }
 
-.beat-waveform-wrapper-fullwidth:hover {
+.beat-waveform-wrapper:hover {
   background: linear-gradient(145deg, var(--bg-tertiary), var(--bg-secondary));
 }
 
-.beat-waveform-wrapper-fullwidth:first-child {
+.beat-waveform-wrapper:first-child {
   border-top: none;
 }
 
-.beat-waveform-wrapper-fullwidth:last-child {
+.beat-waveform-wrapper:last-child {
   margin-bottom: 0;
 }
 
@@ -1621,8 +1598,7 @@ input[type="range"]::-moz-range-thumb {
   display: block;
 }
 
-.beat-waveform-wrapper .beat-playhead,
-.beat-waveform-wrapper-fullwidth .beat-playhead {
+.beat-waveform-wrapper .beat-playhead {
   position: absolute;
   top: 0;
   left: 50%;

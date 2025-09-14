@@ -589,8 +589,8 @@ class ZoomedWaveformRenderer extends BaseWaveformRenderer {
     if (!this.waveformData) return;
     
     const zoomSensitivity = 0.4;
-    const minZoom = 4;
-    const maxZoom = 60;
+    const minZoom = 8;
+    const maxZoom = 80;
     
     // direction: 1 for zoom in (-), -1 for zoom out (+)
     const zoomDelta = direction * zoomSensitivity;
