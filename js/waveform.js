@@ -29,12 +29,21 @@ class BaseWaveformRenderer {
       const start = i * blockSize;
       const end = start + blockSize;
       let sum = 0;
+      let peak = 0; // Track peak amplitude for energy calculation
 
       for (let j = start; j < end && j < channelData.length; j++) {
-        sum += Math.abs(channelData[j]);
+        const amplitude = Math.abs(channelData[j]);
+        sum += amplitude;
+        peak = Math.max(peak, amplitude);
       }
 
-      waveformData.push(sum / blockSize);
+      const average = sum / blockSize;
+      
+      // Enhanced energy calculation: Combine average and peak for better beat emphasis
+      // Use a gentler curve for the overview waveform compared to the zoomed view
+      const energyFactor = Math.pow(average + (peak * 0.2), 1.1);
+      
+      waveformData.push(energyFactor);
     }
 
     this.waveformData = waveformData;
@@ -110,7 +119,8 @@ class WaveformRenderer extends BaseWaveformRenderer {
 
     this.ctx.fillStyle = '#333';
     for (let i = 0; i < this.waveformData.length; i++) {
-      const barHeight = this.waveformData[i] * centerY * 0.8;
+      // Enhanced bar height: Increase from 0.8 to 1.1 for taller, more prominent bars
+      const barHeight = this.waveformData[i] * centerY * 1.1;
       const x = i * barWidth;
             
       this.ctx.fillRect(x, centerY - barHeight, barWidth - 1, barHeight);
@@ -126,7 +136,8 @@ class WaveformRenderer extends BaseWaveformRenderer {
         const x = i * barWidth;
         if (x > playedWidth) break;
                 
-        const barHeight = this.waveformData[i] * centerY * 0.8;
+        // Enhanced bar height: Increase from 0.8 to 1.1 for taller, more prominent bars
+        const barHeight = this.waveformData[i] * centerY * 1.1;
         this.ctx.fillRect(x, centerY - barHeight, barWidth - 1, barHeight);
         this.ctx.fillRect(x, centerY, barWidth - 1, barHeight);
       }
@@ -415,12 +426,21 @@ class ZoomedWaveformRenderer extends BaseWaveformRenderer {
       const start = i * blockSize;
       const end = start + blockSize;
       let sum = 0;
+      let peak = 0; // Track peak amplitude for energy calculation
 
       for (let j = start; j < end && j < channelData.length; j++) {
-        sum += Math.abs(channelData[j]);
+        const amplitude = Math.abs(channelData[j]);
+        sum += amplitude;
+        peak = Math.max(peak, amplitude);
       }
 
-      waveformData.push(sum / blockSize);
+      const average = sum / blockSize;
+      
+      // Enhanced energy calculation: Combine average and peak for better beat emphasis
+      // Use a curve to exaggerate high-energy sections while preserving quieter parts
+      const energyFactor = Math.pow(average + (peak * 0.3), 1.2);
+      
+      waveformData.push(energyFactor);
     }
 
     this.waveformData = waveformData;
@@ -490,7 +510,8 @@ class ZoomedWaveformRenderer extends BaseWaveformRenderer {
       const sampleIndex = startSample + i;
       if (sampleIndex >= this.waveformData.length) break;
       
-      const barHeight = this.waveformData[sampleIndex] * centerY * 0.9;
+      // Enhanced bar height: Increase from 0.9 to 1.3 for taller, more prominent bars
+      const barHeight = this.waveformData[sampleIndex] * centerY * 1.3;
       const x = drawOffsetPixels + i * barWidth;
       
       if (x >= 0 && x < width) {
@@ -516,7 +537,8 @@ class ZoomedWaveformRenderer extends BaseWaveformRenderer {
           const sampleIndex = startSample + i;
           if (sampleIndex >= this.waveformData.length) break;
                 
-          const barHeight = this.waveformData[sampleIndex] * centerY * 0.9;
+          // Enhanced bar height: Increase from 0.9 to 1.3 for taller, more prominent bars
+          const barHeight = this.waveformData[sampleIndex] * centerY * 1.3;
           this.ctx.fillRect(x, centerY - barHeight, barWidth - 0.5, barHeight);
           this.ctx.fillRect(x, centerY, barWidth - 0.5, barHeight);
         }
