@@ -54,7 +54,6 @@ class BaseWaveformRenderer {
   }
 
   startAnimation() {
-    // Don't start if already animating
     if (this.animationId) return;
     
     const animate = () => {
