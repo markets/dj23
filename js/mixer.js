@@ -63,8 +63,8 @@ class MixerController {
     this.deckControllers.B = new DeckController('B');
 
     // Sync buttons
-    window.buttonHandler.createClickHandler('syncAB', () => this.syncDecks('A', 'B'));
-    window.buttonHandler.createClickHandler('syncBA', () => this.syncDecks('B', 'A'));
+    window.buttonHandler.createClickHandler('syncAB', () => this.syncDecks('B', 'A'));
+    window.buttonHandler.createClickHandler('syncBA', () => this.syncDecks('A', 'B'));
 
     // PRE-LISTEN buttons
     window.buttonHandler.createClickHandler('preListenA', () => this.togglePreListen('A'));
@@ -120,12 +120,14 @@ class MixerController {
     const target = window.audioEngine.getDeck(targetDeck);
         
     if (source && target && source.audioBuffer && target.audioBuffer) {
-      const sourceBPM = source.getBPM();
-      const targetBPM = target.getBPM();
+      // Use the current effective BPM of source (includes pitch adjustments)
+      const sourceCurrentBPM = source.getBPM();
+      // Use the base BPM of target (without pitch adjustments) for calculation
+      const targetBaseBPM = target.getBaseBPM();
             
-      if (sourceBPM > 0 && targetBPM > 0) {
-        // Match the BPM by adjusting pitch
-        const pitchAdjustment = ((sourceBPM / targetBPM) - 1) * 100;
+      if (sourceCurrentBPM > 0 && targetBaseBPM > 0) {
+        // Calculate pitch adjustment needed to match source's current BPM
+        const pitchAdjustment = ((sourceCurrentBPM / targetBaseBPM) - 1) * 100;
         target.setPitch(pitchAdjustment);
                 
         // Update UI to reflect pitch change
@@ -140,7 +142,7 @@ class MixerController {
         // Match the beat timing
         this.syncBeatTiming(source, target);
         
-        console.log(`Synced deck ${targetDeck} to deck ${sourceDeck}: BPM ${targetBPM} -> ${sourceBPM}, pitch: ${pitchAdjustment.toFixed(1)}%`);
+        console.log(`Synced deck ${targetDeck} to deck ${sourceDeck}: Base BPM ${targetBaseBPM} -> Current BPM ${sourceCurrentBPM}, pitch: ${pitchAdjustment.toFixed(1)}%`);
       }
     }
   }
