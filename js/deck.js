@@ -1302,16 +1302,11 @@ class DeckController {
             
       // Generate main waveform
       const waveformRenderer = window.waveformRenderers[this.deckId];
-      if (waveformRenderer) {
-        await waveformRenderer.generateWaveform(deck.audioBuffer);
-      }
+      await waveformRenderer.generateWaveform(deck.audioBuffer);
       
       // Generate beat matching waveforms
       const beatWaveformRenderer = window.beatWaveformRenderers[this.deckId];
-      
-      if (beatWaveformRenderer) {
-        await beatWaveformRenderer.generateWaveform(deck.audioBuffer);
-      }
+      await beatWaveformRenderer.generateWaveform(deck.audioBuffer);
             
       // Update BPM display
       this.updateBPMDisplay();

@@ -29,19 +29,31 @@ class BaseWaveformRenderer {
       const start = i * blockSize;
       const end = start + blockSize;
       let sum = 0;
+      let peak = 0; // Track peak amplitude for energy calculation
 
       for (let j = start; j < end && j < channelData.length; j++) {
-        sum += Math.abs(channelData[j]);
+        const amplitude = Math.abs(channelData[j]);
+        sum += amplitude;
+        peak = Math.max(peak, amplitude);
       }
 
-      waveformData.push(sum / blockSize);
+      const average = sum / blockSize;
+      
+      // Enhanced energy calculation: Combine average and peak for better beat emphasis
+      const energyFactor = Math.pow(average + (peak * 0.2), 1.2);
+      
+      waveformData.push(energyFactor);
     }
 
     this.waveformData = waveformData;
   }
 
+  async generateWaveform(audioBuffer) {
+    this.loadWaveformData(audioBuffer);
+    this.render();
+  }
+
   startAnimation() {
-    // Don't start if already animating
     if (this.animationId) return;
     
     const animate = () => {
@@ -88,11 +100,6 @@ class WaveformRenderer extends BaseWaveformRenderer {
     });
   }
 
-  async generateWaveform(audioBuffer) {
-    this.loadWaveformData(audioBuffer);
-    this.render();
-  }
-
   render() {
     if (!this.waveformData) {
       this.renderEmpty();
@@ -110,7 +117,7 @@ class WaveformRenderer extends BaseWaveformRenderer {
 
     this.ctx.fillStyle = '#333';
     for (let i = 0; i < this.waveformData.length; i++) {
-      const barHeight = this.waveformData[i] * centerY * 0.8;
+      const barHeight = this.waveformData[i] * centerY;
       const x = i * barWidth;
             
       this.ctx.fillRect(x, centerY - barHeight, barWidth - 1, barHeight);
@@ -126,14 +133,13 @@ class WaveformRenderer extends BaseWaveformRenderer {
         const x = i * barWidth;
         if (x > playedWidth) break;
                 
-        const barHeight = this.waveformData[i] * centerY * 0.8;
+        const barHeight = this.waveformData[i] * centerY;
         this.ctx.fillRect(x, centerY - barHeight, barWidth - 1, barHeight);
         this.ctx.fillRect(x, centerY, barWidth - 1, barHeight);
       }
     }
 
     this.drawCuePoints(width, height, deck);
-
     this.updatePlayhead();
   }
 
@@ -214,7 +220,6 @@ class WaveformRenderer extends BaseWaveformRenderer {
       const progress = deck.getCurrentTime() / deck.getDuration();
       const position = Math.min(progress * 100, 100);
       playhead.style.left = `${position}%`;
-      // Set opacity based on play state for visual feedback
       playhead.style.opacity = deck.isPlaying ? '1' : '0.7';
     } else {
       playhead.style.left = '0%';
@@ -223,10 +228,10 @@ class WaveformRenderer extends BaseWaveformRenderer {
   }
 }
 
-class ZoomedWaveformRenderer extends BaseWaveformRenderer {
+class BeatWaveformRenderer extends BaseWaveformRenderer {
   constructor(canvasId, deckId) {
     super(canvasId, deckId);
-    this.zoomLevel = 20; // Shows about 20 seconds of audio for beat matching
+    this.zoomLevel = 30; // Shows about 30 seconds of audio for beat matching
     this.offsetSeconds = 0; // Current offset from track start
         
     this.setupCanvas();
@@ -404,29 +409,6 @@ class ZoomedWaveformRenderer extends BaseWaveformRenderer {
     });
   }
 
-  async generateWaveform(audioBuffer) {
-    // Generate high resolution waveform data for zoomed view
-    const channelData = audioBuffer.getChannelData(0);
-    const samples = 2000; // Higher resolution for beat matching
-    const blockSize = Math.floor(channelData.length / samples);
-    const waveformData = [];
-
-    for (let i = 0; i < samples; i++) {
-      const start = i * blockSize;
-      const end = start + blockSize;
-      let sum = 0;
-
-      for (let j = start; j < end && j < channelData.length; j++) {
-        sum += Math.abs(channelData[j]);
-      }
-
-      waveformData.push(sum / blockSize);
-    }
-
-    this.waveformData = waveformData;
-    this.render();
-  }
-
   updateZoomWindow() {
     const deck = window.audioEngine.getDeck(this.deckId);
     if (!deck || !deck.audioBuffer) {
@@ -490,7 +472,7 @@ class ZoomedWaveformRenderer extends BaseWaveformRenderer {
       const sampleIndex = startSample + i;
       if (sampleIndex >= this.waveformData.length) break;
       
-      const barHeight = this.waveformData[sampleIndex] * centerY * 0.9;
+      const barHeight = this.waveformData[sampleIndex] * centerY * 1.1;
       const x = drawOffsetPixels + i * barWidth;
       
       if (x >= 0 && x < width) {
@@ -516,7 +498,7 @@ class ZoomedWaveformRenderer extends BaseWaveformRenderer {
           const sampleIndex = startSample + i;
           if (sampleIndex >= this.waveformData.length) break;
                 
-          const barHeight = this.waveformData[sampleIndex] * centerY * 0.9;
+          const barHeight = this.waveformData[sampleIndex] * centerY * 1.1;
           this.ctx.fillRect(x, centerY - barHeight, barWidth - 0.5, barHeight);
           this.ctx.fillRect(x, centerY, barWidth - 0.5, barHeight);
         }
@@ -601,24 +583,13 @@ class ZoomedWaveformRenderer extends BaseWaveformRenderer {
     }
   }
 
-  startAnimation() {
-    // Don't start if already animating
-    if (this.animationId) return;
-    
-    const animate = () => {
-      this.render();
-      this.animationId = requestAnimationFrame(animate);
-    };
-    animate();
-  }
-
   // Method to handle zoom changes from buttons
   zoom(direction) {
     if (!this.waveformData) return;
     
     const zoomSensitivity = 0.4;
-    const minZoom = 4;
-    const maxZoom = 60;
+    const minZoom = 8;
+    const maxZoom = 80;
     
     // direction: 1 for zoom in (-), -1 for zoom out (+)
     const zoomDelta = direction * zoomSensitivity;
