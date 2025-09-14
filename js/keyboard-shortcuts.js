@@ -19,8 +19,7 @@ class KeyboardShortcuts {
 
   // Helper function for deck transport controls
   controlDeck(deckId, action) {
-    const deckController = window.mixerController?.deckControllers[deckId];
-    if (!deckController) return;
+    const deckController = window.mixerController.deckControllers[deckId];
 
     switch (action) {
       case 'play':

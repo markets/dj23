@@ -271,29 +271,26 @@ class Deck {
     if (this.gainNode) {
       this.gainNode.gain.value = this.volume;
     }
+
     // Update cue mixdown when volume changes
-    if (window.mixerController) {
-      window.mixerController.updateCueMixdown();
-    }
+    window.mixerController.updateCueMixdown();
   }
 
   // Pre-listen functionality
   enablePreListen() {
     this.isPreListenEnabled = true;
     console.log(`Deck ${this.deckId}: Pre-listen enabled`);
+
     // Update the cue mixdown
-    if (window.mixerController) {
-      window.mixerController.updateCueMixdown();
-    }
+    window.mixerController.updateCueMixdown();
   }
 
   disablePreListen() {
     this.isPreListenEnabled = false;
     console.log(`Deck ${this.deckId}: Pre-listen disabled`);
+
     // Update the cue mixdown
-    if (window.mixerController) {
-      window.mixerController.updateCueMixdown();
-    }
+    window.mixerController.updateCueMixdown();
   }
 
   togglePreListen() {
