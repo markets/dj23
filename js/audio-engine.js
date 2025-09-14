@@ -27,12 +27,12 @@ class AudioEngine {
       this.masterGain = this.audioContext.createGain();
       
       // Set initial volumes
-      this.cueGain.gain.value = 0.5;   // CUE volume
-      this.masterGain.gain.value = 0.75; // Master volume
+      this.cueGain.gain.value = 0.5;
+      this.masterGain.gain.value = 0.75;
       
       // Route CUE to left channel, MAIN to right channel of final output
-      this.cueGain.connect(this.channelMerger, 0, 0);   // CUE -> Left channel
-      this.masterGain.connect(this.channelMerger, 0, 1);  // MAIN -> Right channel
+      this.cueGain.connect(this.channelMerger, 0, 0);    // CUE -> Left channel
+      this.masterGain.connect(this.channelMerger, 0, 1); // MAIN -> Right channel
       this.channelMerger.connect(this.audioContext.destination);
 
       // Create a media stream destination for recording

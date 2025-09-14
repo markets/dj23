@@ -207,7 +207,7 @@ class WaveformRenderer extends BaseWaveformRenderer {
         
     // Draw text
     this.ctx.fillStyle = '#666';
-    this.ctx.font = '14px Inter';
+    this.ctx.font = '12px Inter';
     this.ctx.textAlign = 'center';
     this.ctx.fillText('Load a track to see waveform', width / 2, height / 2 - 10);
   }
@@ -605,14 +605,5 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
   }
 }
 
-// Global waveform renderers
-window.waveformRenderers = {
-  A: null,
-  B: null
-};
-
-// Global beat waveform renderers
-window.beatWaveformRenderers = {
-  A: null,
-  B: null
-};
+window.waveformRenderers = { A: null, B: null };
+window.beatWaveformRenderers = { A: null, B: null };

@@ -68,5 +68,4 @@ class ButtonHandler {
   }
 }
 
-// Create global instance
 window.buttonHandler = new ButtonHandler();

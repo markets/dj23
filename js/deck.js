@@ -1238,7 +1238,6 @@ class DeckController {
       const audioFile = files.find(isAudioFile);
       
       if (audioFile) {
-        // Load the audio file using existing loadTrack method
         await this.loadTrack(audioFile);
         
         console.log(`Deck ${this.deckId}: Successfully loaded track via drag and drop: ${audioFile.name}`);
@@ -1378,8 +1377,8 @@ class DeckController {
     
     // Try to parse common patterns
     const patterns = [
-      /^(\d+[\s\-_]*)?(.+?)\s*[\-_]\s*(.+)$/,  // "01 - Artist - Title" or "Artist - Title"
-      /^(.+?)[\s\-_]+(.+)$/                     // "Artist Title" or "Artist_Title"
+      /^(\d+[\s\-_]*)?(.+?)\s*[\-_]\s*(.+)$/, // "01 - Artist - Title" or "Artist - Title"
+      /^(.+?)[\s\-_]+(.+)$/                   // "Artist Title" or "Artist_Title"
     ];
     
     for (const pattern of patterns) {

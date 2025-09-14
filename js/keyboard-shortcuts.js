@@ -147,7 +147,6 @@ class KeyboardShortcuts {
       return;
     }
 
-    // Define keyboard mappings with logical left/right split
     const shortcuts = {
       // General controls
       'Space': () => this.controlDeck('A', 'play'),
@@ -278,5 +277,4 @@ class KeyboardShortcuts {
   }
 }
 
-// Export for use in other modules
 window.KeyboardShortcuts = KeyboardShortcuts;

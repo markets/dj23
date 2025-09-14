@@ -225,6 +225,5 @@ class EffectsController {
   }
 }
 
-// Make both classes available globally
 window.EffectsEngine = EffectsEngine;
 window.EffectsController = EffectsController;

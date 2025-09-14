@@ -44,7 +44,6 @@
   --spacing-lg: 15px;
   --spacing-xl: 20px;
   --spacing-2xl: 25px;
-  --spacing-3xl: 30px;
   
   /* Shadows */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -97,6 +96,7 @@ body {
   font-size: 3rem;
   font-weight: 700;
   color: var(--color-primary);
+  text-shadow: 0 0 4px rgba(78, 205, 196, 0.5);
 }
 
 .header-controls {
@@ -262,8 +262,8 @@ body {
 .mixer-interface {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
-  gap: var(--spacing-3xl);
-  margin-bottom: var(--spacing-3xl);
+  gap: var(--spacing-2xl);
+  margin-bottom: var(--spacing-2xl);
 }
 
 .deck {
@@ -625,7 +625,7 @@ body {
 
 .crossfader-section {
   text-align: center;
-  margin-bottom: var(--spacing-3xl);
+  margin-bottom: var(--spacing-2xl);
 }
 
 .crossfader-section label {
@@ -653,7 +653,7 @@ body {
 
 .sound-pad-section {
   text-align: center;
-  margin-bottom: var(--spacing-3xl);
+  margin-bottom: var(--spacing-2xl);
 }
 
 .sound-pad-section label {
@@ -762,7 +762,7 @@ body {
 
 .bpm-section {
   text-align: center;
-  margin-bottom: var(--spacing-3xl);
+  margin-bottom: var(--spacing-2xl);
 }
 
 .bpm-display {
@@ -957,7 +957,7 @@ body {
    ============================================================================ */
 .master-volume-slider, .cue-volume-slider {
   height: 4px;
-  width: 140px;
+  width: 120px;
 }
 
 .volume-controls {
@@ -1525,7 +1525,6 @@ input[type="range"]::-moz-range-thumb {
   background: rgba(0, 0, 0, 0.7);
   padding: 2px 8px;
   border-radius: var(--radius-sm);
-  text-shadow: 0 0 4px rgba(78, 205, 196, 0.5);
 }
 
 .zoom-controls {
@@ -1547,7 +1546,6 @@ input[type="range"]::-moz-range-thumb {
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: var(--transition-normal);
-  text-shadow: 0 0 4px rgba(78, 205, 196, 0.5);
   min-width: 24px;
   height: 20px;
   display: flex;
