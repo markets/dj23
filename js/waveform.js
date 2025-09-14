@@ -29,21 +29,12 @@ class BaseWaveformRenderer {
       const start = i * blockSize;
       const end = start + blockSize;
       let sum = 0;
-      let peak = 0; // Track peak amplitude for energy calculation
 
       for (let j = start; j < end && j < channelData.length; j++) {
-        const amplitude = Math.abs(channelData[j]);
-        sum += amplitude;
-        peak = Math.max(peak, amplitude);
+        sum += Math.abs(channelData[j]);
       }
 
-      const average = sum / blockSize;
-      
-      // Enhanced energy calculation: Combine average and peak for better beat emphasis
-      // Use a gentler curve for the overview waveform compared to the zoomed view
-      const energyFactor = Math.pow(average + (peak * 0.2), 1.1);
-      
-      waveformData.push(energyFactor);
+      waveformData.push(sum / blockSize);
     }
 
     this.waveformData = waveformData;
@@ -119,8 +110,7 @@ class WaveformRenderer extends BaseWaveformRenderer {
 
     this.ctx.fillStyle = '#333';
     for (let i = 0; i < this.waveformData.length; i++) {
-      // Enhanced bar height: Increase from 0.8 to 1.1 for taller, more prominent bars
-      const barHeight = this.waveformData[i] * centerY * 1.1;
+      const barHeight = this.waveformData[i] * centerY * 0.8;
       const x = i * barWidth;
             
       this.ctx.fillRect(x, centerY - barHeight, barWidth - 1, barHeight);
@@ -136,8 +126,7 @@ class WaveformRenderer extends BaseWaveformRenderer {
         const x = i * barWidth;
         if (x > playedWidth) break;
                 
-        // Enhanced bar height: Increase from 0.8 to 1.1 for taller, more prominent bars
-        const barHeight = this.waveformData[i] * centerY * 1.1;
+        const barHeight = this.waveformData[i] * centerY * 0.8;
         this.ctx.fillRect(x, centerY - barHeight, barWidth - 1, barHeight);
         this.ctx.fillRect(x, centerY, barWidth - 1, barHeight);
       }
@@ -239,12 +228,6 @@ class ZoomedWaveformRenderer extends BaseWaveformRenderer {
     super(canvasId, deckId);
     this.zoomLevel = 20; // Shows about 20 seconds of audio for beat matching
     this.offsetSeconds = 0; // Current offset from track start
-    
-    // Performance optimization: Cache rendering data to avoid recalculations
-    this.cachedRenderData = null;
-    this.lastTrackId = null;
-    this.frameCounter = 0;
-    this.maxFrameRate = 60; // Target 60fps max for smooth performance
         
     this.setupCanvas();
     this.setupEventListeners();
@@ -432,29 +415,15 @@ class ZoomedWaveformRenderer extends BaseWaveformRenderer {
       const start = i * blockSize;
       const end = start + blockSize;
       let sum = 0;
-      let peak = 0; // Track peak amplitude for energy calculation
 
       for (let j = start; j < end && j < channelData.length; j++) {
-        const amplitude = Math.abs(channelData[j]);
-        sum += amplitude;
-        peak = Math.max(peak, amplitude);
+        sum += Math.abs(channelData[j]);
       }
 
-      const average = sum / blockSize;
-      
-      // Enhanced energy calculation: Combine average and peak for better beat emphasis
-      // Use a curve to exaggerate high-energy sections while preserving quieter parts
-      const energyFactor = Math.pow(average + (peak * 0.3), 1.2);
-      
-      waveformData.push(energyFactor);
+      waveformData.push(sum / blockSize);
     }
 
     this.waveformData = waveformData;
-    
-    // Clear cache when new track is loaded to ensure fresh rendering
-    this.cachedRenderData = null;
-    this.lastTrackId = audioBuffer.length; // Use buffer length as simple track ID
-    
     this.render();
   }
 
@@ -486,30 +455,12 @@ class ZoomedWaveformRenderer extends BaseWaveformRenderer {
     const deck = window.audioEngine.getDeck(this.deckId);
     if (!deck) return;
 
-    // Performance optimization: Limit frame rate and skip frames when needed
-    this.frameCounter++;
-    const shouldSkipFrame = this.frameCounter % 2 === 0 && this.frameCounter > this.maxFrameRate;
-    if (shouldSkipFrame && deck.isPlaying) {
-      // Skip this frame but still update playhead for smooth visual feedback
-      this.updatePlayhead();
-      return;
-    }
-
     this.updateZoomWindow();
 
     const width = this.canvas.clientWidth;
     const height = this.canvas.clientHeight;
     const duration = deck.getDuration();
     const currentTime = deck.getCurrentTime();
-    
-    // Performance optimization: Check if we can reuse cached rendering data
-    const currentTrackId = deck.audioBuffer ? deck.audioBuffer.length : null;
-    const trackChanged = currentTrackId !== this.lastTrackId;
-    
-    if (trackChanged) {
-      this.cachedRenderData = null;
-      this.lastTrackId = currentTrackId;
-    }
         
     this.ctx.clearRect(0, 0, width, height);
         
@@ -533,40 +484,14 @@ class ZoomedWaveformRenderer extends BaseWaveformRenderer {
 
     const drawOffsetPixels = windowStart < 0 ? -windowStart * pixelsPerSecond : 0;
 
-    // Performance optimization: Only recalculate bar data if window or track changed
-    if (!this.cachedRenderData || trackChanged || 
-        this.cachedRenderData.startSample !== startSample || 
-        this.cachedRenderData.endSample !== endSample) {
-      
-      this.cachedRenderData = {
-        startSample,
-        endSample,
-        visibleSamples,
-        barPositions: [],
-        barHeights: []
-      };
-
-      // Pre-calculate bar positions and heights for better performance
-      for (let i = 0; i < visibleSamples; i++) {
-        const sampleIndex = startSample + i;
-        if (sampleIndex >= this.waveformData.length) break;
-        
-        // Enhanced bar height: Increase from 0.9 to 1.3 for taller, more prominent bars
-        const barHeight = this.waveformData[sampleIndex] * centerY * 1.3;
-        const x = drawOffsetPixels + i * barWidth;
-        
-        this.cachedRenderData.barPositions.push(x);
-        this.cachedRenderData.barHeights.push(barHeight);
-      }
-    }
-
-    // Draw waveform with cached data for better performance
+    // Draw waveform with higher detail
     this.ctx.fillStyle = '#444';
-    const { barPositions, barHeights } = this.cachedRenderData;
-    
-    for (let i = 0; i < barPositions.length; i++) {
-      const x = barPositions[i];
-      const barHeight = barHeights[i];
+    for (let i = 0; i < visibleSamples; i++) {
+      const sampleIndex = startSample + i;
+      if (sampleIndex >= this.waveformData.length) break;
+      
+      const barHeight = this.waveformData[sampleIndex] * centerY * 0.9;
+      const x = drawOffsetPixels + i * barWidth;
       
       if (x >= 0 && x < width) {
         this.ctx.fillRect(x, centerY - barHeight, barWidth - 0.5, barHeight);
@@ -574,8 +499,7 @@ class ZoomedWaveformRenderer extends BaseWaveformRenderer {
       }
     }
 
-    // Performance optimization: Only redraw played portion when track is playing
-    // Use different color for played portion without recalculating everything
+    // Draw played portion in zoom window
     if (deck.isPlaying) {
       const currentTime = deck.getCurrentTime();
       if (currentTime >= Math.max(0, this.offsetSeconds) && 
@@ -584,13 +508,15 @@ class ZoomedWaveformRenderer extends BaseWaveformRenderer {
         const pixelsPerSecond = width / this.zoomLevel;
         const currentTimePosition = (currentTime - this.offsetSeconds) * pixelsPerSecond;
         
-        // Optimized: Only change color, reuse the same geometry
         this.ctx.fillStyle = '#4ecdc4';
-        for (let i = 0; i < barPositions.length; i++) {
-          const x = barPositions[i];
+        for (let i = 0; i < visibleSamples; i++) {
+          const x = drawOffsetPixels + i * barWidth;
           if (x > currentTimePosition || x < 0 || x >= width) continue;
           
-          const barHeight = barHeights[i];
+          const sampleIndex = startSample + i;
+          if (sampleIndex >= this.waveformData.length) break;
+                
+          const barHeight = this.waveformData[sampleIndex] * centerY * 0.9;
           this.ctx.fillRect(x, centerY - barHeight, barWidth - 0.5, barHeight);
           this.ctx.fillRect(x, centerY, barWidth - 0.5, barHeight);
         }
@@ -679,26 +605,11 @@ class ZoomedWaveformRenderer extends BaseWaveformRenderer {
     // Don't start if already animating
     if (this.animationId) return;
     
-    let lastFrameTime = 0;
-    const targetFPS = 60;
-    const frameInterval = 1000 / targetFPS;
-    
-    const animate = (currentTime) => {
-      // Performance optimization: Throttle frame rate to prevent degradation
-      if (currentTime - lastFrameTime >= frameInterval) {
-        this.render();
-        lastFrameTime = currentTime;
-        
-        // Reset frame counter periodically to prevent overflow
-        if (this.frameCounter > 10000) {
-          this.frameCounter = 0;
-        }
-      }
-      
+    const animate = () => {
+      this.render();
       this.animationId = requestAnimationFrame(animate);
     };
-    
-    this.animationId = requestAnimationFrame(animate);
+    animate();
   }
 
   // Method to handle zoom changes from buttons
