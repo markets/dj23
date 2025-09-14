@@ -6,8 +6,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.waveformRenderers.A = new WaveformRenderer('waveformA', 'A');
   window.waveformRenderers.B = new WaveformRenderer('waveformB', 'B');
     
-  window.beatWaveformRenderers.A = new ZoomedWaveformRenderer('beatWaveformA', 'A');
-  window.beatWaveformRenderers.B = new ZoomedWaveformRenderer('beatWaveformB', 'B');
+  window.beatWaveformRenderers.A = new BeatWaveformRenderer('beatWaveformA', 'A');
+  window.beatWaveformRenderers.B = new BeatWaveformRenderer('beatWaveformB', 'B');
     
   window.waveformRenderers.A.startAnimation();
   window.waveformRenderers.B.startAnimation();

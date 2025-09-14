@@ -229,7 +229,7 @@ class WaveformRenderer extends BaseWaveformRenderer {
   }
 }
 
-class ZoomedWaveformRenderer extends BaseWaveformRenderer {
+class BeatWaveformRenderer extends BaseWaveformRenderer {
   constructor(canvasId, deckId) {
     super(canvasId, deckId);
     this.zoomLevel = 30; // Shows about 30 seconds of audio for beat matching
