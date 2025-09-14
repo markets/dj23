@@ -62,9 +62,9 @@ class MixerController {
     this.deckControllers.A = new DeckController('A');
     this.deckControllers.B = new DeckController('B');
 
-    // Sync buttons
-    window.buttonHandler.createClickHandler('syncAB', () => this.syncDecks('A', 'B'));
-    window.buttonHandler.createClickHandler('syncBA', () => this.syncDecks('B', 'A'));
+    // Sync buttons - each deck syncs itself to the other deck
+    window.buttonHandler.createClickHandler('syncA', () => this.syncDecks('B', 'A'));
+    window.buttonHandler.createClickHandler('syncB', () => this.syncDecks('A', 'B'));
 
     // PRE-LISTEN buttons
     window.buttonHandler.createClickHandler('preListenA', () => this.togglePreListen('A'));
