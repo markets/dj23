@@ -1018,15 +1018,7 @@ class DeckController {
 
     // Pitch reset button
     window.buttonHandler.createClickHandler(`pitchReset${this.deckId}`, () => {
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.setPitch(0);
-        // Update the slider and display
-        document.getElementById(`pitch${this.deckId}`).value = 0;
-        document.getElementById(`pitchDisplay${this.deckId}`).textContent = '0%';
-        // Update BPM display
-        this.updateBPMDisplay();
-      }
+      this.resetPitch();
     });
 
     // CUE point controls
@@ -1277,11 +1269,7 @@ class DeckController {
     this.resetTapState();
     
     // Reset pitch to 0% when loading new track for consistent BPM calculation
-    deck.setPitch(0);
-    const pitchSlider = document.getElementById(`pitch${this.deckId}`);
-    const pitchDisplay = document.getElementById(`pitchDisplay${this.deckId}`);
-    if (pitchSlider) pitchSlider.value = 0;
-    if (pitchDisplay) pitchDisplay.textContent = '0%';
+    this.resetPitch();
         
     // Show loading state
     trackInfo.classList.add('loading');
@@ -1570,22 +1558,32 @@ class DeckController {
     console.log(`Deck ${this.deckId}: Effects reset to default values`);
   }
 
-  updateBPMDisplay() {
+  resetPitch() {
     const deck = window.audioEngine.getDeck(this.deckId);
     if (!deck) return;
 
-    const baseBPM = deck.getBaseBPM(); // Get the original BPM
-    const bpmElement = document.getElementById(`bpm${this.deckId}`);
+    // Reset pitch to 0%
+    deck.setPitch(0);
     
-    // Show BPM if available, even without a loaded track (for TAP functionality)
-    if (baseBPM && baseBPM > 0) {
-      const pitchPercentage = ((deck.playbackRate - 1) * 100);
-      const adjustedBPM = Math.round(baseBPM * deck.playbackRate);
-      bpmElement.textContent = adjustedBPM;
-    } else {
-      // Show "--" when no BPM is available
-      bpmElement.textContent = "--";
-    }
+    // Update the slider and display
+    const pitchSlider = document.getElementById(`pitch${this.deckId}`);
+    const pitchDisplay = document.getElementById(`pitchDisplay${this.deckId}`);
+    if (pitchSlider) pitchSlider.value = 0;
+    if (pitchDisplay) pitchDisplay.textContent = '0%';
+    
+    // Update BPM display
+    this.updateBPMDisplay();
+  }
+
+  updateBPMDisplay() {
+    const deck = window.audioEngine.getDeck(this.deckId);
+    if (!deck || !deck.audioBuffer) return;
+
+    const baseBPM = deck.getBaseBPM(); // Get the original BPM
+    const pitchPercentage = ((deck.playbackRate - 1) * 100);
+    const adjustedBPM = Math.round(baseBPM * deck.playbackRate);
+    
+    document.getElementById(`bpm${this.deckId}`).textContent = adjustedBPM;
   }
 
   handleTap() {
