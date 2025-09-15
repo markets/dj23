@@ -819,8 +819,9 @@ class DeckController {
     this.isScratching = false;
     this.vinylElement = null;
     
-    // TAP functionality - uses only 4 beats
-    this.tapTimes = [];
+    // TAP functionality - stores intervals between taps in rolling window
+    this.tapIntervals = [];
+    this.lastTapTime = null;
     this.tapTimeout = null;
     
     this.setupEventListeners();
@@ -1586,11 +1587,22 @@ class DeckController {
     const now = Date.now();
     const deck = window.audioEngine.getDeck(this.deckId);
 
-    // Add current time to tap history
-    this.tapTimes.push(now);
+    // Initialize tap intervals array if not exists
+    if (!this.tapIntervals) {
+      this.tapIntervals = [];
+    }
+
+    // If we have a previous tap, calculate the interval
+    if (this.lastTapTime) {
+      const interval = now - this.lastTapTime;
+      this.tapIntervals.push(interval);
+      
+      // Keep only the last 8 intervals (rolling window)
+      this.tapIntervals = this.tapIntervals.slice(-8);
+    }
     
-    // Keep only the last 4 taps and remove taps older than 2 seconds
-    this.tapTimes = this.tapTimes.filter(time => now - time <= 2000).slice(-4);
+    // Store current tap time as the last tap
+    this.lastTapTime = now;
     
     // Provide visual feedback
     const tapButton = document.getElementById(`tap${this.deckId}`);
@@ -1606,17 +1618,11 @@ class DeckController {
       tapButton.classList.remove('active');
     }, 150);
     
-    // Need exactly 4 taps to calculate BPM
-    if (this.tapTimes.length < 4) return;
+    // Need at least 2 intervals to calculate BPM
+    if (this.tapIntervals.length < 2) return;
     
-    // Calculate intervals between taps
-    const intervals = [];
-    for (let i = 1; i < this.tapTimes.length; i++) {
-      intervals.push(this.tapTimes[i] - this.tapTimes[i - 1]);
-    }
-    
-    // Apply outlier removal and calculate BPM
-    const bpm = this.calculateBPM(intervals);
+    // Apply outlier filtering and calculate BPM
+    const bpm = this.calculateBPM(this.tapIntervals);
     
     // Validate BPM range
     if (bpm >= 60 && bpm <= 200) {
@@ -1625,41 +1631,42 @@ class DeckController {
       const currentTime = deck.getCurrentTime();
       deck.bpmAnalyzer.updateManualTapTime(currentTime);
       this.updateBPMDisplay();
-      console.log(`TAP: Manual BPM set to ${bpm} for deck ${this.deckId} at ${currentTime.toFixed(1)}s (${intervals.length} intervals from 4 beats)`);
+      console.log(`TAP: Manual BPM set to ${bpm} for deck ${this.deckId} at ${currentTime.toFixed(1)}s (${this.tapIntervals.length} intervals)`);
     }
   }
 
-  // BPM calculation with outlier removal
+  // BPM calculation using median-first approach with outlier filtering
   calculateBPM(intervals) {
     if (intervals.length === 0) return 120;
     
-    // For less than 3 intervals, use average
-    if (intervals.length < 3) {
-      const avgInterval = intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
-      return Math.round(60000 / avgInterval);
-    }
-    
     // Sort intervals to find median
     const sortedIntervals = [...intervals].sort((a, b) => a - b);
-    const median = this.getMedian(sortedIntervals);
+    const medianInterval = this.getMedian(sortedIntervals);
     
-    // Outlier removal: remove intervals that are more than 30% off from median
-    const threshold = median * 0.3;
-    const filteredIntervals = intervals.filter(interval => 
-      Math.abs(interval - median) <= threshold
-    );
-    
-    // If no intervals pass the filter, use median
-    if (filteredIntervals.length === 0) {
-      console.log(`TAP: Using median (${median}ms) - all intervals were outliers for deck ${this.deckId}`);
-      return Math.round(60000 / median);
+    // If we only have 1 interval, use it directly
+    if (intervals.length === 1) {
+      return Math.round(60000 / medianInterval);
     }
     
-    // Calculate average of filtered intervals
-    const avgInterval = filteredIntervals.reduce((sum, interval) => sum + interval, 0) / filteredIntervals.length;
-    const bpm = Math.round(60000 / avgInterval);
+    // Filter outliers: remove intervals that deviate more than 20-25% from median
+    const deviationThreshold = 0.25; // 25% deviation threshold
+    const filteredIntervals = intervals.filter(interval => {
+      const deviation = Math.abs(interval - medianInterval) / medianInterval;
+      return deviation <= deviationThreshold;
+    });
     
-    console.log(`TAP: Used ${filteredIntervals.length}/${intervals.length} intervals for deck ${this.deckId}, avg: ${avgInterval.toFixed(1)}ms, BPM: ${bpm}`);
+    // If no intervals pass the filter, use the median
+    if (filteredIntervals.length === 0) {
+      console.log(`TAP: Using median interval (${medianInterval}ms) - all intervals were outliers for deck ${this.deckId}`);
+      return Math.round(60000 / medianInterval);
+    }
+    
+    // Use median of filtered intervals for final BPM calculation
+    const finalSortedIntervals = [...filteredIntervals].sort((a, b) => a - b);
+    const finalMedianInterval = this.getMedian(finalSortedIntervals);
+    const bpm = Math.round(60000 / finalMedianInterval);
+    
+    console.log(`TAP: Used ${filteredIntervals.length}/${intervals.length} intervals for deck ${this.deckId}, median: ${finalMedianInterval.toFixed(1)}ms, BPM: ${bpm}`);
     
     return bpm;
   }
