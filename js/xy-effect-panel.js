@@ -12,11 +12,30 @@ class XYEffectPanel {
     // Current effect
     this.selectedEffect = 'delay';
     
+    // Persistent XY positions for each effect
+    this.effectPositions = {
+      delay: { x: 0, y: 0 },
+      phaser: { x: 0, y: 0 },
+      flanger: { x: 0, y: 0 },
+      filter: { x: 0, y: 0 }
+    };
+    
     // Default values for reset functionality
     this.defaultValues = {
       x: 0,
       y: 0
     };
+    
+    // Note values for delay quantization
+    this.noteValues = [
+      { name: '1/64', multiplier: 1/64 },
+      { name: '1/32', multiplier: 1/32 },
+      { name: '1/16', multiplier: 1/16 },
+      { name: '1/8', multiplier: 1/8 },
+      { name: '1/4', multiplier: 1/4 },
+      { name: '1/2', multiplier: 1/2 },
+      { name: '1', multiplier: 1 }
+    ];
     
     // Parameter smoothing for audio glitch prevention
     this.smoothingFactor = 0.3; // Lower = smoother, higher = more responsive
@@ -29,17 +48,19 @@ class XYEffectPanel {
         displayName: 'Delay',
         xParam: {
           name: 'Delay Time',
-          range: [0.05, 1.0],
-          default: 0.3,
-          unit: 's',
-          effectMethod: 'setDelayTime'
+          range: [0, 6], // Index range for note values (0 = 1/64, 6 = 1)
+          default: 2,    // Default to 1/16 note
+          unit: '',      // Will show note value
+          effectMethod: 'setDelayTime',
+          quantized: true
         },
         yParam: {
           name: 'Feedback',
           range: [0, 0.9],
           default: 0.3,
           unit: '',
-          effectMethod: 'setDelayFeedback'
+          effectMethod: 'setDelayFeedback',
+          quantized: false
         }
       },
       phaser: {
@@ -159,8 +180,33 @@ class XYEffectPanel {
     const effect = this.effectConfigs[this.selectedEffect];
     if (!effect) return '0';
     
-    const value = this.mapParameterValue(this.xPosition, effect.xParam);
-    const unit = effect.xParam.unit;
+    const param = effect.xParam;
+    
+    // Special handling for quantized delay time
+    if (param.quantized && this.selectedEffect === 'delay') {
+      // Map from normalized position [-1, 1] to note index [0, 6]
+      const zeroToOne = (this.xPosition + 1) / 2;
+      const noteIndex = zeroToOne * (this.noteValues.length - 1);
+      const quantizedIndex = Math.round(Math.max(0, Math.min(this.noteValues.length - 1, noteIndex)));
+      
+      // Ensure we have a valid note value
+      if (quantizedIndex < 0 || quantizedIndex >= this.noteValues.length || !this.noteValues[quantizedIndex]) {
+        return '1/16 (0.125s)'; // Fallback display
+      }
+      
+      const noteValue = this.noteValues[quantizedIndex];
+      
+      // Get current BPM from the deck
+      const deck = this.audioEngine.getDeck(this.deckId);
+      const bpm = deck ? deck.getBPM() : 120;
+      const beatDuration = 60 / bpm; // Duration of one beat in seconds
+      const delayTime = beatDuration * noteValue.multiplier;
+      
+      return `${noteValue.name} (${delayTime.toFixed(3)}s)`;
+    }
+    
+    const value = this.mapParameterValue(this.xPosition, param);
+    const unit = param.unit;
     
     // Determine decimal places based on parameter type and value range
     let decimals = 0;
@@ -198,9 +244,24 @@ class XYEffectPanel {
   setupEventListeners() {
     // Effect selection change
     this.effectSelect.addEventListener('change', (e) => {
+      // Save current position for the old effect
+      this.effectPositions[this.selectedEffect] = {
+        x: this.xPosition,
+        y: this.yPosition
+      };
+      
+      // Switch to new effect
       this.selectedEffect = e.target.value;
+      
+      // Load saved position for the new effect
+      const savedPosition = this.effectPositions[this.selectedEffect];
+      this.xPosition = savedPosition.x;
+      this.yPosition = savedPosition.y;
+      
       this.updateLabels();
-      this.reset();
+      this.updateValueDisplay();
+      this.applyEffectParametersSmooth();
+      this.drawCanvas();
     });
 
     // Reset button
@@ -274,8 +335,21 @@ class XYEffectPanel {
     const y = e.clientY - rect.top;
     
     // Convert to normalized coordinates (-1 to 1)
-    const newXPosition = Math.max(-1, Math.min(1, (x / rect.width) * 2 - 1));
+    let newXPosition = Math.max(-1, Math.min(1, (x / rect.width) * 2 - 1));
     const newYPosition = Math.max(-1, Math.min(1, 1 - (y / rect.height) * 2)); // Flip Y axis
+    
+    // Quantize X position for delay time
+    if (this.selectedEffect === 'delay') {
+      const effect = this.effectConfigs[this.selectedEffect];
+      if (effect && effect.xParam.quantized) {
+        // Map to 0-1 range, then to note index, quantize, then back to -1 to 1
+        const zeroToOne = (newXPosition + 1) / 2;
+        const noteIndex = zeroToOne * (this.noteValues.length - 1);
+        const quantizedIndex = Math.round(Math.max(0, Math.min(this.noteValues.length - 1, noteIndex)));
+        const quantizedZeroToOne = quantizedIndex / (this.noteValues.length - 1);
+        newXPosition = quantizedZeroToOne * 2 - 1;
+      }
+    }
     
     // Apply more responsive smoothing when actively dragging
     const smoothing = this.isDragging ? 0.9 : this.smoothingFactor;
@@ -420,6 +494,32 @@ class XYEffectPanel {
     // Map from [-1, 1] to [0, 1] first
     const zeroToOne = (normalizedValue + 1) / 2;
     
+    // Special handling for quantized delay time
+    if (paramConfig.quantized && paramConfig.name === 'Delay Time') {
+      // Map to note value index (0-6)
+      const noteIndex = zeroToOne * (this.noteValues.length - 1);
+      const quantizedIndex = Math.round(Math.max(0, Math.min(this.noteValues.length - 1, noteIndex)));
+      
+      // Ensure we have a valid note value
+      if (quantizedIndex < 0 || quantizedIndex >= this.noteValues.length || !this.noteValues[quantizedIndex]) {
+        console.warn('Invalid note index:', quantizedIndex, 'using 1/16 note as fallback');
+        const fallbackIndex = 2; // 1/16 note
+        const noteValue = this.noteValues[fallbackIndex] || { multiplier: 0.25 };
+        const deck = this.audioEngine.getDeck(this.deckId);
+        const bpm = deck ? deck.getBPM() : 120;
+        const beatDuration = 60 / bpm;
+        return beatDuration * noteValue.multiplier;
+      }
+      
+      // Get actual delay time in seconds based on current BPM
+      const deck = this.audioEngine.getDeck(this.deckId);
+      const bpm = deck ? deck.getBPM() : 120;
+      const beatDuration = 60 / bpm; // Duration of one beat in seconds
+      const delayTime = beatDuration * this.noteValues[quantizedIndex].multiplier;
+      
+      return delayTime; // Return actual delay time in seconds
+    }
+    
     // Special handling for frequency parameters (logarithmic scale)
     if (paramConfig.name === 'Cutoff Freq') {
       const [min, max] = paramConfig.range;
@@ -508,6 +608,13 @@ class XYEffectPanel {
   reset() {
     this.xPosition = this.defaultValues.x;
     this.yPosition = this.defaultValues.y;
+    
+    // Reset persistent position for current effect
+    this.effectPositions[this.selectedEffect] = {
+      x: this.defaultValues.x,
+      y: this.defaultValues.y
+    };
+    
     this.updateValueDisplay();
     this.updateLabels();
     this.applyEffectParametersSmooth();
