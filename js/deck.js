@@ -19,6 +19,11 @@ class Deck {
     this.playbackRate = 1;
     this.volume = 0.75;
 
+    // Audio time tracking for accurate position with pitch changes
+    this.lastRateChangeTime = 0;
+    this.lastRateChangePosition = 0;
+    this.previousPlaybackRate = 1;
+
     // Pre-listen functionality
     this.isPreListenEnabled = false;
 
@@ -197,13 +202,19 @@ class Deck {
     // Start from the saved resume time
     this.source.start(0, resumeTime);
     this.startTime = this.audioContext.currentTime - resumeTime;
+    
+    // Initialize audio time tracking
+    this.lastRateChangeTime = this.audioContext.currentTime;
+    this.lastRateChangePosition = resumeTime;
+    this.previousPlaybackRate = this.playbackRate;
+    
     this.isPlaying = true;
     this.isPaused = false;
   }
 
   pause() {
     if (this.isPlaying && !this.isPaused) {
-      this.pauseTime = this.audioContext.currentTime - this.startTime;
+      this.pauseTime = this.getCurrentTime();
       this.stopSource(); // Use helper method that doesn't reset pauseTime
       this.isPlaying = false;
       this.isPaused = true;
@@ -308,6 +319,14 @@ class Deck {
   }
 
   setPitch(value) {
+    // Update tracking variables if playing to maintain accurate time
+    if (this.isPlaying) {
+      const currentTime = this.getCurrentTime();
+      this.lastRateChangeTime = this.audioContext.currentTime;
+      this.lastRateChangePosition = currentTime;
+      this.previousPlaybackRate = this.playbackRate;
+    }
+    
     this.playbackRate = 1 + (value / 100);
     if (this.source) {
       this.source.playbackRate.value = this.playbackRate;
@@ -370,7 +389,16 @@ class Deck {
 
   getCurrentTime() {
     if (!this.isPlaying) return this.isPaused ? this.pauseTime : 0;
-    return this.audioContext.currentTime - this.startTime;
+    
+    // Calculate time since last rate change
+    const currentWallClockTime = this.audioContext.currentTime;
+    const wallClockElapsedSinceRateChange = currentWallClockTime - this.lastRateChangeTime;
+    
+    // Calculate audio time elapsed since last rate change using current playback rate
+    const audioTimeElapsedSinceRateChange = wallClockElapsedSinceRateChange * this.playbackRate;
+    
+    // Add to the position we were at when the rate last changed
+    return this.lastRateChangePosition + audioTimeElapsedSinceRateChange;
   }
 
   seek(time) {
