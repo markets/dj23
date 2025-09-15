@@ -1275,6 +1275,13 @@ class DeckController {
     
     // Reset TAP state for new track
     this.resetTapState();
+    
+    // Reset pitch to 0% when loading new track for consistent BPM calculation
+    deck.setPitch(0);
+    const pitchSlider = document.getElementById(`pitch${this.deckId}`);
+    const pitchDisplay = document.getElementById(`pitchDisplay${this.deckId}`);
+    if (pitchSlider) pitchSlider.value = 0;
+    if (pitchDisplay) pitchDisplay.textContent = '0%';
         
     // Show loading state
     trackInfo.classList.add('loading');
