@@ -1699,28 +1699,36 @@ class DeckController {
   }
 
   // BPM calculation using median-first approach with outlier filtering
+  // Accounts for pitch changes by converting system time intervals to audio time
   calculateTapBPM(intervals) {
     if (intervals.length === 0) return 120;
     
+    const deck = window.audioEngine.getDeck(this.deckId);
+    const playbackRate = deck ? deck.playbackRate : 1.0;
+    
+    // Convert system time intervals to audio time intervals
+    // When pitch is +10% (rate=1.1), audio progresses faster, so system intervals need to be stretched
+    const audioIntervals = intervals.map(interval => interval * playbackRate);
+    
     // Sort intervals to find median
-    const sortedIntervals = [...intervals].sort((a, b) => a - b);
+    const sortedIntervals = [...audioIntervals].sort((a, b) => a - b);
     const medianInterval = this.getMedian(sortedIntervals);
     
     // If we only have 1 interval, use it directly
-    if (intervals.length === 1) {
+    if (audioIntervals.length === 1) {
       return Math.round(60000 / medianInterval);
     }
     
     // Filter outliers: remove intervals that deviate more than 25% from median
     const deviationThreshold = 0.25;
-    const filteredIntervals = intervals.filter(interval => {
+    const filteredIntervals = audioIntervals.filter(interval => {
       const deviation = Math.abs(interval - medianInterval) / medianInterval;
       return deviation <= deviationThreshold;
     });
     
     // If no intervals pass the filter, use the median
     if (filteredIntervals.length === 0) {
-      console.log(`TAP: Using median interval (${medianInterval}ms) - all intervals were outliers for deck ${this.deckId}`);
+      console.log(`TAP: Using median interval (${medianInterval.toFixed(1)}ms) - all intervals were outliers for deck ${this.deckId}`);
       return Math.round(60000 / medianInterval);
     }
     
@@ -1729,7 +1737,7 @@ class DeckController {
     const finalMedianInterval = this.getMedian(finalSortedIntervals);
     const bpm = Math.round(60000 / finalMedianInterval);
     
-    console.log(`TAP: Used ${filteredIntervals.length}/${intervals.length} intervals for deck ${this.deckId}, median: ${finalMedianInterval.toFixed(1)}ms, BPM: ${bpm}`);
+    console.log(`TAP: Used ${filteredIntervals.length}/${intervals.length} intervals for deck ${this.deckId}, playback rate: ${playbackRate.toFixed(2)}, audio median: ${finalMedianInterval.toFixed(1)}ms, BPM: ${bpm}`);
     
     return bpm;
   }
