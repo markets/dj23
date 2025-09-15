@@ -434,8 +434,8 @@ body {
   transform: translateY(0);
 }
 
-.play-btn:hover {
-  background: var(--gradient-primary);
+.transport-controls .back-spin-btn {
+  font-size: 1.5rem;
 }
 
 /* ============================================================================
@@ -1150,7 +1150,6 @@ body {
 /* Beat Navigation Controls */
 .beat-navigation {
   display: flex;
-  gap: var(--spacing-sm);
   justify-content: center;
   margin-bottom: var(--spacing-sm);
 }
@@ -1162,12 +1161,12 @@ body {
   color: var(--text-primary);
   font-size: 14px;
   font-weight: 600;
-  padding: var(--spacing-xs) var(--spacing-sm);
+  padding: var(--spacing-sm);
   cursor: pointer;
   transition: var(--transition-fast);
   box-shadow: var(--shadow-sm);
   min-width: 35px;
-  height: 28px;
+  height: 25px;
   display: flex;
   align-items: center;
   justify-content: center;
