@@ -772,14 +772,6 @@ body {
   border-top: 1px solid var(--border-secondary);
 }
 
-.xy-filter-type-controls label {
-  display: block;
-  margin-bottom: var(--spacing-xs);
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
 .xy-filter-type-toggles {
   display: flex;
   gap: 2px;

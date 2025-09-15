@@ -149,11 +149,9 @@ class XYEffectPanel {
           </select>
         </div>
         <div class="xy-filter-type-controls" style="display: ${this.selectedEffect === 'filter' ? 'block' : 'none'};">
-          <label>Filter Type:</label>
           <div class="xy-filter-type-toggles">
             <button class="xy-filter-type-btn ${this.filterType === 'lowpass' ? 'active' : ''}" data-type="lowpass">LP</button>
             <button class="xy-filter-type-btn ${this.filterType === 'highpass' ? 'active' : ''}" data-type="highpass">HP</button>
-            <button class="xy-filter-type-btn ${this.filterType === 'bandpass' ? 'active' : ''}" data-type="bandpass">BP</button>
           </div>
         </div>
       </div>
