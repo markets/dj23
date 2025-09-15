@@ -10,9 +10,9 @@ class XYEffectPanel {
     this.yPosition = 0;
     
     // Current effect and parameter mappings
-    this.selectedEffect = 'reverb';
-    this.xParameter = 'wet';
-    this.yParameter = 'roomSize';
+    this.selectedEffect = 'delay';
+    this.xParameter = 'time';
+    this.yParameter = 'feedback';
     
     // Default values for reset functionality
     this.defaultValues = {
@@ -21,33 +21,12 @@ class XYEffectPanel {
     };
     
     // Effect parameter configurations
+    // Only include effects with multiple parameters beyond wet/dry
+    // Main effect sliders handle wet/dry mix, XY panels control additional parameters
     this.effectConfigs = {
-      reverb: {
-        displayName: 'Reverb',
-        parameters: {
-          wet: { 
-            name: 'Wet/Dry', 
-            range: [0, 100], 
-            default: 0,
-            effectMethod: 'setReverb'
-          },
-          roomSize: { 
-            name: 'Room Size', 
-            range: [0.1, 3.0], 
-            default: 1.0,
-            effectMethod: 'setReverbRoomSize'
-          }
-        }
-      },
       delay: {
         displayName: 'Delay',
         parameters: {
-          wet: { 
-            name: 'Wet/Dry', 
-            range: [0, 100], 
-            default: 0,
-            effectMethod: 'setDelay'
-          },
           time: { 
             name: 'Delay Time', 
             range: [0.05, 1.0], 
@@ -65,12 +44,6 @@ class XYEffectPanel {
       phaser: {
         displayName: 'Phaser',
         parameters: {
-          wet: { 
-            name: 'Wet/Dry', 
-            range: [0, 100], 
-            default: 0,
-            effectMethod: 'setPhaser'
-          },
           rate: { 
             name: 'LFO Rate', 
             range: [0.08, 2.0], 
@@ -88,12 +61,6 @@ class XYEffectPanel {
       flanger: {
         displayName: 'Flanger',
         parameters: {
-          wet: { 
-            name: 'Wet/Dry', 
-            range: [0, 100], 
-            default: 0,
-            effectMethod: 'setFlanger'
-          },
           rate: { 
             name: 'LFO Rate', 
             range: [0.1, 5.0], 
