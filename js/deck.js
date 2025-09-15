@@ -1526,7 +1526,6 @@ class DeckController {
 
   resetFilters() {
     const deck = window.audioEngine.getDeck(this.deckId);
-    if (!deck) return;
 
     // Reset effects controls only (not EQ)
     const effects = [
@@ -1560,16 +1559,13 @@ class DeckController {
 
   resetPitch() {
     const deck = window.audioEngine.getDeck(this.deckId);
-    if (!deck) return;
 
     // Reset pitch to 0%
     deck.setPitch(0);
     
     // Update the slider and display
-    const pitchSlider = document.getElementById(`pitch${this.deckId}`);
-    const pitchDisplay = document.getElementById(`pitchDisplay${this.deckId}`);
-    if (pitchSlider) pitchSlider.value = 0;
-    if (pitchDisplay) pitchDisplay.textContent = '0%';
+    document.getElementById(`pitch${this.deckId}`).value = 0;
+    document.getElementById(`pitchDisplay${this.deckId}`).textContent = '0%';
     
     // Update BPM display
     this.updateBPMDisplay();
@@ -1589,7 +1585,6 @@ class DeckController {
   handleTap() {
     const now = Date.now();
     const deck = window.audioEngine.getDeck(this.deckId);
-    if (!deck) return;
 
     // Add current time to tap history
     this.tapTimes.push(now);
