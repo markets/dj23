@@ -1224,11 +1224,8 @@ body {
   appearance: slider-vertical;
   width: 20px;
   height: 165px !important;
-  background: linear-gradient(180deg, var(--color-accent-blue) 0%, var(--color-accent-purple) 100%);
-  border-radius: var(--radius-xl);
   outline: none;
   margin: var(--spacing-xs) 0;
-  border: 1px solid var(--border-light);
 }
 
 .pitch-slider::-webkit-slider-thumb {
