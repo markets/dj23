@@ -9,10 +9,8 @@ class XYEffectPanel {
     this.xPosition = 0;
     this.yPosition = 0;
     
-    // Current effect and parameter mappings
+    // Current effect
     this.selectedEffect = 'delay';
-    this.xParameter = 'time';
-    this.yParameter = 'feedback';
     
     // Default values for reset functionality
     this.defaultValues = {
@@ -20,76 +18,79 @@ class XYEffectPanel {
       y: 0
     };
     
-    // Effect parameter configurations
-    // Only include effects with multiple parameters beyond wet/dry
-    // Main effect sliders handle wet/dry mix, XY panels control additional parameters
+    // Parameter smoothing for audio glitch prevention
+    this.smoothingFactor = 0.3; // Lower = smoother, higher = more responsive
+    this.lastUpdateTime = 0;
+    this.updateThrottleMs = 8; // ~120fps max update rate for smoother interaction
+    
+    // Effect parameter configurations with fixed X/Y mappings
     this.effectConfigs = {
       delay: {
         displayName: 'Delay',
-        parameters: {
-          time: { 
-            name: 'Delay Time', 
-            range: [0.05, 1.0], 
-            default: 0.3,
-            effectMethod: 'setDelayTime'
-          },
-          feedback: { 
-            name: 'Feedback', 
-            range: [0, 0.9], 
-            default: 0.3,
-            effectMethod: 'setDelayFeedback'
-          }
+        xParam: {
+          name: 'Delay Time',
+          range: [0.05, 1.0],
+          default: 0.3,
+          unit: 's',
+          effectMethod: 'setDelayTime'
+        },
+        yParam: {
+          name: 'Feedback',
+          range: [0, 0.9],
+          default: 0.3,
+          unit: '',
+          effectMethod: 'setDelayFeedback'
         }
       },
       phaser: {
         displayName: 'Phaser',
-        parameters: {
-          rate: { 
-            name: 'LFO Rate', 
-            range: [0.08, 2.0], 
-            default: 0.3,
-            effectMethod: 'setPhaserRate'
-          },
-          depth: { 
-            name: 'Depth', 
-            range: [0, 1000], 
-            default: 600,
-            effectMethod: 'setPhaserDepth'
-          }
+        xParam: {
+          name: 'LFO Rate',
+          range: [0.08, 2.0],
+          default: 0.3,
+          unit: 'Hz',
+          effectMethod: 'setPhaserRate'
+        },
+        yParam: {
+          name: 'Depth',
+          range: [0, 1000],
+          default: 600,
+          unit: '',
+          effectMethod: 'setPhaserDepth'
         }
       },
       flanger: {
         displayName: 'Flanger',
-        parameters: {
-          rate: { 
-            name: 'LFO Rate', 
-            range: [0.1, 5.0], 
-            default: 0.25,
-            effectMethod: 'setFlangerRate'
-          },
-          depth: { 
-            name: 'Depth', 
-            range: [0.001, 0.01], 
-            default: 0.003,
-            effectMethod: 'setFlangerDepth'
-          }
+        xParam: {
+          name: 'LFO Rate',
+          range: [0.1, 5.0],
+          default: 0.25,
+          unit: 'Hz',
+          effectMethod: 'setFlangerRate'
+        },
+        yParam: {
+          name: 'Depth',
+          range: [0.001, 0.01],
+          default: 0.003,
+          unit: '',
+          effectMethod: 'setFlangerDepth'
         }
       },
       filter: {
         displayName: 'Filter',
-        parameters: {
-          frequency: { 
-            name: 'Cutoff Freq', 
-            range: [100, 15000], 
-            default: 15000,
-            effectMethod: 'setFilter'
-          },
-          resonance: { 
-            name: 'Resonance', 
-            range: [0.1, 30], 
-            default: 1,
-            effectMethod: 'setFilterResonance'
-          }
+        xParam: {
+          name: 'Cutoff Freq',
+          range: [100, 15000],
+          default: 15000,
+          unit: 'Hz',
+          effectMethod: 'setFilterFrequency'
+        },
+        yParam: {
+          name: 'Resonance',
+          range: [0.1, 30],
+          default: 1,
+          unit: '',
+          effectMethod: 'setFilterResonance'
         }
       }
     };
@@ -116,42 +117,24 @@ class XYEffectPanel {
             ).join('')}
           </select>
         </div>
-        <div class="xy-parameter-mappings">
-          <div class="xy-param-mapping">
-            <label>X Axis:</label>
-            <select class="xy-x-param-select">
-              ${this.getParameterOptions(this.selectedEffect)}
-            </select>
-          </div>
-          <div class="xy-param-mapping">
-            <label>Y Axis:</label>
-            <select class="xy-y-param-select">
-              ${this.getParameterOptions(this.selectedEffect)}
-            </select>
-          </div>
-        </div>
       </div>
       <div class="xy-canvas-container">
         <canvas class="xy-canvas" width="200" height="200"></canvas>
-        <div class="xy-handle"></div>
         <div class="xy-axis-labels">
-          <div class="xy-x-label">${this.getParameterDisplayName(this.selectedEffect, this.xParameter)}</div>
-          <div class="xy-y-label">${this.getParameterDisplayName(this.selectedEffect, this.yParameter)}</div>
+          <div class="xy-x-label">${this.getCurrentXParamName()}</div>
+          <div class="xy-y-label">${this.getCurrentYParamName()}</div>
         </div>
       </div>
       <div class="xy-value-display">
-        <span class="xy-x-value">X: 0</span>
-        <span class="xy-y-value">Y: 0</span>
+        <span class="xy-x-value">X: ${this.getCurrentXValue()}</span>
+        <span class="xy-y-value">Y: ${this.getCurrentYValue()}</span>
       </div>
     `;
 
     // Get references to elements
     this.canvas = this.container.querySelector('.xy-canvas');
     this.ctx = this.canvas.getContext('2d');
-    this.handle = this.container.querySelector('.xy-handle');
     this.effectSelect = this.container.querySelector('.xy-effect-select');
-    this.xParamSelect = this.container.querySelector('.xy-x-param-select');
-    this.yParamSelect = this.container.querySelector('.xy-y-param-select');
     this.resetBtn = this.container.querySelector('.xy-reset-btn');
     this.xValueDisplay = this.container.querySelector('.xy-x-value');
     this.yValueDisplay = this.container.querySelector('.xy-y-value');
@@ -160,43 +143,42 @@ class XYEffectPanel {
 
     this.updateCanvasSize();
     this.drawCanvas();
-    this.updateHandlePosition();
   }
 
-  getParameterOptions(effectKey) {
-    const effect = this.effectConfigs[effectKey];
-    if (!effect) return '';
+  getCurrentXParamName() {
+    const effect = this.effectConfigs[this.selectedEffect];
+    return effect ? effect.xParam.name : 'X';
+  }
+
+  getCurrentYParamName() {
+    const effect = this.effectConfigs[this.selectedEffect];
+    return effect ? effect.yParam.name : 'Y';
+  }
+
+  getCurrentXValue() {
+    const effect = this.effectConfigs[this.selectedEffect];
+    if (!effect) return '0';
     
-    return Object.entries(effect.parameters).map(([key, param]) => 
-      `<option value="${key}">${param.name}</option>`
-    ).join('');
+    const value = this.mapParameterValue(this.xPosition, effect.xParam);
+    const unit = effect.xParam.unit;
+    return `${value.toFixed(unit === 'Hz' || unit === 's' ? 2 : 0)}${unit}`;
   }
 
-  getParameterDisplayName(effectKey, paramKey) {
-    const effect = this.effectConfigs[effectKey];
-    if (!effect || !effect.parameters[paramKey]) return paramKey;
-    return effect.parameters[paramKey].name;
+  getCurrentYValue() {
+    const effect = this.effectConfigs[this.selectedEffect];
+    if (!effect) return '0';
+    
+    const value = this.mapParameterValue(this.yPosition, effect.yParam);
+    const unit = effect.yParam.unit;
+    return `${value.toFixed(unit === 'Hz' || unit === 's' ? 2 : 0)}${unit}`;
   }
 
   setupEventListeners() {
     // Effect selection change
     this.effectSelect.addEventListener('change', (e) => {
       this.selectedEffect = e.target.value;
-      this.updateParameterSelectors();
+      this.updateLabels();
       this.reset();
-    });
-
-    // Parameter mapping changes
-    this.xParamSelect.addEventListener('change', (e) => {
-      this.xParameter = e.target.value;
-      this.updateLabels();
-      this.applyEffectParameters();
-    });
-
-    this.yParamSelect.addEventListener('change', (e) => {
-      this.yParameter = e.target.value;
-      this.updateLabels();
-      this.applyEffectParameters();
     });
 
     // Reset button
@@ -258,15 +240,26 @@ class XYEffectPanel {
   }
 
   updatePositionFromEvent(e) {
+    // Throttle updates to prevent audio glitches
+    const now = Date.now();
+    if (now - this.lastUpdateTime < this.updateThrottleMs) {
+      return;
+    }
+    this.lastUpdateTime = now;
+
     const rect = this.canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
     // Convert to normalized coordinates (-1 to 1)
-    this.xPosition = Math.max(-1, Math.min(1, (x / rect.width) * 2 - 1));
-    this.yPosition = Math.max(-1, Math.min(1, 1 - (y / rect.height) * 2)); // Flip Y axis
+    const newXPosition = Math.max(-1, Math.min(1, (x / rect.width) * 2 - 1));
+    const newYPosition = Math.max(-1, Math.min(1, 1 - (y / rect.height) * 2)); // Flip Y axis
     
-    this.updateHandlePosition();
+    // Apply more responsive smoothing when actively dragging
+    const smoothing = this.isDragging ? 0.7 : this.smoothingFactor;
+    this.xPosition = this.xPosition + (newXPosition - this.xPosition) * smoothing;
+    this.yPosition = this.yPosition + (newYPosition - this.yPosition) * smoothing;
+    
     this.updateValueDisplay();
     this.applyEffectParameters();
     this.drawCanvas();
@@ -330,11 +323,11 @@ class XYEffectPanel {
     this.ctx.lineTo(width, 3 * height / 4);
     this.ctx.stroke();
     
-    // Draw current position indicator
+    // Draw current position indicator (single handle)
     const x = (this.xPosition + 1) * width / 2;
     const y = (1 - this.yPosition) * height / 2;
     
-    // Draw a larger, more visible indicator
+    // Draw the main handle
     this.ctx.fillStyle = '#4ecdc4';
     this.ctx.beginPath();
     this.ctx.arc(x, y, 10, 0, 2 * Math.PI);
@@ -353,39 +346,14 @@ class XYEffectPanel {
     this.ctx.strokeRect(1, 1, width - 2, height - 2);
   }
 
-  updateHandlePosition() {
-    const rect = this.canvas.getBoundingClientRect();
-    const x = (this.xPosition + 1) * rect.width / 2 - 8;
-    const y = (1 - this.yPosition) * rect.height / 2 - 8;
-    
-    this.handle.style.left = `${x}px`;
-    this.handle.style.top = `${y}px`;
-  }
-
   updateValueDisplay() {
-    this.xValueDisplay.textContent = `X: ${this.xPosition.toFixed(2)}`;
-    this.yValueDisplay.textContent = `Y: ${this.yPosition.toFixed(2)}`;
-  }
-
-  updateParameterSelectors() {
-    const optionsHtml = this.getParameterOptions(this.selectedEffect);
-    this.xParamSelect.innerHTML = optionsHtml;
-    this.yParamSelect.innerHTML = optionsHtml;
-    
-    // Set default parameter mappings
-    const params = Object.keys(this.effectConfigs[this.selectedEffect].parameters);
-    this.xParameter = params[0] || 'wet';
-    this.yParameter = params[1] || params[0]; // Use second parameter for Y, fallback to first
-    
-    this.xParamSelect.value = this.xParameter;
-    this.yParamSelect.value = this.yParameter;
-    
-    this.updateLabels();
+    this.xValueDisplay.textContent = `X: ${this.getCurrentXValue()}`;
+    this.yValueDisplay.textContent = `Y: ${this.getCurrentYValue()}`;
   }
 
   updateLabels() {
-    this.xLabel.textContent = this.getParameterDisplayName(this.selectedEffect, this.xParameter);
-    this.yLabel.textContent = this.getParameterDisplayName(this.selectedEffect, this.yParameter);
+    this.xLabel.textContent = this.getCurrentXParamName();
+    this.yLabel.textContent = this.getCurrentYParamName();
   }
 
   applyEffectParameters() {
@@ -396,24 +364,39 @@ class XYEffectPanel {
     if (!effectConfig) return;
 
     // Apply X parameter
-    const xParamConfig = effectConfig.parameters[this.xParameter];
-    if (xParamConfig) {
-      const xValue = this.mapValueToRange(this.xPosition, xParamConfig.range);
-      this.applyParameterValue(deck, xParamConfig.effectMethod, xValue);
-    }
+    const xValue = this.mapParameterValue(this.xPosition, effectConfig.xParam);
+    this.applyParameterValue(deck, effectConfig.xParam.effectMethod, xValue);
 
-    // Apply Y parameter
-    const yParamConfig = effectConfig.parameters[this.yParameter];
-    if (yParamConfig) {
-      const yValue = this.mapValueToRange(this.yPosition, yParamConfig.range);
-      this.applyParameterValue(deck, yParamConfig.effectMethod, yValue);
+    // Apply Y parameter  
+    const yValue = this.mapParameterValue(this.yPosition, effectConfig.yParam);
+    this.applyParameterValue(deck, effectConfig.yParam.effectMethod, yValue);
+  }
+
+  mapParameterValue(normalizedValue, paramConfig) {
+    // Map from [-1, 1] to [0, 1] first
+    const zeroToOne = (normalizedValue + 1) / 2;
+    
+    // Special handling for frequency parameters (logarithmic scale)
+    if (paramConfig.name === 'Cutoff Freq') {
+      const [min, max] = paramConfig.range;
+      const logMin = Math.log(min);
+      const logMax = Math.log(max);
+      return Math.exp(logMin + zeroToOne * (logMax - logMin));
     }
+    
+    // Linear mapping for other parameters
+    const [min, max] = paramConfig.range;
+    return min + zeroToOne * (max - min);
   }
 
   mapValueToRange(normalizedValue, range) {
-    // Map from [-1, 1] to [min, max]
+    // This method is used for display only
+    // Map from [-1, 1] to [0, 1] first
+    const zeroToOne = (normalizedValue + 1) / 2;
+    
+    // Then map to the target range [min, max]
     const [min, max] = range;
-    return min + (normalizedValue + 1) * (max - min) / 2;
+    return min + zeroToOne * (max - min);
   }
 
   applyParameterValue(deck, methodName, value) {
@@ -427,8 +410,8 @@ class XYEffectPanel {
   reset() {
     this.xPosition = this.defaultValues.x;
     this.yPosition = this.defaultValues.y;
-    this.updateHandlePosition();
     this.updateValueDisplay();
+    this.updateLabels();
     this.applyEffectParameters();
     this.drawCanvas();
   }
@@ -439,8 +422,8 @@ class XYEffectPanel {
     // Initialize canvas after it's in the DOM
     setTimeout(() => {
       this.updateCanvasSize();
+      this.updateLabels();
       this.drawCanvas();
-      this.updateHandlePosition();
     }, 100);
   }
 }
