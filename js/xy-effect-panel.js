@@ -161,7 +161,18 @@ class XYEffectPanel {
     
     const value = this.mapParameterValue(this.xPosition, effect.xParam);
     const unit = effect.xParam.unit;
-    return `${value.toFixed(unit === 'Hz' || unit === 's' ? 2 : 0)}${unit}`;
+    
+    // Determine decimal places based on parameter type and value range
+    let decimals = 0;
+    if (unit === 'Hz' || unit === 's') {
+      decimals = 2;
+    } else if (value < 10) {
+      decimals = 2; // Show 2 decimals for small values
+    } else if (value < 100) {
+      decimals = 1; // Show 1 decimal for medium values
+    }
+    
+    return `${value.toFixed(decimals)}${unit}`;
   }
 
   getCurrentYValue() {
@@ -170,7 +181,18 @@ class XYEffectPanel {
     
     const value = this.mapParameterValue(this.yPosition, effect.yParam);
     const unit = effect.yParam.unit;
-    return `${value.toFixed(unit === 'Hz' || unit === 's' ? 2 : 0)}${unit}`;
+    
+    // Determine decimal places based on parameter type and value range
+    let decimals = 0;
+    if (unit === 'Hz' || unit === 's') {
+      decimals = 2;
+    } else if (value < 10) {
+      decimals = 2; // Show 2 decimals for small values
+    } else if (value < 100) {
+      decimals = 1; // Show 1 decimal for medium values
+    }
+    
+    return `${value.toFixed(decimals)}${unit}`;
   }
 
   setupEventListeners() {
@@ -256,12 +278,12 @@ class XYEffectPanel {
     const newYPosition = Math.max(-1, Math.min(1, 1 - (y / rect.height) * 2)); // Flip Y axis
     
     // Apply more responsive smoothing when actively dragging
-    const smoothing = this.isDragging ? 0.7 : this.smoothingFactor;
+    const smoothing = this.isDragging ? 0.9 : this.smoothingFactor;
     this.xPosition = this.xPosition + (newXPosition - this.xPosition) * smoothing;
     this.yPosition = this.yPosition + (newYPosition - this.yPosition) * smoothing;
     
     this.updateValueDisplay();
-    this.applyEffectParameters();
+    this.applyEffectParametersSmooth();
     this.drawCanvas();
   }
 
@@ -347,8 +369,14 @@ class XYEffectPanel {
   }
 
   updateValueDisplay() {
-    this.xValueDisplay.textContent = `X: ${this.getCurrentXValue()}`;
-    this.yValueDisplay.textContent = `Y: ${this.getCurrentYValue()}`;
+    const effect = this.effectConfigs[this.selectedEffect];
+    if (effect) {
+      this.xValueDisplay.textContent = `${effect.xParam.name} (X): ${this.getCurrentXValue()}`;
+      this.yValueDisplay.textContent = `${effect.yParam.name} (Y): ${this.getCurrentYValue()}`;
+    } else {
+      this.xValueDisplay.textContent = `X: ${this.getCurrentXValue()}`;
+      this.yValueDisplay.textContent = `Y: ${this.getCurrentYValue()}`;
+    }
   }
 
   updateLabels() {
@@ -370,6 +398,22 @@ class XYEffectPanel {
     // Apply Y parameter  
     const yValue = this.mapParameterValue(this.yPosition, effectConfig.yParam);
     this.applyParameterValue(deck, effectConfig.yParam.effectMethod, yValue);
+  }
+
+  applyEffectParametersSmooth() {
+    const deck = this.audioEngine.getDeck(this.deckId);
+    if (!deck) return;
+
+    const effectConfig = this.effectConfigs[this.selectedEffect];
+    if (!effectConfig) return;
+
+    // Apply X parameter with smooth automation
+    const xValue = this.mapParameterValue(this.xPosition, effectConfig.xParam);
+    this.applyParameterValueSmooth(deck, effectConfig.xParam.effectMethod, xValue);
+
+    // Apply Y parameter with smooth automation
+    const yValue = this.mapParameterValue(this.yPosition, effectConfig.yParam);
+    this.applyParameterValueSmooth(deck, effectConfig.yParam.effectMethod, yValue);
   }
 
   mapParameterValue(normalizedValue, paramConfig) {
@@ -407,12 +451,66 @@ class XYEffectPanel {
     }
   }
 
+  applyParameterValueSmooth(deck, methodName, value) {
+    // Use smooth parameter automation for Web Audio API AudioParams
+    const audioContext = this.audioEngine.audioContext;
+    const currentTime = audioContext.currentTime;
+    
+    // Try to access the actual AudioParam for smooth automation
+    let audioParam = null;
+    
+    if (deck && deck.effectNodes) {
+      switch (methodName) {
+        case 'setDelayTime':
+          audioParam = deck.effectNodes.delay?.delayTime;
+          break;
+        case 'setDelayFeedback':
+          audioParam = deck.effectNodes.delayFeedback?.gain;
+          break;
+        case 'setPhaserRate':
+          audioParam = deck.effectNodes.phaserLFO?.frequency;
+          break;
+        case 'setPhaserDepth':
+          audioParam = deck.effectNodes.phaserLFOGain?.gain;
+          break;
+        case 'setFlangerRate':
+          audioParam = deck.effectNodes.flangerLFO?.frequency;
+          break;
+        case 'setFlangerDepth':
+          audioParam = deck.effectNodes.flangerLFOGain?.gain;
+          break;
+        case 'setFilterFrequency':
+          audioParam = deck.effectNodes.filter?.frequency;
+          break;
+        case 'setFilterResonance':
+          audioParam = deck.effectNodes.filter?.Q;
+          break;
+      }
+    }
+
+    if (audioParam) {
+      // Use exponentialRampToValueAtTime for smooth parameter changes
+      try {
+        audioParam.cancelScheduledValues(currentTime);
+        // Ensure value is greater than 0 for exponential ramps
+        const safeValue = Math.max(0.001, value);
+        audioParam.exponentialRampToValueAtTime(safeValue, currentTime + 0.02); // 20ms ramp
+      } catch (e) {
+        // Fallback to direct value setting if exponential ramp fails
+        audioParam.value = value;
+      }
+    } else {
+      // Fallback to standard method call
+      this.applyParameterValue(deck, methodName, value);
+    }
+  }
+
   reset() {
     this.xPosition = this.defaultValues.x;
     this.yPosition = this.defaultValues.y;
     this.updateValueDisplay();
     this.updateLabels();
-    this.applyEffectParameters();
+    this.applyEffectParametersSmooth();
     this.drawCanvas();
   }
 
