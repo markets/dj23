@@ -110,6 +110,18 @@ class BPMAnalyzer {
     return currentTime; // If no next beat found, return current time
   }
 
+  // Get the previous beat before current time
+  getPreviousBeat(currentTime) {
+    let previousBeat = 0; // Start from beginning if no previous beat found
+    for (const beatTime of this.beatPositions) {
+      if (beatTime >= currentTime) {
+        break;
+      }
+      previousBeat = beatTime;
+    }
+    return previousBeat;
+  }
+
   calculateBPM(audioBuffer) {
     // Reset BPM source tracking when calculating BPM for a new track
     this.bpmSource = null;
