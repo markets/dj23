@@ -1065,6 +1065,13 @@ body {
   justify-content: center;
 }
 
+.vinyl-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
 .vinyl-wrapper {
   position: relative;
   width: 200px;
@@ -1142,13 +1149,10 @@ body {
 
 /* Beat Navigation Controls */
 .beat-navigation {
-  position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
   gap: var(--spacing-sm);
-  z-index: 10;
+  justify-content: center;
+  margin-bottom: var(--spacing-sm);
 }
 
 .beat-nav-btn {
