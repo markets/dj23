@@ -339,6 +339,13 @@ class Deck {
     }
   }
 
+  setFilterResonance(value) {
+    if (this.effectNodes.filter) {
+      const resonance = Math.max(0.1, Math.min(30, value));
+      this.effectNodes.filter.Q.value = resonance;
+    }
+  }
+
   setReverb(value) {
     if (this.effectsEngine) {
       this.effectsEngine.setReverb(value);

@@ -147,9 +147,35 @@ class EffectsEngine {
     }
   }
 
+  // Additional reverb parameter controls for XY panel
+  setReverbRoomSize(value) {
+    // Room size affects the reverb impulse length and character
+    // For now, we'll use this to control the wet level with a different curve
+    if (this.effectNodes.reverbGain) {
+      const roomFactor = Math.max(0.1, Math.min(3.0, value));
+      const wetLevel = this.effectNodes.reverbGain.gain.value * roomFactor * 0.5;
+      this.effectNodes.reverbGain.gain.value = Math.min(wetLevel, 1.5);
+    }
+  }
+
   setDelay(value) {
     if (this.effectNodes.delayGain) {
       this.effectNodes.delayGain.gain.value = value / 100;
+    }
+  }
+
+  // Additional delay parameter controls for XY panel
+  setDelayTime(value) {
+    if (this.effectNodes.delay) {
+      const delayTime = Math.max(0.05, Math.min(1.0, value));
+      this.effectNodes.delay.delayTime.value = delayTime;
+    }
+  }
+
+  setDelayFeedback(value) {
+    if (this.effectNodes.delayFeedback) {
+      const feedback = Math.max(0, Math.min(0.9, value));
+      this.effectNodes.delayFeedback.gain.value = feedback;
     }
   }
 
@@ -183,10 +209,40 @@ class EffectsEngine {
     }
   }
 
+  // Additional phaser parameter controls for XY panel
+  setPhaserRate(value) {
+    if (this.effectNodes.phaserLFO) {
+      const rate = Math.max(0.08, Math.min(2.0, value));
+      this.effectNodes.phaserLFO.frequency.value = rate;
+    }
+  }
+
+  setPhaserDepth(value) {
+    if (this.effectNodes.phaserLFOGain) {
+      const depth = Math.max(0, Math.min(1000, value));
+      this.effectNodes.phaserLFOGain.gain.value = depth;
+    }
+  }
+
   setFlanger(value) {
     if (this.effectNodes.flangerGain) {
       this.effectNodes.flangerGain.gain.value = value / 100;
       this.effectNodes.flangerDry.gain.value = 1 - (value / 100);
+    }
+  }
+
+  // Additional flanger parameter controls for XY panel
+  setFlangerRate(value) {
+    if (this.effectNodes.flangerLFO) {
+      const rate = Math.max(0.1, Math.min(5.0, value));
+      this.effectNodes.flangerLFO.frequency.value = rate;
+    }
+  }
+
+  setFlangerDepth(value) {
+    if (this.effectNodes.flangerLFOGain) {
+      const depth = Math.max(0.001, Math.min(0.01, value));
+      this.effectNodes.flangerLFOGain.gain.value = depth;
     }
   }
 
