@@ -1648,7 +1648,7 @@ class DeckController {
       return Math.round(60000 / medianInterval);
     }
     
-    // Filter outliers: remove intervals that deviate more than 20-25% from median
+    // Filter outliers: remove intervals that deviate more than 25% from median
     const deviationThreshold = 0.25;
     const filteredIntervals = intervals.filter(interval => {
       const deviation = Math.abs(interval - medianInterval) / medianInterval;
