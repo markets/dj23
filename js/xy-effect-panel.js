@@ -23,6 +23,14 @@ class XYEffectPanel {
     // Persistent filter type configuration
     this.filterType = 'lowpass'; // Default to lowpass
     
+    // Track last applied parameter values to prevent redundant updates
+    this.lastAppliedValues = {
+      delay: { x: null, y: null },
+      phaser: { x: null, y: null },
+      flanger: { x: null, y: null },
+      filter: { x: null, y: null }
+    };
+    
     // Update the UI to reflect the initial state
     setTimeout(() => {
       if (this.selectedEffect === 'filter') {
@@ -270,6 +278,9 @@ class XYEffectPanel {
       
       // Switch to new effect
       this.selectedEffect = e.target.value;
+      
+      // Reset last applied values for the new effect to ensure parameters are applied
+      this.lastAppliedValues[this.selectedEffect] = { x: null, y: null };
       
       // Load saved position for the new effect
       const savedPosition = this.effectPositions[this.selectedEffect];
@@ -542,13 +553,28 @@ class XYEffectPanel {
       deck.setFilterType(this.filterType);
     }
 
-    // Apply X parameter with smooth automation
+    // Calculate X parameter value
     const xValue = this.mapParameterValue(this.xPosition, effectConfig.xParam);
-    this.applyParameterValueSmooth(deck, effectConfig.xParam.effectMethod, xValue);
-
-    // Apply Y parameter with smooth automation
+    
+    // Calculate Y parameter value
     const yValue = this.mapParameterValue(this.yPosition, effectConfig.yParam);
-    this.applyParameterValueSmooth(deck, effectConfig.yParam.effectMethod, yValue);
+    
+    // Get last applied values for this effect
+    const lastValues = this.lastAppliedValues[this.selectedEffect];
+    
+    // Apply X parameter only if value has changed (with small tolerance for floating point comparison)
+    const xChanged = lastValues.x === null || Math.abs(xValue - lastValues.x) > 0.001;
+    if (xChanged) {
+      this.applyParameterValueSmooth(deck, effectConfig.xParam.effectMethod, xValue);
+      lastValues.x = xValue;
+    }
+
+    // Apply Y parameter only if value has changed (with small tolerance for floating point comparison)
+    const yChanged = lastValues.y === null || Math.abs(yValue - lastValues.y) > 0.001;
+    if (yChanged) {
+      this.applyParameterValueSmooth(deck, effectConfig.yParam.effectMethod, yValue);
+      lastValues.y = yValue;
+    }
   }
 
   mapParameterValue(normalizedValue, paramConfig) {
@@ -675,6 +701,9 @@ class XYEffectPanel {
       x: this.defaultValues.x,
       y: this.defaultValues.y
     };
+    
+    // Reset last applied values to ensure parameters are updated
+    this.lastAppliedValues[this.selectedEffect] = { x: null, y: null };
     
     // Reset filter type to default if current effect is filter
     if (this.selectedEffect === 'filter') {
