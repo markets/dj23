@@ -1572,13 +1572,20 @@ class DeckController {
 
   updateBPMDisplay() {
     const deck = window.audioEngine.getDeck(this.deckId);
-    if (!deck || !deck.audioBuffer) return;
+    if (!deck) return;
 
     const baseBPM = deck.getBaseBPM(); // Get the original BPM
-    const pitchPercentage = ((deck.playbackRate - 1) * 100);
-    const adjustedBPM = Math.round(baseBPM * deck.playbackRate);
+    const bpmElement = document.getElementById(`bpm${this.deckId}`);
     
-    document.getElementById(`bpm${this.deckId}`).textContent = adjustedBPM;
+    // Show BPM if available, even without a loaded track (for TAP functionality)
+    if (baseBPM && baseBPM > 0) {
+      const pitchPercentage = ((deck.playbackRate - 1) * 100);
+      const adjustedBPM = Math.round(baseBPM * deck.playbackRate);
+      bpmElement.textContent = adjustedBPM;
+    } else {
+      // Show "--" when no BPM is available
+      bpmElement.textContent = "--";
+    }
   }
 
   handleTap() {
