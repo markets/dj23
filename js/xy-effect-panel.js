@@ -109,8 +109,8 @@ class XYEffectPanel {
         },
         yParam: {
           name: 'Depth',
-          range: [0.001, 0.01],
-          default: 0.003,
+          range: [0.001, 0.020],
+          default: 0.005,
           unit: '',
           effectMethod: 'setFlangerDepth'
         }

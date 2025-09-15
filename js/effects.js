@@ -241,7 +241,7 @@ class EffectsEngine {
 
   setFlangerDepth(value) {
     if (this.effectNodes.flangerLFOGain) {
-      const depth = Math.max(0.001, Math.min(0.01, value));
+      const depth = Math.max(0.001, Math.min(0.020, value));
       this.effectNodes.flangerLFOGain.gain.value = depth;
     }
   }
@@ -278,6 +278,26 @@ class EffectsController {
     this.createEffectSliderHandler('delay', 'setDelay');
     this.createEffectSliderHandler('phaser', 'setPhaser');
     this.createEffectSliderHandler('flanger', 'setFlanger');
+    
+    // Special handling for filter to apply XY panel parameters when activated
+    const filterSlider = document.getElementById(`filter${this.deckId}`);
+    if (filterSlider) {
+      filterSlider.addEventListener('input', (e) => {
+        const value = parseInt(e.target.value);
+        // When filter is activated (value > 0), ensure XY panel parameters are applied
+        if (value > 0) {
+          this.applyFilterXYParameters();
+        }
+      });
+    }
+  }
+  
+  applyFilterXYParameters() {
+    // Get the corresponding XY panel and apply filter parameters if filter is selected
+    const xyPanel = this.deckId === 'A' ? window.xyEffectPanelA : window.xyEffectPanelB;
+    if (xyPanel && xyPanel.selectedEffect === 'filter') {
+      xyPanel.applyEffectParametersSmooth();
+    }
   }
 }
 
