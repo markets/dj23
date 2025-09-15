@@ -766,6 +766,58 @@ body {
   text-align: center;
 }
 
+.xy-filter-type-controls {
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--border-secondary);
+}
+
+.xy-filter-type-controls label {
+  display: block;
+  margin-bottom: var(--spacing-xs);
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.xy-filter-type-toggles {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  border: 1px solid var(--border-secondary);
+}
+
+.xy-filter-type-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: calc(var(--radius-sm) - 2px);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: var(--transition-fast);
+  text-align: center;
+}
+
+.xy-filter-type-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.xy-filter-type-btn.active {
+  background: var(--accent-primary);
+  color: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.xy-filter-type-btn.active:hover {
+  background: var(--accent-hover);
+}
+
 /* ============================================================================
    RESET BUTTON & VOLUME CONTROLS
    ============================================================================ */

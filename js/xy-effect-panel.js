@@ -20,6 +20,16 @@ class XYEffectPanel {
       filter: { x: 0, y: 0 }
     };
     
+    // Persistent filter type configuration
+    this.filterType = 'lowpass'; // Default to lowpass
+    
+    // Update the UI to reflect the initial state
+    setTimeout(() => {
+      if (this.selectedEffect === 'filter') {
+        this.updateFilterTypeButtons();
+      }
+    }, 0);
+    
     // Default values for reset functionality
     this.defaultValues = {
       x: 0,
@@ -138,6 +148,14 @@ class XYEffectPanel {
             ).join('')}
           </select>
         </div>
+        <div class="xy-filter-type-controls" style="display: ${this.selectedEffect === 'filter' ? 'block' : 'none'};">
+          <label>Filter Type:</label>
+          <div class="xy-filter-type-toggles">
+            <button class="xy-filter-type-btn ${this.filterType === 'lowpass' ? 'active' : ''}" data-type="lowpass">LP</button>
+            <button class="xy-filter-type-btn ${this.filterType === 'highpass' ? 'active' : ''}" data-type="highpass">HP</button>
+            <button class="xy-filter-type-btn ${this.filterType === 'bandpass' ? 'active' : ''}" data-type="bandpass">BP</button>
+          </div>
+        </div>
       </div>
       <div class="xy-canvas-container">
         <canvas class="xy-canvas" width="200" height="200"></canvas>
@@ -161,6 +179,8 @@ class XYEffectPanel {
     this.yValueDisplay = this.container.querySelector('.xy-y-value');
     this.xLabel = this.container.querySelector('.xy-x-label');
     this.yLabel = this.container.querySelector('.xy-y-label');
+    this.filterTypeControls = this.container.querySelector('.xy-filter-type-controls');
+    this.filterTypeBtns = this.container.querySelectorAll('.xy-filter-type-btn');
 
     this.updateCanvasSize();
     this.drawCanvas();
@@ -258,6 +278,15 @@ class XYEffectPanel {
       this.xPosition = savedPosition.x;
       this.yPosition = savedPosition.y;
       
+      // Show/hide filter type controls
+      const isFilter = this.selectedEffect === 'filter';
+      this.filterTypeControls.style.display = isFilter ? 'block' : 'none';
+      
+      // Update filter type buttons if switching to filter
+      if (isFilter) {
+        this.updateFilterTypeButtons();
+      }
+      
       this.updateLabels();
       this.updateValueDisplay();
       this.applyEffectParametersSmooth();
@@ -267,6 +296,16 @@ class XYEffectPanel {
     // Reset button
     this.resetBtn.addEventListener('click', () => {
       this.reset();
+    });
+
+    // Filter type button clicks
+    this.filterTypeBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const newType = e.target.dataset.type;
+        if (newType !== this.filterType) {
+          this.setFilterType(newType);
+        }
+      });
     });
 
     // Canvas interaction
@@ -474,12 +513,36 @@ class XYEffectPanel {
     this.applyParameterValue(deck, effectConfig.yParam.effectMethod, yValue);
   }
 
+  updateFilterTypeButtons() {
+    this.filterTypeBtns.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.type === this.filterType);
+    });
+  }
+
+  setFilterType(type) {
+    this.filterType = type;
+    
+    // Update button states
+    this.updateFilterTypeButtons();
+    
+    // Apply the filter type to the deck
+    const deck = this.audioEngine.getDeck(this.deckId);
+    if (deck && typeof deck.setFilterType === 'function') {
+      deck.setFilterType(type);
+    }
+  }
+
   applyEffectParametersSmooth() {
     const deck = this.audioEngine.getDeck(this.deckId);
     if (!deck) return;
 
     const effectConfig = this.effectConfigs[this.selectedEffect];
     if (!effectConfig) return;
+
+    // Apply filter type if this is the filter effect
+    if (this.selectedEffect === 'filter' && typeof deck.setFilterType === 'function') {
+      deck.setFilterType(this.filterType);
+    }
 
     // Apply X parameter with smooth automation
     const xValue = this.mapParameterValue(this.xPosition, effectConfig.xParam);
@@ -615,6 +678,11 @@ class XYEffectPanel {
       y: this.defaultValues.y
     };
     
+    // Reset filter type to default if current effect is filter
+    if (this.selectedEffect === 'filter') {
+      this.setFilterType('lowpass');
+    }
+    
     this.updateValueDisplay();
     this.updateLabels();
     this.applyEffectParametersSmooth();
@@ -629,6 +697,11 @@ class XYEffectPanel {
       this.updateCanvasSize();
       this.updateLabels();
       this.drawCanvas();
+      // Update filter type buttons if filter effect is selected
+      if (this.selectedEffect === 'filter') {
+        this.updateFilterTypeButtons();
+        this.applyEffectParametersSmooth();
+      }
     }, 100);
   }
 }

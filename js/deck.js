@@ -358,6 +358,16 @@ class Deck {
     }
   }
 
+  setFilterType(type) {
+    if (this.effectNodes.filter) {
+      // Valid filter types in Web Audio API
+      const validTypes = ['lowpass', 'highpass', 'bandpass', 'lowshelf', 'highshelf', 'peaking', 'notch', 'allpass'];
+      if (validTypes.includes(type)) {
+        this.effectNodes.filter.type = type;
+      }
+    }
+  }
+
   setReverb(value) {
     if (this.effectsEngine) {
       this.effectsEngine.setReverb(value);
