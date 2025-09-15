@@ -1622,7 +1622,7 @@ class DeckController {
     if (this.tapIntervals.length < 2) return;
     
     // Apply outlier filtering and calculate BPM
-    const bpm = this.calculateBPM(this.tapIntervals);
+    const bpm = this.calculateTapBPM(this.tapIntervals);
     
     // Validate BPM range
     if (bpm >= 60 && bpm <= 200) {
@@ -1636,7 +1636,7 @@ class DeckController {
   }
 
   // BPM calculation using median-first approach with outlier filtering
-  calculateBPM(intervals) {
+  calculateTapBPM(intervals) {
     if (intervals.length === 0) return 120;
     
     // Sort intervals to find median
@@ -1649,7 +1649,7 @@ class DeckController {
     }
     
     // Filter outliers: remove intervals that deviate more than 20-25% from median
-    const deviationThreshold = 0.25; // 25% deviation threshold
+    const deviationThreshold = 0.20;
     const filteredIntervals = intervals.filter(interval => {
       const deviation = Math.abs(interval - medianInterval) / medianInterval;
       return deviation <= deviationThreshold;
