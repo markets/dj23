@@ -1056,7 +1056,7 @@ body {
 }
 
 /* ============================================================================
-   VINYL RECORD
+   VINYL SECTION
    ============================================================================ */
 .vinyl-container {
   display: flex;
@@ -1147,7 +1147,6 @@ body {
   to { transform: rotate(360deg); }
 }
 
-/* Beat Navigation Controls */
 .beat-navigation {
   display: flex;
   justify-content: center;
