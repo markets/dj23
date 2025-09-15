@@ -1018,15 +1018,7 @@ class DeckController {
 
     // Pitch reset button
     window.buttonHandler.createClickHandler(`pitchReset${this.deckId}`, () => {
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.setPitch(0);
-        // Update the slider and display
-        document.getElementById(`pitch${this.deckId}`).value = 0;
-        document.getElementById(`pitchDisplay${this.deckId}`).textContent = '0%';
-        // Update BPM display
-        this.updateBPMDisplay();
-      }
+      this.resetPitch();
     });
 
     // CUE point controls
@@ -1275,6 +1267,9 @@ class DeckController {
     
     // Reset TAP state for new track
     this.resetTapState();
+    
+    // Reset pitch to 0% when loading new track for consistent BPM calculation
+    this.resetPitch();
         
     // Show loading state
     trackInfo.classList.add('loading');
@@ -1531,7 +1526,6 @@ class DeckController {
 
   resetFilters() {
     const deck = window.audioEngine.getDeck(this.deckId);
-    if (!deck) return;
 
     // Reset effects controls only (not EQ)
     const effects = [
@@ -1563,6 +1557,20 @@ class DeckController {
     console.log(`Deck ${this.deckId}: Effects reset to default values`);
   }
 
+  resetPitch() {
+    const deck = window.audioEngine.getDeck(this.deckId);
+
+    // Reset pitch to 0%
+    deck.setPitch(0);
+    
+    // Update the slider and display
+    document.getElementById(`pitch${this.deckId}`).value = 0;
+    document.getElementById(`pitchDisplay${this.deckId}`).textContent = '0%';
+    
+    // Update BPM display
+    this.updateBPMDisplay();
+  }
+
   updateBPMDisplay() {
     const deck = window.audioEngine.getDeck(this.deckId);
     if (!deck || !deck.audioBuffer) return;
@@ -1577,7 +1585,6 @@ class DeckController {
   handleTap() {
     const now = Date.now();
     const deck = window.audioEngine.getDeck(this.deckId);
-    if (!deck) return;
 
     // Add current time to tap history
     this.tapTimes.push(now);
