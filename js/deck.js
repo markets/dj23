@@ -126,6 +126,11 @@ class Deck {
     return this.bpmAnalyzer.getNextBeat(currentTime);
   }
 
+  // Get the previous beat before current time
+  getPreviousBeat(currentTime) {
+    return this.bpmAnalyzer.getPreviousBeat(currentTime);
+  }
+
   play() {
     if (!this.audioBuffer) return;
 
@@ -437,6 +442,32 @@ class Deck {
       this.seek(this.cuePoints[cueNumber]);
       console.log(`Deck ${this.deckId}: Jumped to CUE ${cueNumber} at ${this.cuePoints[cueNumber]}s`);
     }
+  }
+
+  // Jump to next beat
+  jumpToNextBeat() {
+    if (!this.audioBuffer) {
+      console.log(`Deck ${this.deckId}: Cannot jump to next beat - no audio buffer loaded`);
+      return;
+    }
+    
+    const currentTime = this.getCurrentTime();
+    const nextBeatTime = this.getNextBeat(currentTime);
+    this.seek(nextBeatTime);
+    console.log(`Deck ${this.deckId}: Jumped to next beat at ${nextBeatTime.toFixed(3)}s`);
+  }
+
+  // Jump to previous beat
+  jumpToPreviousBeat() {
+    if (!this.audioBuffer) {
+      console.log(`Deck ${this.deckId}: Cannot jump to previous beat - no audio buffer loaded`);
+      return;
+    }
+    
+    const currentTime = this.getCurrentTime();
+    const previousBeatTime = this.getPreviousBeat(currentTime);
+    this.seek(previousBeatTime);
+    console.log(`Deck ${this.deckId}: Jumped to previous beat at ${previousBeatTime.toFixed(3)}s`);
   }
 
   // Helper method to find the most recently set cue point
@@ -1026,6 +1057,10 @@ class DeckController {
     this.createDeckMethodHandler('cue2', 'jumpToCue', 2);
     this.createDeckMethodHandler('setCue1', 'setCuePoint', 1);
     this.createDeckMethodHandler('setCue2', 'setCuePoint', 2);
+
+    // Beat navigation controls
+    this.createDeckMethodHandler('previousBeat', 'jumpToPreviousBeat');
+    this.createDeckMethodHandler('nextBeat', 'jumpToNextBeat');
 
     // TAP
     this.createControllerMethodHandler('tap', 'handleTap');

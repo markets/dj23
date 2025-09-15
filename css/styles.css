@@ -1140,6 +1140,59 @@ body {
   to { transform: rotate(360deg); }
 }
 
+/* Beat Navigation Controls */
+.beat-navigation {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: var(--spacing-sm);
+  z-index: 10;
+}
+
+.beat-nav-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+  min-width: 35px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.beat-nav-btn:hover {
+  background: var(--bg-surface-light);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2);
+}
+
+.beat-nav-btn:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.beat-nav-btn.previous-beat {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.beat-nav-btn.next-beat {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-left: none;
+}
+
 /* ============================================================================
    PITCH & LOOP CONTROLS
    ============================================================================ */
