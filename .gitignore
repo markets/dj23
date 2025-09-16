@@ -1,5 +1,2 @@
 node_modules/
 dist/
-test-pitch-timing.html
-test-tap-bpm.html
-test-fixed-tap-bpm.html

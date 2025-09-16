@@ -17,7 +17,7 @@ class AudioEngine {
     if (this.isInitialized) return;
 
     try {
-      this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      this.audioContext = new AudioContext({ sampleRate: 44100 });
       
       // Create stereo channel merger for CUE (left) and MAIN (right) outputs
       this.channelMerger = this.audioContext.createChannelMerger(2);
