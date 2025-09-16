@@ -39,18 +39,7 @@ window.addEventListener('unhandledrejection', (e) => {
 
 // Prevent accidental tab closure or navigation away from the page
 window.addEventListener('beforeunload', (e) => {
-  // Check if there's an active session (audio loaded or playing)
-  const hasActiveSession = () => {
-    if (!window.audioEngine || !window.audioEngine.isInitialized) return false;
-    
-    const deckA = window.audioEngine.getDeck('A');
-    const deckB = window.audioEngine.getDeck('B');
-    
-    return (deckA && (deckA.audioBuffer || deckA.isPlaying)) || 
-           (deckB && (deckB.audioBuffer || deckB.isPlaying));
-  };
-  
-  if (hasActiveSession()) {
+  if (window.audioEngine && window.audioEngine.hasActiveSession()) {
     e.preventDefault();
   }
 });

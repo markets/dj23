@@ -149,6 +149,16 @@ class AudioEngine {
   isCurrentlyRecording() {
     return this.isRecording;
   }
+
+  hasActiveSession() {
+    if (!this.isInitialized) return false;
+    
+    const deckA = this.getDeck('A');
+    const deckB = this.getDeck('B');
+    
+    return (deckA && (deckA.audioBuffer || deckA.isPlaying)) || 
+           (deckB && (deckB.audioBuffer || deckB.isPlaying));
+  }
 }
 
 window.audioEngine = new AudioEngine();
