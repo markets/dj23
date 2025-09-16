@@ -48,8 +48,6 @@ class ButtonHandler {
     if (config.preventContextMenu) {
       button.addEventListener('contextmenu', (e) => e.preventDefault());
     }
-
-    return { startPress, stopPress };
   }
 
   createClickHandler(buttonId, onClick) {
