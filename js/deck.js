@@ -577,6 +577,18 @@ class Deck {
   }
 
   setLoopOut() {
+    // If loop is already active and has both points set, toggle loop off
+    if (this.isLooping && this.loopStart !== null && this.loopEnd !== null) {
+      this.isLooping = false;
+      this.stopLoopMonitoring();
+      console.log(`Deck ${this.deckId}: Loop disabled`);
+      
+      // Update UI to show loop is available but not active
+      this.controller.updateLoopInState(false);
+      this.controller.updateLoopOutState(false);
+      return;
+    }
+    
     // Only allow setting OUT if IN is already set
     if (this.loopStart === null) {
       console.log(`Deck ${this.deckId}: Cannot set Loop OUT - Loop IN must be set first`);
