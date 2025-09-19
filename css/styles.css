@@ -1268,7 +1268,11 @@ body {
   pointer-events: none;
 }
 
-.loop-control .loop-length-value {
+.loop-slider {
+  height: 134px !important;
+}
+
+.loop-length-value {
   font-size: 0.9rem;
   color: var(--text-secondary);
   margin-top: var(--spacing-xs);
