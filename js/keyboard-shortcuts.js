@@ -111,7 +111,7 @@ class KeyboardShortcuts {
     const shortcuts = [
       'Space', 'KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyA', 'KeyS',
       'KeyU', 'KeyI', 'KeyO', 'KeyP', 'KeyJ', 'KeyK',
-      'KeyZ', 'KeyX', 'KeyC', 'KeyN', 'KeyM', 'Comma',
+      'KeyZ', 'KeyX', 'KeyN', 'KeyM',
       'Digit1', 'Digit2', 'Digit8', 'Digit9',
       'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'
     ];
@@ -168,7 +168,6 @@ class KeyboardShortcuts {
       // LEFT SIDE - Deck A Loop Controls
       'KeyZ': () => this.clickButton('loopInA'),
       'KeyX': () => this.clickButton('loopOutA'),
-      'KeyC': () => this.clickButton('loopToggleA'),
       
       // RIGHT SIDE - Deck B Controls
       'KeyU': () => this.controlDeck('B', 'play'),
@@ -187,7 +186,6 @@ class KeyboardShortcuts {
       // RIGHT SIDE - Deck B Loop Controls
       'KeyN': () => this.clickButton('loopInB'),
       'KeyM': () => this.clickButton('loopOutB'),
-      'Comma': () => this.clickButton('loopToggleB'),
       
       // Crossfader and Master Volume
       'ArrowLeft': () => this.adjustCrossfader(-5),

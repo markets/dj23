@@ -565,6 +565,13 @@ class Deck {
     this.loopStart = this.findNearestBeat(this.getCurrentTime());
     console.log(`Deck ${this.deckId}: Loop IN set at ${this.loopStart}s`);
     
+    // If we already have a loop end, start the loop immediately
+    if (this.loopEnd !== null) {
+      this.isLooping = true;
+      this.startLoopMonitoring();
+      console.log(`Deck ${this.deckId}: Loop started automatically`);
+    }
+    
     // Show only IN as active
     this.controller.updateLoopInState(true);
     this.controller.updateLoopOutState(false);
@@ -585,7 +592,12 @@ class Deck {
     this.loopLengthPercentage = 100; // Reset to 100% when setting new loop out
     console.log(`Deck ${this.deckId}: Loop OUT set at ${this.loopEnd}s`);
     
-    // Show only OUT as active (indicates you have a saved loop)
+    // Automatically start the loop after setting OUT
+    this.isLooping = true;
+    this.startLoopMonitoring();
+    console.log(`Deck ${this.deckId}: Loop started automatically`);
+    
+    // Show only OUT as active (indicates active loop)
     this.controller.updateLoopInState(false);
     this.controller.updateLoopOutState(true);
     this.controller.updateLoopToggleState(false);
@@ -1097,11 +1109,6 @@ class DeckController {
     // Loop controls
     this.createDeckMethodHandler('loopIn', 'setLoopIn');
     this.createDeckMethodHandler('loopOut', 'setLoopOut');
-    // Custom handler for loop toggle
-    window.buttonHandler.createClickHandler(`loopToggle${this.deckId}`, () => {
-      const deck = window.audioEngine.getDeck(this.deckId);
-      deck.toggleLoop();
-    });
     this.createSliderHandler(`loopLength${this.deckId}`, 'setLoopLength', {
       displayElement: document.getElementById(`loopLengthValue${this.deckId}`),
       suffix: '%'
