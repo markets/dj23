@@ -508,9 +508,6 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     // Draw beat markers (every second)
     this.drawBeatMarkers(width, height, duration);
     
-    // Draw loop areas
-    this.drawLoopAreas(width, height, deck);
-    
     // Draw red playhead line in center
     const playheadX = width / 2;
     
@@ -583,76 +580,6 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     } else {
       playhead.style.left = '50%';
       playhead.style.opacity = '0.3';
-    }
-  }
-
-  drawLoopAreas(width, height, deck) {
-    if (!deck || !deck.audioBuffer || deck.loopStart === null || deck.loopEnd === null) return;
-    
-    const duration = deck.getDuration();
-    const pixelsPerSecond = width / this.zoomLevel;
-    
-    // Calculate loop positions relative to the current view window
-    const loopStartX = (deck.loopStart - this.offsetSeconds) * pixelsPerSecond;
-    const loopEndX = (deck.loopEnd - this.offsetSeconds) * pixelsPerSecond;
-    
-    // Only draw if loop is visible in current window
-    if (loopEndX < 0 || loopStartX > width) return;
-    
-    // Clamp to visible area
-    const visibleLoopStartX = Math.max(0, loopStartX);
-    const visibleLoopEndX = Math.min(width, loopEndX);
-    const visibleLoopWidth = visibleLoopEndX - visibleLoopStartX;
-    
-    if (visibleLoopWidth <= 0) return;
-    
-    // Draw loop area with transparency (same color as delimiters)
-    const loopColor = '#fff'; // Same color as cues/delimiters
-    this.ctx.fillStyle = `${loopColor}30`; // Adding transparency (30 in hex = ~19% opacity)
-    this.ctx.fillRect(visibleLoopStartX, 0, visibleLoopWidth, height);
-    
-    // Draw loop start and end markers (same style as cues)
-    this.ctx.strokeStyle = loopColor;
-    this.ctx.lineWidth = 2;
-    this.ctx.setLineDash([]);
-    
-    // Draw start marker if visible
-    if (loopStartX >= 0 && loopStartX <= width) {
-      this.ctx.beginPath();
-      this.ctx.moveTo(loopStartX, 0);
-      this.ctx.lineTo(loopStartX, height);
-      this.ctx.stroke();
-    }
-    
-    // Draw end marker if visible
-    if (loopEndX >= 0 && loopEndX <= width) {
-      this.ctx.beginPath();
-      this.ctx.moveTo(loopEndX, 0);
-      this.ctx.lineTo(loopEndX, height);
-      this.ctx.stroke();
-    }
-    
-    // Draw single "Loop" label in the center of the visible loop area
-    this.ctx.font = 'bold 10px Inter';
-    
-    const labelText = 'Loop';
-    const labelTextMetrics = this.ctx.measureText(labelText);
-    const labelTextWidth = labelTextMetrics.width + 4;
-    
-    // Position label in the center of visible loop area
-    const labelX = visibleLoopStartX + (visibleLoopWidth - labelTextWidth) / 2;
-    const labelY = 14;
-    
-    // Only draw label if there's enough space and it's within bounds
-    if (visibleLoopWidth > labelTextWidth + 10 && labelX >= 0 && labelX + labelTextWidth <= width) {
-      // Background for better readability
-      this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      this.ctx.fillRect(labelX - 2, labelY - 10, labelTextWidth, 12);
-      
-      // Text
-      this.ctx.fillStyle = loopColor;
-      this.ctx.textAlign = 'left';
-      this.ctx.fillText(labelText, labelX, labelY);
     }
   }
 

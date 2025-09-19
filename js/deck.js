@@ -561,15 +561,24 @@ class Deck {
 
   // Loop methods
   setLoopIn() {
+    // If loop points already exist, clear them for a fresh start
+    if (this.loopStart !== null || this.loopEnd !== null) {
+      this.isLooping = false;
+      this.stopLoopMonitoring();
+      this.loopStart = null;
+      this.loopEnd = null;
+      this.originalLoopEnd = null;
+      this.loopLengthPercentage = 100;
+      console.log(`Deck ${this.deckId}: Loop points cleared for fresh start`);
+      
+      // Clear UI states
+      this.controller.updateLoopInState(false);
+      this.controller.updateLoopOutState(false);
+      return;
+    }
+    
     this.loopStart = this.findNearestBeat(this.getCurrentTime());
     console.log(`Deck ${this.deckId}: Loop IN set at ${this.loopStart}s`);
-    
-    // If we already have a loop end, start the loop immediately
-    if (this.loopEnd !== null) {
-      this.isLooping = true;
-      this.startLoopMonitoring();
-      console.log(`Deck ${this.deckId}: Loop started automatically`);
-    }
     
     // Show only IN as active
     this.controller.updateLoopInState(true);
@@ -577,13 +586,17 @@ class Deck {
   }
 
   setLoopOut() {
-    // If loop is already active and has both points set, toggle loop off
+    // If loop is already active and has both points set, clear loop points completely
     if (this.isLooping && this.loopStart !== null && this.loopEnd !== null) {
       this.isLooping = false;
       this.stopLoopMonitoring();
-      console.log(`Deck ${this.deckId}: Loop disabled`);
+      this.loopStart = null;
+      this.loopEnd = null;
+      this.originalLoopEnd = null;
+      this.loopLengthPercentage = 100;
+      console.log(`Deck ${this.deckId}: Loop disabled and points cleared`);
       
-      // Update UI to show loop is available but not active
+      // Clear all UI states
       this.controller.updateLoopInState(false);
       this.controller.updateLoopOutState(false);
       return;
