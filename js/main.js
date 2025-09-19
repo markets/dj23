@@ -17,6 +17,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   window.soundPad = new SoundPad(window.audioEngine);
 
+  // Initialize XY Effect Panels
+  window.xyEffectPanelA = new XYEffectPanel('A', window.audioEngine);
+  window.xyEffectPanelB = new XYEffectPanel('B', window.audioEngine);
+  
+  // Append XY panels to their respective sections
+  const xyEffectSectionA = document.getElementById('xyEffectSectionA');
+  const xyEffectSectionB = document.getElementById('xyEffectSectionB');
+  
+  if (xyEffectSectionA) {
+    window.xyEffectPanelA.appendTo(xyEffectSectionA);
+  }
+  
+  if (xyEffectSectionB) {
+    window.xyEffectPanelB.appendTo(xyEffectSectionB);
+  }
+
   window.keyboardShortcuts = new KeyboardShortcuts();
     
   console.log('✅ Ready to mix!');

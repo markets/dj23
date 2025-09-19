@@ -98,7 +98,11 @@ class Deck {
 
     this.effectNodes.filter = this.audioContext.createBiquadFilter();
     this.effectNodes.filter.type = 'lowpass';
-    this.effectNodes.filter.frequency.value = 20000;
+    this.effectNodes.filter.frequency.value = 15000; // Start with high frequency (no filtering)
+    this.effectNodes.filterGain = this.audioContext.createGain();
+    this.effectNodes.filterGain.gain.value = 0; // Start with no effect
+    this.effectNodes.filterDry = this.audioContext.createGain();
+    this.effectNodes.filterDry.gain.value = 1; // Start with full dry signal
 
     this.effectNodes.reverb = this.audioContext.createConvolver();
     this.effectNodes.reverbGain = this.audioContext.createGain();
@@ -148,9 +152,16 @@ class Deck {
     this.source.buffer = this.audioBuffer;
     this.source.playbackRate.value = this.playbackRate;
 
-    // Connect the main effect chain
+    // Connect the main effect chain with filter wet/dry mixing
+    // Dry path: source -> filterDry -> EQ chain
+    this.source.connect(this.effectNodes.filterDry);
+    this.effectNodes.filterDry.connect(this.eqNodes.low);
+    
+    // Wet path: source -> filter -> filterGain -> EQ chain  
     this.source.connect(this.effectNodes.filter);
-    this.effectNodes.filter.connect(this.eqNodes.low);
+    this.effectNodes.filter.connect(this.effectNodes.filterGain);
+    this.effectNodes.filterGain.connect(this.eqNodes.low);
+    
     this.eqNodes.low.connect(this.eqNodes.mid);
     this.eqNodes.mid.connect(this.eqNodes.high);
 
@@ -346,20 +357,38 @@ class Deck {
   }
 
   setFilter(value) {
+    if (this.effectNodes.filterGain) {
+      // Main filter slider now controls dry/wet mix
+      const wetLevel = value / 100;
+      this.effectNodes.filterGain.gain.value = wetLevel;
+      this.effectNodes.filterDry.gain.value = 1 - wetLevel;
+    }
+  }
+
+  setFilterFrequency(frequency) {
     if (this.effectNodes.filter) {
-      // Use logarithmic scale for more musical frequency response
-      // Map 0-100% in INVERSE direction for traditional DJ filter behavior
-      const minFreq = 100; // 100Hz minimum (full filtering at 100%)
-      const maxFreq = 15000; // 15kHz maximum (no filtering at 0%)
-      
-      // Invert the value so slider works as expected
-      // 0% = no filtering (15kHz), 100% = heavy filtering (100Hz)
-      const invertedValue = (100 - value) / 100;
-      const logMin = Math.log(minFreq);
-      const logMax = Math.log(maxFreq);
-      const frequency = Math.exp(logMin + invertedValue * (logMax - logMin));
-      
-      this.effectNodes.filter.frequency.value = frequency;
+      // Ensure frequency is finite and within valid range
+      const finalFreq = Math.max(100, Math.min(15000, frequency));
+      if (isFinite(finalFreq)) {
+        this.effectNodes.filter.frequency.value = finalFreq;
+      }
+    }
+  }
+
+  setFilterResonance(value) {
+    if (this.effectNodes.filter) {
+      const resonance = Math.max(0.1, Math.min(30, value));
+      this.effectNodes.filter.Q.value = resonance;
+    }
+  }
+
+  setFilterType(type) {
+    if (this.effectNodes.filter) {
+      // Valid filter types in Web Audio API
+      const validTypes = ['lowpass', 'highpass', 'bandpass', 'lowshelf', 'highshelf', 'peaking', 'notch', 'allpass'];
+      if (validTypes.includes(type)) {
+        this.effectNodes.filter.type = type;
+      }
     }
   }
 
@@ -811,9 +840,16 @@ class Deck {
     this.source = this.audioContext.createBufferSource();
     this.source.buffer = reversedBuffer;
 
-    // Connect audio chain
+    // Connect audio chain with filter wet/dry mixing
+    // Dry path: source -> filterDry -> EQ chain
+    this.source.connect(this.effectNodes.filterDry);
+    this.effectNodes.filterDry.connect(this.eqNodes.low);
+    
+    // Wet path: source -> filter -> filterGain -> EQ chain  
     this.source.connect(this.effectNodes.filter);
-    this.effectNodes.filter.connect(this.eqNodes.low);
+    this.effectNodes.filter.connect(this.effectNodes.filterGain);
+    this.effectNodes.filterGain.connect(this.eqNodes.low);
+    
     this.eqNodes.low.connect(this.eqNodes.mid);
     this.eqNodes.mid.connect(this.eqNodes.high);
     this.eqNodes.high.connect(this.globalGainNode);
