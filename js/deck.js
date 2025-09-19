@@ -450,7 +450,6 @@ class Deck {
     this.loopLengthPercentage = 100;
     
     // Update UI to reflect cleared loop state
-    this.controller.updateLoopToggleState(false);
     this.controller.updateLoopInState(false);
     this.controller.updateLoopOutState(false);
     this.controller.updateLoopButtonsDisabledState(false);
@@ -575,7 +574,6 @@ class Deck {
     // Show only IN as active
     this.controller.updateLoopInState(true);
     this.controller.updateLoopOutState(false);
-    this.controller.updateLoopToggleState(false);
   }
 
   setLoopOut() {
@@ -600,7 +598,6 @@ class Deck {
     // Show only OUT as active (indicates active loop)
     this.controller.updateLoopInState(false);
     this.controller.updateLoopOutState(true);
-    this.controller.updateLoopToggleState(false);
   }
 
   setLoopLength(percentage) {
@@ -621,8 +618,7 @@ class Deck {
         this.startLoopMonitoring();
         console.log(`Deck ${this.deckId}: Loop enabled`);
         
-        // When loop is active: only LOOP button is active, IN/OUT are disabled
-        this.controller.updateLoopToggleState(true);
+        // When loop is active: IN/OUT are disabled
         this.controller.updateLoopInState(false);
         this.controller.updateLoopOutState(false);
         this.controller.updateLoopButtonsDisabledState(true);
@@ -631,7 +627,6 @@ class Deck {
         console.log(`Deck ${this.deckId}: Loop disabled`);
         
         // When loop is disabled: restore IN/OUT to their normal state
-        this.controller.updateLoopToggleState(false);
         this.controller.updateLoopButtonsDisabledState(false);
         this.controller.updateLoopOutState(false);
       }
@@ -1758,11 +1753,6 @@ class DeckController {
     } else {
       return sortedArray[Math.floor(length / 2)];
     }
-  }
-
-  updateLoopToggleState(isActive) {
-    const loopToggleButton = document.getElementById(`loopToggle${this.deckId}`);
-    loopToggleButton.classList.toggle('active', isActive);
   }
 
   updateLoopInState(isActive) {
