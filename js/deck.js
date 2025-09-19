@@ -450,9 +450,8 @@ class Deck {
     this.loopLengthPercentage = 100;
     
     // Update UI to reflect cleared loop state
-    this.controller.updateLoopInState(false);
+    this.controller.updateLoopInState(false, false);
     this.controller.updateLoopOutState(false);
-    this.controller.updateLoopInDisabled(false);
     
     console.log(`Deck ${this.deckId}: Loop points reset`);
   }
@@ -597,9 +596,8 @@ class Deck {
       console.log(`Deck ${this.deckId}: Loop disabled and points cleared`);
       
       // Clear all UI states and enable IN button
-      this.controller.updateLoopInState(false);
+      this.controller.updateLoopInState(false, false);
       this.controller.updateLoopOutState(false);
-      this.controller.updateLoopInDisabled(false);
       return;
     }
     
@@ -622,9 +620,8 @@ class Deck {
     console.log(`Deck ${this.deckId}: Loop started automatically`);
     
     // Show only OUT as active (indicates active loop) and disable IN button
-    this.controller.updateLoopInState(false);
+    this.controller.updateLoopInState(false, true);
     this.controller.updateLoopOutState(true);
-    this.controller.updateLoopInDisabled(true);
   }
 
   setLoopLength(percentage) {
@@ -1757,14 +1754,10 @@ class DeckController {
     }
   }
 
-  updateLoopInState(isActive) {
+  updateLoopInState(isActive, disabled = false) {
     const loopInButton = document.getElementById(`loopIn${this.deckId}`);
     loopInButton.classList.toggle('active', isActive);
-  }
-
-  updateLoopInDisabled(disabled) {
-    const loopInButton = document.getElementById(`loopIn${this.deckId}`);
-    loopInButton.disabled = disabled;
+    loopInButton.classList.toggle('disabled', disabled);
   }
 
   updateLoopOutState(isActive) {
