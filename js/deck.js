@@ -56,7 +56,6 @@ class Deck {
     this.loopStart = null;
     this.loopEnd = null;
     this.originalLoopEnd = null; // Store the original loop end point
-    this.loopLengthPercentage = 100; // Current loop length as percentage
     this.isLooping = false;
     this.loopCheckInterval = null;
 
@@ -447,12 +446,10 @@ class Deck {
     this.loopStart = null;
     this.loopEnd = null;
     this.originalLoopEnd = null;
-    this.loopLengthPercentage = 100;
     
     // Update UI to reflect cleared loop state
     this.controller.updateLoopInState(false);
     this.controller.updateLoopOutState(false);
-    this.controller.updateLoopButtonsDisabledState(false);
     
     console.log(`Deck ${this.deckId}: Loop points reset`);
   }
@@ -568,7 +565,6 @@ class Deck {
       this.loopStart = null;
       this.loopEnd = null;
       this.originalLoopEnd = null;
-      this.loopLengthPercentage = 100;
       console.log(`Deck ${this.deckId}: Loop points cleared for fresh start`);
       
       // Clear UI states
@@ -593,7 +589,6 @@ class Deck {
       this.loopStart = null;
       this.loopEnd = null;
       this.originalLoopEnd = null;
-      this.loopLengthPercentage = 100;
       console.log(`Deck ${this.deckId}: Loop disabled and points cleared`);
       
       // Clear all UI states
@@ -612,7 +607,6 @@ class Deck {
     
     this.loopEnd = this.findNearestBeat(this.getCurrentTime());
     this.originalLoopEnd = this.loopEnd; // Store original loop end
-    this.loopLengthPercentage = 100; // Reset to 100% when setting new loop out
     console.log(`Deck ${this.deckId}: Loop OUT set at ${this.loopEnd}s`);
     
     // Automatically start the loop after setting OUT
@@ -623,41 +617,6 @@ class Deck {
     // Show only OUT as active (indicates active loop)
     this.controller.updateLoopInState(false);
     this.controller.updateLoopOutState(true);
-  }
-
-  setLoopLength(percentage) {
-    if (this.loopStart !== null && this.originalLoopEnd !== null) {
-      this.loopLengthPercentage = percentage;
-      const loopDuration = this.originalLoopEnd - this.loopStart;
-      const adjustedLoopDuration = loopDuration * (percentage / 100);
-      this.loopEnd = this.loopStart + adjustedLoopDuration;
-      console.log(`Deck ${this.deckId}: Loop length set to ${percentage}% (${this.loopEnd}s)`);
-    }
-  }
-
-  toggleLoop() {
-    if (this.loopStart !== null && this.loopEnd !== null) {
-      this.isLooping = !this.isLooping;
-
-      if (this.isLooping) {
-        this.startLoopMonitoring();
-        console.log(`Deck ${this.deckId}: Loop enabled`);
-        
-        // When loop is active: IN/OUT are disabled
-        this.controller.updateLoopInState(false);
-        this.controller.updateLoopOutState(false);
-        this.controller.updateLoopButtonsDisabledState(true);
-      } else {
-        this.stopLoopMonitoring();
-        console.log(`Deck ${this.deckId}: Loop disabled`);
-        
-        // When loop is disabled: restore IN/OUT to their normal state
-        this.controller.updateLoopButtonsDisabledState(false);
-        this.controller.updateLoopOutState(false);
-      }
-    } else {
-      console.log(`Deck ${this.deckId}: Cannot loop - loop points not set`);
-    }
   }
 
   startLoopMonitoring() {
@@ -1129,10 +1088,6 @@ class DeckController {
     // Loop controls
     this.createDeckMethodHandler('loopIn', 'setLoopIn');
     this.createDeckMethodHandler('loopOut', 'setLoopOut');
-    this.createSliderHandler(`loopLength${this.deckId}`, 'setLoopLength', {
-      displayElement: document.getElementById(`loopLengthValue${this.deckId}`),
-      suffix: '%'
-    });
 
     // Reset effects
     this.createControllerMethodHandler('resetFilters', 'resetFilters');
@@ -1374,12 +1329,6 @@ class DeckController {
       
       // Reset loops
       deck.resetLoopPoints();
-      
-      // Reset loop length slider UI
-      const loopLengthSlider = document.getElementById(`loopLength${this.deckId}`);
-      const loopLengthDisplay = document.getElementById(`loopLengthValue${this.deckId}`);
-      if (loopLengthSlider) loopLengthSlider.value = 100;
-      if (loopLengthDisplay) loopLengthDisplay.textContent = '100%';
       
       // Extract metadata and update track display
       await this.extractAndDisplayMetadata(file);
@@ -1788,12 +1737,5 @@ class DeckController {
   updateLoopOutState(isActive) {
     const loopOutButton = document.getElementById(`loopOut${this.deckId}`);
     loopOutButton.classList.toggle('active', isActive);
-  }
-
-  updateLoopButtonsDisabledState(disabled) {
-    const loopInButton = document.getElementById(`loopIn${this.deckId}`);
-    const loopOutButton = document.getElementById(`loopOut${this.deckId}`);
-    loopInButton.classList.toggle('disabled', disabled);
-    loopOutButton.classList.toggle('disabled', disabled);
   }
 }
