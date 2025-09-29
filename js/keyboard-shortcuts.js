@@ -116,7 +116,7 @@ class KeyboardShortcuts {
       'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'
     ];
     
-    if (shortcuts.includes(e.code) || e.key === '?' || (e.ctrlKey && ['KeyS', 'KeyD', 'KeyO', 'KeyP'].includes(e.code))) {
+    if (shortcuts.includes(e.code) || e.key === '?' || (e.ctrlKey && ['KeyS', 'KeyD', 'KeyO', 'KeyP', 'KeyL', 'Semicolon'].includes(e.code))) {
       e.preventDefault();
     }
 
@@ -133,7 +133,9 @@ class KeyboardShortcuts {
       'KeyS': () => this.clickButton('syncAB'),
       'KeyD': () => this.clickButton('syncBA'),
       'KeyO': () => this.clickButton('fileInputA'),
-      'KeyP': () => this.clickButton('fileInputB')
+      'KeyP': () => this.clickButton('fileInputB'),
+      'KeyL': () => this.clickButton('keyLockA'),
+      'Semicolon': () => this.clickButton('keyLockB')
     };
 
     const action = ctrlActions[e.code];

@@ -52,6 +52,12 @@ class Deck {
     this.isCueActive = false; // Track if CUE is currently being held/active
     this.defaultCuePoint = null; // Auto-set cue point for when no manual cue points exist
 
+    // Key Lock (Master Tempo) properties
+    this.isKeyLockEnabled = false;
+    this.timeStretchProcessor = null;
+    this.timeStretchNode = null;
+    this.originalPitchValue = 0; // Store the pitch value set by user
+
     // Loop points
     this.loopStart = null;
     this.loopEnd = null;
@@ -82,6 +88,9 @@ class Deck {
     // Create splitter and merger nodes that will be reused
     this.splitter = this.audioContext.createChannelSplitter(2);
     this.merger = this.audioContext.createChannelMerger(2);
+
+    // Initialize time stretch processor for Key Lock
+    this.timeStretchProcessor = new TimeStretchProcessor(this.audioContext);
 
     this.eqNodes.high = this.audioContext.createBiquadFilter();
     this.eqNodes.high.type = 'highshelf';
@@ -148,7 +157,35 @@ class Deck {
     this.source.buffer = this.audioBuffer;
     this.source.playbackRate.value = this.playbackRate;
 
-    // Connect the main effect chain
+    // Setup the audio processing chain
+    if (this.isKeyLockEnabled && this.originalPitchValue !== 0) {
+      this.setupKeyLockAudioChain();
+    } else {
+      this.setupNormalAudioChain();
+    }
+
+    // Route to both main and cue outputs
+    this.globalGainNode.connect(this.gainNode);
+    this.globalGainNode.connect(this.cueGainNode);
+    
+    this.gainNode.connect(this.mainOutput);
+    this.cueGainNode.connect(this.cueOutput);
+
+    // Start from the saved resume time
+    this.source.start(0, resumeTime);
+    this.startTime = this.audioContext.currentTime - resumeTime;
+    
+    // Initialize audio time tracking
+    this.lastRateChangeTime = this.audioContext.currentTime;
+    this.lastRateChangePosition = resumeTime;
+    this.previousPlaybackRate = this.playbackRate;
+    
+    this.isPlaying = true;
+    this.isPaused = false;
+  }
+
+  setupNormalAudioChain() {
+    // Connect the main effect chain (normal mode)
     this.source.connect(this.effectNodes.filter);
     this.effectNodes.filter.connect(this.eqNodes.low);
     this.eqNodes.low.connect(this.eqNodes.mid);
@@ -159,8 +196,29 @@ class Deck {
 
     // Main dry signal path
     this.eqNodes.high.connect(this.globalGainNode);
-    this.globalGainNode.connect(this.gainNode);
+    this.connectEffectsChain();
+  }
 
+  setupKeyLockAudioChain() {
+    // Create time-stretch node for Key Lock mode
+    this.timeStretchNode = this.timeStretchProcessor.createTimeStretchNode(1 + (this.originalPitchValue / 100));
+    
+    // Connect through time-stretch processor first
+    this.source.connect(this.timeStretchNode);
+    this.timeStretchNode.connect(this.effectNodes.filter);
+    this.effectNodes.filter.connect(this.eqNodes.low);
+    this.eqNodes.low.connect(this.eqNodes.mid);
+    this.eqNodes.mid.connect(this.eqNodes.high);
+
+    // Use the persistent splitter and merger nodes
+    this.eqNodes.high.connect(this.splitter);
+
+    // Main dry signal path
+    this.eqNodes.high.connect(this.globalGainNode);
+    this.connectEffectsChain();
+  }
+
+  connectEffectsChain() {
     // Connect reverb send (wet/dry mix)
     this.splitter.connect(this.effectNodes.reverb);
     this.effectNodes.reverb.connect(this.effectNodes.reverbGain);
@@ -191,25 +249,6 @@ class Deck {
       this.effectNodes.flanger.connect(this.effectNodes.flangerGain);
       this.effectNodes.flangerGain.connect(this.globalGainNode);
     }
-
-    // Route to both main and cue outputs
-    this.globalGainNode.connect(this.gainNode);
-    this.globalGainNode.connect(this.cueGainNode);
-    
-    this.gainNode.connect(this.mainOutput);
-    this.cueGainNode.connect(this.cueOutput);
-
-    // Start from the saved resume time
-    this.source.start(0, resumeTime);
-    this.startTime = this.audioContext.currentTime - resumeTime;
-    
-    // Initialize audio time tracking
-    this.lastRateChangeTime = this.audioContext.currentTime;
-    this.lastRateChangePosition = resumeTime;
-    this.previousPlaybackRate = this.playbackRate;
-    
-    this.isPlaying = true;
-    this.isPaused = false;
   }
 
   pause() {
@@ -241,6 +280,12 @@ class Deck {
       this.source.stop();
       this.source.disconnect();
       this.source = null;
+    }
+    
+    // Disconnect time-stretch node if it exists
+    if (this.timeStretchNode) {
+      this.timeStretchNode.disconnect();
+      this.timeStretchNode = null;
     }
     
     // Disconnect all audio nodes to prevent multiple connections accumulating
@@ -319,6 +364,9 @@ class Deck {
   }
 
   setPitch(value) {
+    // Store the original pitch value set by user
+    this.originalPitchValue = value;
+    
     // Update tracking variables if playing to maintain accurate time
     if (this.isPlaying) {
       const currentTime = this.getCurrentTime();
@@ -327,9 +375,56 @@ class Deck {
       this.previousPlaybackRate = this.playbackRate;
     }
     
-    this.playbackRate = 1 + (value / 100);
+    if (this.isKeyLockEnabled) {
+      // Key Lock mode: change tempo but preserve pitch (key)
+      // Use time-stretching instead of playbackRate
+      this.updateTimeStretch(value);
+    } else {
+      // Normal mode: change both tempo and pitch
+      this.playbackRate = 1 + (value / 100);
+      if (this.source) {
+        this.source.playbackRate.value = this.playbackRate;
+      }
+    }
+  }
+
+  updateTimeStretch(pitchValue) {
+    const stretchRatio = 1 + (pitchValue / 100);
+    
+    if (this.timeStretchNode) {
+      this.timeStretchNode.setStretchRatio(stretchRatio);
+    }
+    
+    // Keep playbackRate at 1.0 to preserve pitch
+    this.playbackRate = 1.0;
     if (this.source) {
-      this.source.playbackRate.value = this.playbackRate;
+      this.source.playbackRate.value = 1.0;
+    }
+  }
+
+  toggleKeyLock() {
+    this.isKeyLockEnabled = !this.isKeyLockEnabled;
+    
+    console.log(`Deck ${this.deckId}: Key Lock ${this.isKeyLockEnabled ? 'enabled' : 'disabled'}`);
+    
+    // If we're playing, restart the audio chain to apply the new mode
+    if (this.isPlaying) {
+      const wasPlaying = this.isPlaying;
+      const currentTime = this.getCurrentTime();
+      this.stop();
+      this.pauseTime = currentTime;
+      this.isPaused = true;
+      if (wasPlaying) {
+        this.play();
+      }
+    }
+    
+    // Re-apply current pitch with new mode
+    this.setPitch(this.originalPitchValue);
+    
+    // Update UI state
+    if (this.controller) {
+      this.controller.updateKeyLockState(this.isKeyLockEnabled);
     }
   }
 
@@ -1087,6 +1182,14 @@ class DeckController {
       this.resetPitch();
     });
 
+    // Key Lock button
+    window.buttonHandler.createClickHandler(`keyLock${this.deckId}`, () => {
+      const deck = window.audioEngine.getDeck(this.deckId);
+      if (deck) {
+        deck.toggleKeyLock();
+      }
+    });
+
     // CUE point controls
     this.createDeckMethodHandler('cue1', 'jumpToCue', 1);
     this.createDeckMethodHandler('cue2', 'jumpToCue', 2);
@@ -1763,5 +1866,10 @@ class DeckController {
   updateLoopOutState(isActive) {
     const loopOutButton = document.getElementById(`loopOut${this.deckId}`);
     loopOutButton.classList.toggle('active', isActive);
+  }
+
+  updateKeyLockState(isActive) {
+    const keyLockButton = document.getElementById(`keyLock${this.deckId}`);
+    keyLockButton.classList.toggle('active', isActive);
   }
 }

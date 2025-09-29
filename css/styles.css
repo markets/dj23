@@ -1357,6 +1357,49 @@ body {
   box-shadow: 0 0px 8px white;
 }
 
+.key-lock-btn {
+  background: var(--gradient-surface);
+  border: 1px solid var(--border-secondary);
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.7rem;
+  padding: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+  width: 50px;
+  height: 35px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  transition: all 0.3s ease;
+}
+
+.key-lock-btn:hover {
+  background: linear-gradient(145deg, var(--border-secondary), var(--border-primary));
+  color: var(--text-primary);
+}
+
+.key-lock-btn.active {
+  background: var(--gradient-primary) !important;
+  color: white !important;
+  box-shadow: var(--shadow-primary) !important;
+  border-color: var(--color-primary);
+}
+
+.key-lock-icon {
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.key-lock-text {
+  font-size: 0.6rem;
+  line-height: 1;
+  font-weight: 600;
+}
+
 /* ============================================================================
    SLIDER STYLING
    ============================================================================ */

@@ -132,6 +132,10 @@
             <input type="range" id="pitchA" min="-30" max="30" value="0" class="pitch-slider vertical-fader" orient="vertical">
             <button id="pitchResetA" class="pitch-reset-btn" title="Reset pitch to 0%"></button>
             <span id="pitchDisplayA">0%</span>
+            <button id="keyLockA" class="key-lock-btn" title="Key Lock (Master Tempo)">
+              <span class="key-lock-icon">🔒</span>
+              <span class="key-lock-text">KEY</span>
+            </button>
           </div>
         </div>
 
@@ -452,6 +456,10 @@
             <input type="range" id="pitchB" min="-30" max="30" value="0" class="pitch-slider vertical-fader" orient="vertical">
             <button id="pitchResetB" class="pitch-reset-btn" title="Reset pitch to 0%"></button>
             <span id="pitchDisplayB">0%</span>
+            <button id="keyLockB" class="key-lock-btn" title="Key Lock (Master Tempo)">
+              <span class="key-lock-icon">🔒</span>
+              <span class="key-lock-text">KEY</span>
+            </button>
           </div>
         </div>
 
@@ -712,6 +720,18 @@
               <span>Load Track (Deck B)</span>
             </div>
           </div>
+
+          <div class="shortcuts-section">
+            <h3>Key Lock (Master Tempo)</h3>
+            <div class="shortcut-item">
+              <kbd>Ctrl + L</kbd>
+              <span>Toggle Key Lock (Deck A)</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>Ctrl + ;</kbd>
+              <span>Toggle Key Lock (Deck B)</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -719,6 +739,7 @@
 
   <script src="node_modules/jsmediatags/dist/jsmediatags.min.js"></script>
   <script src="node_modules/music-tempo/dist/browser/music-tempo.min.js"></script>
+  <script src="js/time-stretch-processor.js"></script>
   <script src="js/audio-engine.js"></script>
   <script src="js/bpm-analyzer.js"></script>
   <script src="js/deck.js"></script>
