@@ -1,4 +1,6 @@
 class MobileNavigation {
+  static MOBILE_BREAKPOINT = 768;
+  
   constructor() {
     this.nav = document.querySelector('.mobile-bottom-nav');
     this.buttons = document.querySelectorAll('.mobile-nav-btn');
@@ -6,6 +8,7 @@ class MobileNavigation {
     this.centerMixer = document.querySelector('.center-mixer');
     this.deckB = document.getElementById('deckB');
     this.currentView = 'mixer';
+    this.resizeTimeout = null;
     
     this.init();
   }
@@ -19,21 +22,28 @@ class MobileNavigation {
     });
     
     // Initialize view on mobile
-    if (window.innerWidth <= 768) {
+    if (window.innerWidth <= MobileNavigation.MOBILE_BREAKPOINT) {
       this.switchView(this.currentView);
     }
     
-    // Handle resize events
+    // Handle resize events with debouncing
     window.addEventListener('resize', () => {
-      if (window.innerWidth <= 768) {
-        this.switchView(this.currentView);
-      } else {
-        // Reset visibility on desktop
-        this.deckA.classList.remove('mobile-hidden', 'mobile-visible');
-        this.centerMixer.classList.remove('mobile-hidden', 'mobile-visible');
-        this.deckB.classList.remove('mobile-hidden', 'mobile-visible');
-      }
+      clearTimeout(this.resizeTimeout);
+      this.resizeTimeout = setTimeout(() => {
+        this.handleResize();
+      }, 150);
     });
+  }
+  
+  handleResize() {
+    if (window.innerWidth <= MobileNavigation.MOBILE_BREAKPOINT) {
+      this.switchView(this.currentView);
+    } else {
+      // Reset visibility on desktop
+      this.deckA.classList.remove('mobile-hidden', 'mobile-visible');
+      this.centerMixer.classList.remove('mobile-hidden', 'mobile-visible');
+      this.deckB.classList.remove('mobile-hidden', 'mobile-visible');
+    }
   }
   
   switchView(view) {
