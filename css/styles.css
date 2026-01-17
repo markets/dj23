@@ -2024,7 +2024,7 @@ input[type="range"]::-moz-range-thumb {
 /* ============================================================================
    RESPONSIVE DESIGN
    ============================================================================ */
-@media (max-width: 1200px) {
+@media (max-width: 768px) {
   .mixer-interface {
     grid-template-columns: 1fr;
     gap: var(--spacing-xl);
@@ -2033,9 +2033,7 @@ input[type="range"]::-moz-range-thumb {
   .center-mixer {
     order: -1;
   }
-}
-
-@media (max-width: 768px) {
+  
   .mixer-container {
     padding: var(--spacing-md);
   }
@@ -2043,20 +2041,117 @@ input[type="range"]::-moz-range-thumb {
   .deck {
     padding: var(--spacing-lg);
   }
-
-  .eq-section {
+  
+  /* Mixer header: 2 lines, centered */
+  .mixer-header {
     flex-direction: column;
-    gap: var(--spacing-lg);
+    align-items: center;
+    text-align: center;
+    gap: var(--spacing-md);
+  }
+  
+  .mixer-header h1 {
+    font-size: 2rem;
+  }
+  
+  .header-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--spacing-md);
+  }
+  
+  .master-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--spacing-md);
+  }
+
+  /* EQ section: horizontal row with scroll */
+  .eq-section {
+    flex-direction: row;
+    gap: var(--spacing-md);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: var(--spacing-md);
+    scrollbar-width: thin;
   }
 
   .eq-band {
     flex-direction: column;
     align-items: center;
+    flex-shrink: 0;
+    min-width: 60px;
   }
 
+  /* VU meters: horizontal row */
   .vu-meters {
-    flex-direction: column;
-    gap: var(--spacing-xl);
+    flex-direction: row;
+    gap: var(--spacing-lg);
+    justify-content: center;
+  }
+  
+  .vu-meter {
+    flex-shrink: 0;
+  }
+  
+  /* Vinyl section improvements */
+  .vinyl-container {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .vinyl-wrapper {
+    width: 150px;
+    height: 150px;
+  }
+  
+  .vinyl-record {
+    width: 150px;
+    height: 150px;
+  }
+  
+  .pitch-control,
+  .loop-control {
+    height: auto;
+    min-height: 200px;
+  }
+  
+  /* Transport controls */
+  .transport-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .transport-controls button {
+    width: 50px;
+    height: 50px;
+    font-size: 1rem;
+  }
+  
+  /* Cue points */
+  .cue-points {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  /* Effects section */
+  .effects-section {
+    padding: 0 var(--spacing-sm);
+  }
+  
+  .effect label {
+    min-width: 50px;
+    font-size: 0.85rem;
+  }
+  
+  /* Sound pad */
+  .sound-pad {
+    max-width: 200px;
+  }
+  
+  .sound-pad-btn {
+    width: 60px;
+    height: 60px;
   }
   
   .modal-content {
@@ -2079,6 +2174,19 @@ input[type="range"]::-moz-range-thumb {
   
   .shortcuts-section {
     padding: var(--spacing-lg);
+  }
+  
+  /* Global beat waveforms */
+  .global-beat-waveforms {
+    margin-bottom: var(--spacing-lg);
+  }
+  
+  .global-beat-waveform-container > label {
+    font-size: 0.7rem;
+  }
+  
+  .beat-waveform-wrapper {
+    height: 50px;
   }
 }
 
