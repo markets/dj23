@@ -186,14 +186,13 @@ body {
   padding: var(--spacing-md) var(--size-page-pad);
   background: rgba(15, 15, 15, 0.82);
   backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid transparent;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 /* Toggled by js/main.js once the page is scrolled */
 .app-topbar.is-stuck {
-  border-bottom-color: var(--border-primary);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
 }
 
