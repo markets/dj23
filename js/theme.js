@@ -1,0 +1,26 @@
+/**
+ * Single source of truth for colors used outside CSS (canvas rendering,
+ * inline styles). Values are read from the CSS custom properties in
+ * css/styles.css so the palette only ever has to change in one place.
+ */
+class Theme {
+  static cache = new Map();
+
+  static color(name) {
+    if (!Theme.cache.has(name)) {
+      const value = getComputedStyle(document.documentElement)
+        .getPropertyValue(`--${name}`)
+        .trim();
+      Theme.cache.set(name, value);
+    }
+
+    return Theme.cache.get(name);
+  }
+
+  /** Call after swapping the palette at runtime. */
+  static clearCache() {
+    Theme.cache.clear();
+  }
+}
+
+window.Theme = Theme;

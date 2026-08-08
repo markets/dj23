@@ -128,13 +128,19 @@ class MixerController {
       if (sourceCurrentBPM > 0 && targetBaseBPM > 0) {
         // Calculate pitch adjustment needed to match source's current BPM
         const pitchAdjustment = ((sourceCurrentBPM / targetBaseBPM) - 1) * 100;
-        target.setPitch(pitchAdjustment);
-                
+        // setPitch clamps to the configured pitch range, so mirror what it
+        // actually applied rather than what was requested
+        const appliedPitch = target.setPitch(pitchAdjustment);
+
+        if (Math.abs(appliedPitch - pitchAdjustment) > 0.05) {
+          console.log(`Deck ${targetDeck}: sync needs ${pitchAdjustment.toFixed(1)}% but the pitch range is ±${target.pitchRange}%`);
+        }
+
         // Update UI to reflect pitch change
         const pitchSlider = document.getElementById(`pitch${targetDeck}`);
         const pitchDisplay = document.getElementById(`pitchDisplay${targetDeck}`);
-        pitchSlider.value = pitchAdjustment;
-        pitchDisplay.textContent = `${pitchAdjustment.toFixed(1)}%`;
+        pitchSlider.value = appliedPitch;
+        pitchDisplay.textContent = `${appliedPitch.toFixed(1)}%`;
 
         // Update BPM display after pitch adjustment
         this.deckControllers[targetDeck].updateBPMDisplay();
