@@ -55,18 +55,6 @@ through the Web Audio API.
 - **Responsive layout** — the full three-column mixer down to tablet size, and a bottom-nav
   layout on phones that switches between Deck A, the mixer and Deck B
 
-## Settings
-
-Open the ⚙ menu in the header. Preferences are saved in `localStorage`.
-
-| Setting | Options | Notes |
-| --- | --- | --- |
-| Pitch range | ±8%, ±16%, ±32%, ±64% | ±8% matches a real turntable; the wider ranges make SYNC usable across tracks with very different tempos. Defaults to ±32%. |
-| Output routing | Main out, Cue split | **Main out** sends the full stereo mix to both channels — the right choice for casual mixing on laptop speakers. **Cue split** puts the cue bus on the left channel and the mix on the right, so you can pre-listen through one headphone without a second sound card. |
-
-Pre-listen buttons and the cue fader only appear in cue split mode, since they do nothing in
-main out.
-
 ## Keyboard shortcuts
 
 | | Deck A | Deck B |
