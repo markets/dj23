@@ -144,6 +144,36 @@ body {
   margin-bottom: var(--spacing-2xl);
 }
 
+/* --- Icons ---------------------------------------------------------------- */
+/* Icon shapes live in images/icons/. Masking a box with the shape rather than
+   embedding SVG keeps them painted with currentColor, so they follow hover and
+   active states like text does. Defined here, ahead of everything that uses
+   them, so a component can still override the size with a single class. */
+.icon {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  mask: center / contain no-repeat;
+  -webkit-mask: center / contain no-repeat;
+}
+
+.icon-sm {
+  width: 16px;
+  height: 16px;
+}
+
+.icon-headphones {
+  mask-image: url('../images/icons/headphones.svg');
+  -webkit-mask-image: url('../images/icons/headphones.svg');
+}
+
+.icon-gear {
+  mask-image: url('../images/icons/gear.svg');
+  -webkit-mask-image: url('../images/icons/gear.svg');
+}
+
 /* ============================================================================
    3. TOP BAR (HEADER + GLOBAL BEAT WAVEFORMS)
    ============================================================================ */
@@ -189,8 +219,8 @@ body {
 .brand-mark {
   width: clamp(28px, 3vw, 38px);
   height: clamp(28px, 3vw, 38px);
-  flex-shrink: 0;
-  display: block;
+  mask-image: url('../images/logo.svg');
+  -webkit-mask-image: url('../images/logo.svg');
   filter: drop-shadow(0 0 6px rgba(var(--color-primary-rgb), 0.35));
   transition: var(--transition-normal);
 }
@@ -308,7 +338,7 @@ body {
   padding: var(--spacing-lg);
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
+  gap: var(--spacing-2xl);
   background: var(--bg-quaternary);
   border: 1px solid var(--border-secondary);
   border-radius: var(--radius-xl);
@@ -1519,7 +1549,7 @@ input[type="range"]::-moz-range-thumb {
 .sync-buttons {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: space-around;
   gap: var(--spacing-sm);
 }
 

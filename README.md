@@ -89,3 +89,19 @@ Global: <kbd>Space</kbd> play/pause the active deck, <kbd>←</kbd> <kbd>→</kb
 
 Needs a modern browser with Web Audio and `ResizeObserver` — recent Chrome, Edge, Firefox or
 Safari. Recording uses `MediaRecorder`, which is unavailable in some older Safari versions.
+
+## License
+
+Copyright (C) 2026 Marc Anguera Insa
+
+DJ23 is free software: you can redistribute it and modify it under the terms of the
+[GNU Affero General Public License](LICENSE) as published by the Free Software Foundation,
+either version 3 of the License, or (at your option) any later version.
+
+It is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+[GNU Affero General Public License](LICENSE) for more details.
+
+The AGPL is the GPL plus one extra condition: if you run a modified version of DJ23 on a
+server and let other people use it over a network, you have to offer them the source of your
+version too.
