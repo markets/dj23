@@ -1906,9 +1906,10 @@ input[type="range"]::-moz-range-thumb {
   left: 0;
   right: 0;
   justify-content: space-around;
+  gap: var(--spacing-xs);
   background: linear-gradient(to top, var(--bg-primary), var(--bg-secondary));
   border-top: 1px solid var(--border-secondary);
-  padding: var(--spacing-xs) var(--spacing-md) calc(var(--spacing-xs) + env(safe-area-inset-bottom, 0px));
+  padding: var(--spacing-xs) calc(var(--spacing-xs) + env(safe-area-inset-bottom, 0px));
   z-index: 100;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
 }
