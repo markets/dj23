@@ -52,8 +52,7 @@ through the Web Audio API.
   whoosh — and every slot can be replaced with your own audio file
 - **Record your mix** as it plays and download it as a WebM file
 - **Keyboard shortcuts** for everything you need mid-mix, with a `?` cheat sheet
-- **Responsive layout** — the full three-column mixer down to tablet size, and a bottom-nav
-  layout on phones that switches between Deck A, the mixer and Deck B
+- **Responsive layout** — so you can even mix from your phone
 
 ## Keyboard shortcuts
 
