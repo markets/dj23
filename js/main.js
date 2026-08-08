@@ -18,7 +18,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.soundPad = new SoundPad(window.audioEngine);
 
   window.keyboardShortcuts = new KeyboardShortcuts();
-    
+
+  // After the decks exist, so saved preferences can be applied to them
+  window.settings = new Settings();
+  window.settings.init();
+
+  setupStickyTopbar();
+
   console.log('✅ Ready to mix!');
     
   // Handle audio context resume on user interaction (setup once after initialization)
@@ -28,6 +34,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }, { once: true });
 });
+
+// Separate the sticky top bar from the content scrolling underneath it
+function setupStickyTopbar() {
+  const topbar = document.getElementById('appTopbar');
+  if (!topbar) return;
+
+  const update = () => topbar.classList.toggle('is-stuck', window.scrollY > 0);
+
+  update();
+  window.addEventListener('scroll', update, { passive: true });
+  // The browser restores the scroll position after DOMContentLoaded, without
+  // firing a scroll event — re-check once the page is fully shown
+  window.addEventListener('pageshow', update);
+}
 
 window.addEventListener('error', (e) => {
   console.error('Application error:', e.error);

@@ -1,4 +1,8 @@
 class Deck {
+  /** Pitch fader travel, in percent either side of zero. */
+  static PITCH_RANGES = [8, 16, 32, 64];
+  static DEFAULT_PITCH_RANGE = 32;
+
   constructor(audioContext, mainOutput, cueOutput, deckId) {
     this.audioContext = audioContext;
     this.mainOutput = mainOutput;
@@ -18,6 +22,7 @@ class Deck {
     this.pauseTime = 0;
     this.playbackRate = 1;
     this.volume = 0.75;
+    this.pitchRange = Deck.DEFAULT_PITCH_RANGE;
 
     // Audio time tracking for accurate position with pitch changes
     this.lastRateChangeTime = 0;
@@ -318,7 +323,11 @@ class Deck {
     }
   }
 
+  /** Applies a pitch in percent, clamped to the configured range.
+   *  Returns the value actually applied so callers can mirror it in the UI. */
   setPitch(value) {
+    const pitch = Math.max(-this.pitchRange, Math.min(this.pitchRange, value));
+
     // Update tracking variables if playing to maintain accurate time
     if (this.isPlaying) {
       const currentTime = this.getCurrentTime();
@@ -326,11 +335,17 @@ class Deck {
       this.lastRateChangePosition = currentTime;
       this.previousPlaybackRate = this.playbackRate;
     }
-    
-    this.playbackRate = 1 + (value / 100);
+
+    this.playbackRate = 1 + (pitch / 100);
     if (this.source) {
       this.source.playbackRate.value = this.playbackRate;
     }
+
+    return pitch;
+  }
+
+  getPitch() {
+    return (this.playbackRate - 1) * 100;
   }
 
   setEQ(band, value) {
@@ -763,14 +778,12 @@ class Deck {
   pitchBend(direction) {
     // Store the original pitch when starting pitch bend
     if (!this.isPitchBending) {
-      this.originalPitchBeforeBend = ((this.playbackRate - 1) * 100);
+      this.originalPitchBeforeBend = this.getPitch();
       this.isPitchBending = true;
     }
 
     const bendAmount = direction > 0 ? 6 : -6; // +/- 6% pitch bend for more noticeable effect
-    const currentPitch = this.originalPitchBeforeBend;
-    const newPitch = Math.max(-30, Math.min(30, currentPitch + bendAmount));
-    this.setPitch(newPitch);
+    this.setPitch(this.originalPitchBeforeBend + bendAmount);
   }
 
   stopPitchBend() {
@@ -1308,7 +1321,7 @@ class DeckController {
         // Provide user-friendly error message
         const trackInfo = document.getElementById(`trackInfo${this.deckId}`);
         const originalContent = trackInfo.innerHTML;
-        trackInfo.style.color = '#ff6b6b';
+        trackInfo.style.color = Theme.color('color-secondary');
         trackInfo.innerHTML = '<div class="track-details"><div class="track-name">Invalid file type</div><div class="track-time">Audio files only</div></div>';
         
         setTimeout(() => {

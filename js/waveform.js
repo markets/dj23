@@ -7,14 +7,37 @@ class BaseWaveformRenderer {
     this.animationId = null;
   }
 
+  /**
+   * Match the canvas backing store to its CSS size. The element is sized by
+   * the stylesheet, so nothing is written back to canvas.style — writing an
+   * inline width there would freeze the canvas at whatever it measured first.
+   * Returns true when the size actually changed and a re-render is needed.
+   */
   setupCanvas() {
     const rect = this.canvas.getBoundingClientRect();
-    this.canvas.width = rect.width * window.devicePixelRatio;
-    this.canvas.height = rect.height * window.devicePixelRatio;
-    this.ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-        
-    this.canvas.style.width = rect.width + 'px';
-    this.canvas.style.height = rect.height + 'px';
+    if (!rect.width || !rect.height) return false;
+
+    const dpr = window.devicePixelRatio || 1;
+    const width = Math.round(rect.width * dpr);
+    const height = Math.round(rect.height * dpr);
+
+    if (this.canvas.width === width && this.canvas.height === height) return false;
+
+    this.canvas.width = width;
+    this.canvas.height = height;
+    // setTransform, not scale — scale would compound on every resize
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    return true;
+  }
+
+  /** Keep the backing store in sync with the fluid layout. */
+  observeResize() {
+    this.resizeObserver = new ResizeObserver(() => {
+      if (this.setupCanvas()) this.render();
+    });
+
+    this.resizeObserver.observe(this.canvas);
   }
 
   loadWaveformData(audioBuffer) {
@@ -68,6 +91,7 @@ class WaveformRenderer extends BaseWaveformRenderer {
   constructor(canvasId, deckId) {
     super(canvasId, deckId);        
     this.setupCanvas();
+    this.observeResize();
     this.setupEventListeners();
   }
 
@@ -93,11 +117,6 @@ class WaveformRenderer extends BaseWaveformRenderer {
         console.log(`Deck ${this.deckId}: No audio buffer available for seeking`);
       }
     });
-
-    window.addEventListener('resize', () => {
-      this.setupCanvas();
-      this.render();
-    });
   }
 
   render() {
@@ -115,7 +134,7 @@ class WaveformRenderer extends BaseWaveformRenderer {
     const barWidth = width / this.waveformData.length;
     const centerY = height / 2;
 
-    this.ctx.fillStyle = '#333';
+    this.ctx.fillStyle = Theme.color('border-primary');
     for (let i = 0; i < this.waveformData.length; i++) {
       const barHeight = this.waveformData[i] * centerY;
       const x = i * barWidth;
@@ -128,7 +147,7 @@ class WaveformRenderer extends BaseWaveformRenderer {
       const progress = deck.getCurrentTime() / deck.getDuration();
       const playedWidth = width * progress;
             
-      this.ctx.fillStyle = '#4ecdc4';
+      this.ctx.fillStyle = Theme.color('color-primary');
       for (let i = 0; i < this.waveformData.length; i++) {
         const x = i * barWidth;
         if (x > playedWidth) break;
@@ -160,7 +179,7 @@ class WaveformRenderer extends BaseWaveformRenderer {
   }
 
   drawSingleCuePoint(cueTime, duration, width, height, label, textY) {
-    const cuePointColor = '#fff';
+    const cuePointColor = Theme.color('text-primary');
     const cuePosition = (cueTime / duration) * width;
     
     // Draw cue line
@@ -198,7 +217,7 @@ class WaveformRenderer extends BaseWaveformRenderer {
     this.ctx.clearRect(0, 0, width, height);
         
     // Draw empty state
-    this.ctx.strokeStyle = '#333';
+    this.ctx.strokeStyle = Theme.color('border-primary');
     this.ctx.lineWidth = 1;
     this.ctx.beginPath();
     this.ctx.moveTo(0, height / 2);
@@ -206,7 +225,7 @@ class WaveformRenderer extends BaseWaveformRenderer {
     this.ctx.stroke();
         
     // Draw text
-    this.ctx.fillStyle = '#666';
+    this.ctx.fillStyle = Theme.color('border-light');
     this.ctx.font = '12px Inter';
     this.ctx.textAlign = 'center';
     this.ctx.fillText('Load a track to see waveform', width / 2, height / 2 - 10);
@@ -235,6 +254,7 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     this.offsetSeconds = 0; // Current offset from track start
         
     this.setupCanvas();
+    this.observeResize();
     this.setupEventListeners();
   }
 
@@ -402,11 +422,6 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     document.getElementById('zoomOutB').addEventListener('click', () => {
       this.zoom(5);
     });
-
-    window.addEventListener('resize', () => {
-      this.setupCanvas();
-      this.render();
-    });
   }
 
   updateZoomWindow() {
@@ -467,7 +482,7 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     const drawOffsetPixels = windowStart < 0 ? -windowStart * pixelsPerSecond : 0;
 
     // Draw waveform with higher detail
-    this.ctx.fillStyle = '#444';
+    this.ctx.fillStyle = Theme.color('border-secondary');
     for (let i = 0; i < visibleSamples; i++) {
       const sampleIndex = startSample + i;
       if (sampleIndex >= this.waveformData.length) break;
@@ -490,7 +505,7 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
         const pixelsPerSecond = width / this.zoomLevel;
         const currentTimePosition = (currentTime - this.offsetSeconds) * pixelsPerSecond;
         
-        this.ctx.fillStyle = '#4ecdc4';
+        this.ctx.fillStyle = Theme.color('color-primary');
         for (let i = 0; i < visibleSamples; i++) {
           const x = drawOffsetPixels + i * barWidth;
           if (x > currentTimePosition || x < 0 || x >= width) continue;
@@ -511,7 +526,7 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     // Draw red playhead line in center
     const playheadX = width / 2;
     
-    this.ctx.strokeStyle = '#ff4757';
+    this.ctx.strokeStyle = Theme.color('color-playhead');
     this.ctx.lineWidth = 2;
     this.ctx.beginPath();
     this.ctx.moveTo(playheadX, 0);
@@ -525,7 +540,7 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     const windowDuration = Math.min(this.zoomLevel, duration - this.offsetSeconds);
     const secondsPerPixel = windowDuration / width;
     
-    this.ctx.strokeStyle = '#666';
+    this.ctx.strokeStyle = Theme.color('border-light');
     this.ctx.lineWidth = 1;
     this.ctx.setLineDash([2, 2]);
     
@@ -548,7 +563,7 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     this.ctx.clearRect(0, 0, width, height);
         
     // Draw empty state with just the center line
-    this.ctx.strokeStyle = '#333';
+    this.ctx.strokeStyle = Theme.color('border-primary');
     this.ctx.lineWidth = 1;
     this.ctx.beginPath();
     this.ctx.moveTo(0, height / 2);
@@ -556,7 +571,7 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     this.ctx.stroke();
         
     // Draw red playhead line in center
-    this.ctx.strokeStyle = '#ff4757';
+    this.ctx.strokeStyle = Theme.color('color-playhead');
     this.ctx.lineWidth = 2;
     this.ctx.beginPath();
     this.ctx.moveTo(width / 2, 0);
@@ -564,7 +579,7 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     this.ctx.stroke();
     
     // Draw text
-    this.ctx.fillStyle = '#666';
+    this.ctx.fillStyle = Theme.color('border-light');
     this.ctx.font = '12px Inter';
     this.ctx.textAlign = 'center';
     this.ctx.fillText('Load track for beat view', width / 2, height / 2 - 6);

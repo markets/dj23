@@ -1,4 +1,10 @@
 class AudioEngine {
+  /** 'main' sends the full stereo mix to the output; 'cue-split' puts the cue
+   *  bus on the left channel and the main mix on the right, which is how you
+   *  pre-listen through one headphone without a second sound card. */
+  static ROUTINGS = ['main', 'cue-split'];
+  static DEFAULT_ROUTING = 'main';
+
   constructor() {
     this.audioContext = null;
     this.masterGain = null;
@@ -11,6 +17,7 @@ class AudioEngine {
     this.recordedChunks = [];
     this.isRecording = false;
     this.recordingStartTime = null;
+    this.outputRouting = AudioEngine.DEFAULT_ROUTING;
   }
 
   async initialize() {
@@ -18,26 +25,22 @@ class AudioEngine {
 
     try {
       this.audioContext = new AudioContext({ sampleRate: 44100 });
-      
+
       // Create stereo channel merger for CUE (left) and MAIN (right) outputs
       this.channelMerger = this.audioContext.createChannelMerger(2);
-      
+
       // Create separate gain nodes for CUE and MAIN outputs
       this.cueGain = this.audioContext.createGain();
       this.masterGain = this.audioContext.createGain();
-      
+
       // Set initial volumes
       this.cueGain.gain.value = 0.5;
       this.masterGain.gain.value = 0.75;
-      
-      // Route CUE to left channel, MAIN to right channel of final output
-      this.cueGain.connect(this.channelMerger, 0, 0);    // CUE -> Left channel
-      this.masterGain.connect(this.channelMerger, 0, 1); // MAIN -> Right channel
-      this.channelMerger.connect(this.audioContext.destination);
 
       // Create a media stream destination for recording
       this.mediaStreamDestination = this.audioContext.createMediaStreamDestination();
-      this.channelMerger.connect(this.mediaStreamDestination);
+
+      this.setOutputRouting(this.outputRouting);
 
       this.decks.A = new Deck(this.audioContext, this.masterGain, this.cueGain, 'A');
       this.decks.B = new Deck(this.audioContext, this.masterGain, this.cueGain, 'B');
@@ -56,6 +59,39 @@ class AudioEngine {
     if (this.audioContext && this.audioContext.state === 'suspended') {
       await this.audioContext.resume();
     }
+  }
+
+  /**
+   * Rewire the output stage. Safe to call at any time — only the output side
+   * of the gain nodes is touched, so the decks feeding them stay connected.
+   */
+  setOutputRouting(routing) {
+    this.outputRouting = AudioEngine.ROUTINGS.includes(routing)
+      ? routing
+      : AudioEngine.DEFAULT_ROUTING;
+
+    if (!this.audioContext) return this.outputRouting;
+
+    this.cueGain.disconnect();
+    this.masterGain.disconnect();
+    this.channelMerger.disconnect();
+
+    if (this.outputRouting === 'cue-split') {
+      this.cueGain.connect(this.channelMerger, 0, 0);    // CUE -> Left channel
+      this.masterGain.connect(this.channelMerger, 0, 1); // MAIN -> Right channel
+      this.channelMerger.connect(this.audioContext.destination);
+      this.channelMerger.connect(this.mediaStreamDestination);
+    } else {
+      // Straight through, so the main mix keeps its stereo image
+      this.masterGain.connect(this.audioContext.destination);
+      this.masterGain.connect(this.mediaStreamDestination);
+    }
+
+    return this.outputRouting;
+  }
+
+  isCueAvailable() {
+    return this.outputRouting === 'cue-split';
   }
 
   setMasterVolume(value) {

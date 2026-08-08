@@ -4,72 +4,115 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DJ23</title>
+  <meta name="theme-color" content="#0f0f0f">
+  <link rel="icon" type="image/svg+xml" href="images/logo.svg">
   <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="dist/styles.css">
 </head>
 <body>
   <div class="mixer-container">
-    <!-- Header -->
-    <header class="mixer-header">
-      <h1>DJ23</h1>
-      <div class="header-controls">
-        <button id="showShortcutsBtn" class="help-button" title="Keyboard Shortcuts (?)">
-          <span>?</span>
-        </button>
-        <div class="recording-controls">
-          <button id="recordBtn" class="record-button" title="Start/Stop Recording">
-            <span class="record-icon">⏺</span>
-            <span class="record-text">REC</span>
-          </button>
-          <div class="recording-status" id="recordingStatus" style="display: none;">
-            <span class="recording-indicator">●</span>
-            <span class="recording-time" id="recordingTime">0:00</span>
-          </div>
-          <button id="downloadBtn" class="download-button" title="Download Recording" style="display: none;">
-            <span>⬇ Download</span>
-          </button>
-        </div>
+    <!-- Sticky top bar: header + beat matching waveforms -->
+    <div class="app-topbar" id="appTopbar">
+      <header class="app-header">
+        <a class="brand" href="./" aria-label="DJ23 home">
+          <span class="icon brand-mark" aria-hidden="true"></span>
+          <span class="brand-name">DJ23</span>
+        </a>
+
         <div class="master-controls">
           <div class="cue-volume">
-            <label>
-              <svg class="headphones-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                <path d="M12 2C7.58 2 4 5.58 4 10v8c0 1.1.9 2 2 2h2c.55 0 1-.45 1-1v-6c0-.55-.45-1-1-1H6v-2c0-3.31 2.69-6 6-6s6 2.69 6 6v2h-2c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h2c1.1 0 2-.9 2-2v-8c0-4.42-3.58-8-8-8z"/>
-              </svg>
+            <label for="cueVolume" title="Cue volume">
+              <span class="icon icon-sm icon-headphones" aria-hidden="true"></span>
             </label>
             <input type="range" id="cueVolume" min="0" max="100" value="50" class="cue-volume-slider horizontal-fader">
             <span class="volume-display">50%</span>
           </div>
           <div class="master-volume">
-            <label>Master</label>
+            <label for="masterVolume">Master</label>
             <input type="range" id="masterVolume" min="0" max="100" value="75" class="master-volume-slider horizontal-fader">
             <span class="volume-display">75%</span>
           </div>
         </div>
-      </div>
-    </header>
 
-    <!-- Beat Matching Waveforms Section -->
-    <div class="global-beat-waveforms">
-      <div class="global-beat-waveform-container">
-        <label>Deck A</label>
-        <div class="zoom-controls">
-          <button id="zoomOutA" class="zoom-btn" title="Zoom Out">-</button>
-          <button id="zoomInA" class="zoom-btn" title="Zoom In">+</button>
+        <div class="header-actions">
+          <div class="recording-controls">
+            <button id="recordBtn" class="record-button" title="Start/Stop Recording">
+              <span class="record-icon">⏺</span>
+              <span class="record-text">REC</span>
+            </button>
+            <div class="recording-status" id="recordingStatus" style="display: none;">
+              <span class="recording-indicator">●</span>
+              <span class="recording-time" id="recordingTime">0:00</span>
+            </div>
+            <button id="downloadBtn" class="download-button" title="Download Recording" style="display: none;">
+              <span>⬇ Download</span>
+            </button>
+          </div>
+          <button id="showShortcutsBtn" class="icon-button" title="Keyboard Shortcuts (?)" aria-label="Keyboard shortcuts">
+            <span aria-hidden="true">?</span>
+          </button>
+
+          <div class="settings">
+            <button id="settingsBtn" class="icon-button" title="Settings" aria-label="Settings" aria-haspopup="true" aria-expanded="false" aria-controls="settingsMenu">
+              <span class="icon icon-gear" aria-hidden="true"></span>
+            </button>
+
+            <div class="settings-menu" id="settingsMenu" role="menu" aria-label="Settings" hidden>
+              <div class="settings-group" role="group" aria-label="Pitch range">
+                <div class="settings-label">Pitch range</div>
+                <p class="settings-hint">Travel of the pitch fader, either side of zero.</p>
+                <div class="settings-choices">
+                  <button class="settings-choice" role="menuitemradio" aria-checked="false" data-setting="pitchRange" data-value="8">±8%</button>
+                  <button class="settings-choice" role="menuitemradio" aria-checked="false" data-setting="pitchRange" data-value="16">±16%</button>
+                  <button class="settings-choice" role="menuitemradio" aria-checked="false" data-setting="pitchRange" data-value="32">±32%</button>
+                  <button class="settings-choice" role="menuitemradio" aria-checked="false" data-setting="pitchRange" data-value="64">±64%</button>
+                </div>
+              </div>
+
+              <div class="settings-group" role="group" aria-label="Output routing">
+                <div class="settings-label">Output routing</div>
+                <div class="settings-choices settings-choices-stacked">
+                  <button class="settings-choice" role="menuitemradio" aria-checked="false" data-setting="outputRouting" data-value="main">
+                    <span class="settings-choice-name">Main out</span>
+                    <span class="settings-choice-note">Full stereo mix to both channels.</span>
+                  </button>
+                  <button class="settings-choice" role="menuitemradio" aria-checked="false" data-setting="outputRouting" data-value="cue-split">
+                    <span class="settings-choice-name">Cue split</span>
+                    <span class="settings-choice-note">Cue on the left channel, mix on the right — for pre-listening on one headphone.</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="beat-waveform-wrapper">
-          <canvas id="beatWaveformA" class="beat-waveform-global-fullwidth"></canvas>
-          <div class="beat-playhead" id="beatPlayheadA"></div>
+      </header>
+
+      <!-- Beat Matching Waveforms Section -->
+      <div class="global-beat-waveforms">
+        <div class="global-beat-waveform-container">
+          <label>Deck A</label>
+          <div class="zoom-controls">
+            <button id="zoomOutA" class="zoom-btn" title="Zoom Out">-</button>
+            <button id="zoomInA" class="zoom-btn" title="Zoom In">+</button>
+          </div>
+          <div class="beat-waveform-wrapper">
+            <canvas id="beatWaveformA" class="beat-waveform-global-fullwidth"></canvas>
+            <div class="beat-playhead" id="beatPlayheadA"></div>
+          </div>
         </div>
-      </div>
-      <div class="global-beat-waveform-container">
-        <label>Deck B</label>
-        <div class="zoom-controls">
-          <button id="zoomOutB" class="zoom-btn" title="Zoom Out">-</button>
-          <button id="zoomInB" class="zoom-btn" title="Zoom In">+</button>
-        </div>
-        <div class="beat-waveform-wrapper">
-          <canvas id="beatWaveformB" class="beat-waveform-global-fullwidth"></canvas>
-          <div class="beat-playhead" id="beatPlayheadB"></div>
+        <div class="global-beat-waveform-container">
+          <label>Deck B</label>
+          <div class="zoom-controls">
+            <button id="zoomOutB" class="zoom-btn" title="Zoom Out">-</button>
+            <button id="zoomInB" class="zoom-btn" title="Zoom In">+</button>
+          </div>
+          <div class="beat-waveform-wrapper">
+            <canvas id="beatWaveformB" class="beat-waveform-global-fullwidth"></canvas>
+            <div class="beat-playhead" id="beatPlayheadB"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -129,8 +172,10 @@
               <button id="pitchBendPlusA" class="pitch-bend-btn">+</button>
               <button id="pitchBendMinusA" class="pitch-bend-btn">-</button>
             </div>
-            <input type="range" id="pitchA" min="-30" max="30" value="0" class="pitch-slider vertical-fader" orient="vertical">
-            <button id="pitchResetA" class="pitch-reset-btn" title="Reset pitch to 0%"></button>
+            <div class="pitch-control-wrapper">
+              <input type="range" id="pitchA" min="-30" max="30" value="0" class="pitch-slider vertical-fader" orient="vertical">
+              <button id="pitchResetA" class="pitch-reset-btn" title="Reset pitch to 0%"></button>
+            </div>
             <span id="pitchDisplayA">0%</span>
           </div>
         </div>
@@ -257,8 +302,10 @@
               <button id="tapB" class="tap-btn" title="Tap to set BPM">TAP</button>
             </div>
           </div>
-          <button id="syncAB" class="sync-btn" title="Sync Deck A to Deck B">SYNC A</button>
-          <button id="syncBA" class="sync-btn" title="Sync Deck B to Deck A">SYNC B</button>
+          <div class="sync-buttons">
+            <button id="syncAB" class="sync-btn" title="Sync Deck A to Deck B">SYNC A</button>
+            <button id="syncBA" class="sync-btn" title="Sync Deck B to Deck A">SYNC B</button>
+          </div>
         </div>
 
         <div class="beat-meter-section">
@@ -290,9 +337,7 @@
         <div class="volume-controls">
           <div class="volume-control">
             <button id="preListenA" class="prelisten-btn">
-              <svg class="headphones-icon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                <path d="M12 2C7.58 2 4 5.58 4 10v8c0 1.1.9 2 2 2h2c.55 0 1-.45 1-1v-6c0-.55-.45-1-1-1H6v-2c0-3.31 2.69-6 6-6s6 2.69 6 6v2h-2c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h2c1.1 0 2-.9 2-2v-8c0-4.42-3.58-8-8-8z"/>
-              </svg>
+              <span class="icon icon-headphones" aria-hidden="true"></span>
             </button>
             <label>Volume A</label>
             <input type="range" id="volumeA" min="0" max="100" value="100" class="volume-slider vertical-fader" orient="vertical">
@@ -300,9 +345,7 @@
           </div>
           <div class="volume-control">
             <button id="preListenB" class="prelisten-btn">
-              <svg class="headphones-icon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                <path d="M12 2C7.58 2 4 5.58 4 10v8c0 1.1.9 2 2 2h2c.55 0 1-.45 1-1v-6c0-.55-.45-1-1-1H6v-2c0-3.31 2.69-6 6-6s6 2.69 6 6v2h-2c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h2c1.1 0 2-.9 2-2v-8c0-4.42-3.58-8-8-8z"/>
-              </svg>
+              <span class="icon icon-headphones" aria-hidden="true"></span>
             </button>
             <label>Volume B</label>
             <input type="range" id="volumeB" min="0" max="100" value="0" class="volume-slider vertical-fader" orient="vertical">
@@ -449,8 +492,10 @@
               <button id="pitchBendPlusB" class="pitch-bend-btn">+</button>
               <button id="pitchBendMinusB" class="pitch-bend-btn">-</button>
             </div>
-            <input type="range" id="pitchB" min="-30" max="30" value="0" class="pitch-slider vertical-fader" orient="vertical">
-            <button id="pitchResetB" class="pitch-reset-btn" title="Reset pitch to 0%"></button>
+            <div class="pitch-control-wrapper">
+              <input type="range" id="pitchB" min="-30" max="30" value="0" class="pitch-slider vertical-fader" orient="vertical">
+              <button id="pitchResetB" class="pitch-reset-btn" title="Reset pitch to 0%"></button>
+            </div>
             <span id="pitchDisplayB">0%</span>
           </div>
         </div>
@@ -547,6 +592,22 @@
       </div>
     </div>
   </div>
+
+  <!-- Mobile Bottom Navigation -->
+  <nav class="mobile-bottom-nav">
+    <button class="mobile-nav-btn" data-view="deckA">
+      <span class="nav-icon">A</span>
+      <span class="nav-label">Deck A</span>
+    </button>
+    <button class="mobile-nav-btn active" data-view="mixer">
+      <span class="nav-icon">≡</span>
+      <span class="nav-label">Mixer</span>
+    </button>
+    <button class="mobile-nav-btn" data-view="deckB">
+      <span class="nav-icon">B</span>
+      <span class="nav-label">Deck B</span>
+    </button>
+  </nav>
 
   <!-- Keyboard Shortcuts Modal -->
   <div id="keyboardShortcutsModal" class="modal">
@@ -719,6 +780,7 @@
 
   <script src="node_modules/jsmediatags/dist/jsmediatags.min.js"></script>
   <script src="node_modules/music-tempo/dist/browser/music-tempo.min.js"></script>
+  <script src="js/theme.js"></script>
   <script src="js/audio-engine.js"></script>
   <script src="js/bpm-analyzer.js"></script>
   <script src="js/deck.js"></script>
@@ -729,6 +791,8 @@
   <script src="js/mixer.js"></script>
   <script src="js/sound-pad.js"></script>
   <script src="js/recording.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/mobile-nav.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>
