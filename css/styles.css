@@ -2000,6 +2000,8 @@ input[type="range"]::-moz-range-thumb {
   .master-controls {
     justify-content: space-between;
     gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+    margin-bottom: var(--spacing-xs);
   }
 
   .master-volume,
