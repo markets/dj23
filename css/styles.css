@@ -94,7 +94,6 @@
   --gradient-accent: linear-gradient(45deg, var(--color-accent-blue), var(--color-accent-purple));
   --gradient-surface: linear-gradient(145deg, var(--bg-tertiary), var(--bg-quaternary));
   --gradient-surface-hover: linear-gradient(145deg, var(--border-secondary), var(--border-primary));
-  --gradient-body: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
 
   /* Fader thumbs — the centre line that reads as a mixer cap */
   --thumb-horizontal: linear-gradient(to right, var(--bg-secondary) 0%, var(--bg-secondary) 45%, #ffffff 47%, #ffffff 53%, var(--bg-secondary) 55%, var(--bg-secondary) 100%);
@@ -113,8 +112,7 @@
 
 body {
   font-family: 'Inter', sans-serif;
-  background: var(--gradient-body);
-  background-attachment: fixed;
+  background: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
 }
@@ -154,7 +152,6 @@ body {
   height: 18px;
   background-color: currentColor;
   mask: center / contain no-repeat;
-  -webkit-mask: center / contain no-repeat;
 }
 
 .icon-sm {
@@ -164,12 +161,10 @@ body {
 
 .icon-headphones {
   mask-image: url('../images/icons/headphones.svg');
-  -webkit-mask-image: url('../images/icons/headphones.svg');
 }
 
 .icon-gear {
   mask-image: url('../images/icons/gear.svg');
-  -webkit-mask-image: url('../images/icons/gear.svg');
 }
 
 /* ============================================================================
@@ -182,9 +177,8 @@ body {
   /* Bleed to the container edges so the blur covers the full width */
   margin: 0 calc(var(--size-page-pad) * -1) var(--size-panel-gap);
   padding: var(--spacing-md) var(--size-page-pad);
-  background: rgba(15, 15, 15, 0.82);
+  background: var(--bg-primary);
   backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid transparent;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -217,7 +211,6 @@ body {
   width: clamp(28px, 3vw, 38px);
   height: clamp(28px, 3vw, 38px);
   mask-image: url('../images/logo.svg');
-  -webkit-mask-image: url('../images/logo.svg');
   filter: drop-shadow(0 0 6px rgba(var(--color-primary-rgb), 0.35));
   transition: var(--transition-normal);
 }
@@ -814,7 +807,6 @@ input[type="range"]::-moz-range-thumb {
 /* Vertical faders: EQ, loop, pitch, channel volume */
 .vertical-fader {
   writing-mode: vertical-lr;
-  appearance: slider-vertical;
   width: 20px;
   margin: var(--spacing-xs) 0;
 }

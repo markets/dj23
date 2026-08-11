@@ -1,15 +1,11 @@
 {
   "private": true,
   "scripts": {
-    "dev": "npm run build:css -- -w & npm run server",
-    "build:css": "postcss css/styles.css -o dist/styles.css",
-    "server": "http-server -p 8080 -c-1"
+    "dev": "node build.mjs --watch --serve",
+    "build": "node build.mjs --minify"
   },
   "devDependencies": {
-    "autoprefixer": "^10.4.16",
-    "http-server": "^14.1.1",
-    "postcss": "^8.4.32",
-    "postcss-cli": "^11.0.0"
+    "esbuild": "^0.28.2"
   },
   "dependencies": {
     "jsmediatags": "^3.9.7",
