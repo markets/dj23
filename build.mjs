@@ -1,77 +1,69 @@
-// Builds the site into build/ — the same pipeline for development and
-// production. Production adds minification, development adds a watcher and a
-// server. Run with no flags for a plain one-off build.
+// Builds the site into build/. Dev and production run the same pipeline:
 //
-//   node build.mjs                 one-off, unminified
-//   node build.mjs --minify        production
-//   node build.mjs --watch --serve development
+//   node build.mjs                  one-off build
+//   node build.mjs --minify         production
+//   node build.mjs --watch --serve  development
+
 import esbuild from 'esbuild';
-import { cp, mkdir, readdir, rm } from 'node:fs/promises';
+import { copyFile, cp, mkdir, readdir, rm } from 'node:fs/promises';
 import { watch } from 'node:fs';
 
 const OUT = 'build';
 const PORT = Number(process.env.PORT) || 8080;
 
-// The floor is set by color-mix(), which css/styles.css relies on. Raising
-// these versions is safe; lowering them only adds prefixes nobody needs.
+// Floor set by color-mix() in css/styles.css; lowering only adds unused prefixes.
 const TARGET = ['safari16', 'chrome111', 'firefox113', 'edge111'];
 
-// Browser builds pulled straight out of node_modules, so nothing in the page
-// ever points at node_modules itself.
+// Copied out so the page never points at node_modules
 const VENDOR = [
   'node_modules/jsmediatags/dist/jsmediatags.min.js',
   'node_modules/music-tempo/dist/browser/music-tempo.min.js'
 ];
 
-const STATIC_DIRS = ['images', 'sounds'];
-
 const flags = new Set(process.argv.slice(2));
-const minify = flags.has('--minify');
-
-async function copyStatic() {
-  await cp('index.html', `${OUT}/index.html`);
-
-  await Promise.all(STATIC_DIRS.map(dir =>
-    cp(dir, `${OUT}/${dir}`, {
-      recursive: true,
-      filter: src => !src.endsWith('.DS_Store')
-    })
-  ));
-
-  await mkdir(`${OUT}/vendor`, { recursive: true });
-  await Promise.all(VENDOR.map(src =>
-    cp(src, `${OUT}/vendor/${src.split('/').pop()}`)
-  ));
-}
+const copyIndex = () => copyFile('index.html', `${OUT}/index.html`);
 
 await rm(OUT, { recursive: true, force: true });
-await copyStatic();
+await mkdir(OUT, { recursive: true });
+await copyIndex();
 
-// js/*.js are classic scripts sharing globals across files, so they are built
-// individually rather than bundled — esbuild leaves top-level names alone in
-// this mode, which is what keeps cross-file references like `new Deck(...)`
-// working. outbase keeps the source layout, so build/js/… and build/css/…
-// mirror the paths index.html already uses.
+for (const dir of ['images', 'sounds']) {
+  await cp(dir, `${OUT}/${dir}`, { recursive: true, filter: p => !p.endsWith('.DS_Store') });
+}
+for (const src of VENDOR) {
+  await cp(src, `${OUT}/vendor/${src.split('/').pop()}`);
+}
+
+// Built individually rather than bundled: these are classic scripts sharing
+// globals, and only in this mode does esbuild leave top-level names intact.
 const scripts = (await readdir('js')).filter(f => f.endsWith('.js')).map(f => `js/${f}`);
 
 const context = await esbuild.context({
   entryPoints: [...scripts, 'css/styles.css'],
   outdir: OUT,
-  outbase: '.',
+  outbase: '.', // mirror the source layout, so index.html needs no rewriting
   target: TARGET,
-  minify,
+  minify: flags.has('--minify'),
   logLevel: 'info'
 });
 
 if (flags.has('--watch')) {
   await context.watch();
-  // esbuild only watches what it compiles; index.html is a plain copy
-  watch('index.html', () => cp('index.html', `${OUT}/index.html`));
+  // esbuild only watches what it compiles, so index.html needs its own watch.
+  // It has to be on the directory, not the file: editors save atomically by
+  // renaming over the original, which a file watch would stop following.
+  // Debounce because one save fires several events, and catch because an
+  // unhandled rejection in here would take the server down.
+  let pending;
+  watch('.', (_event, filename) => {
+    if (filename !== 'index.html') return;
+    clearTimeout(pending);
+    pending = setTimeout(() => copyIndex().catch(e => console.error('[watch]', e.message)), 50);
+  });
 }
 
 if (flags.has('--serve')) {
-  // esbuild prints the URLs it is listening on itself
-  await context.serve({ servedir: OUT, port: PORT });
+  await context.serve({ servedir: OUT, port: PORT }); // prints its own URLs
 } else {
   await context.rebuild();
   await context.dispose();

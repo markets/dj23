@@ -1,5 +1,2 @@
 node_modules/
-
-# Everything the browser loads is built into here, for dev and production
-# alike. Nothing generated is committed.
 build/

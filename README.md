@@ -24,7 +24,7 @@
 Drop an audio file onto either deck, or use **Load Track**. Everything is decoded locally
 through the Web Audio API.
 
-## 🎚️ Features
+## 📦 Features
 
 ### 🎧 Decks
 
