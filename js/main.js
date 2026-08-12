@@ -27,12 +27,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   console.log('✅ Ready to mix!');
     
-  // Handle audio context resume on user interaction (setup once after initialization)
-  document.addEventListener('click', async () => {
-    if (window.audioEngine && window.audioEngine.audioContext) {
-      await window.audioEngine.resumeContext();
-    }
-  }, { once: true });
+  // Mobile browsers keep the audio context suspended until a user gesture, and
+  // can re-suspend it when the page goes to the background. Listening on every
+  // gesture rather than only the first means an early stray tap — a scroll, the
+  // bottom nav — can't swallow the one chance to start audio.
+  const resume = () => window.audioEngine?.resumeContext();
+  document.addEventListener('pointerdown', resume);
+  document.addEventListener('keydown', resume);
 });
 
 // Separate the sticky top bar from the content scrolling underneath it

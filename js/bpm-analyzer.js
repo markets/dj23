@@ -1,4 +1,8 @@
 class BPMAnalyzer {
+  // How much audio the tempo detector looks at, and how far in it starts
+  static ANALYSIS_WINDOW_SECONDS = 90;
+  static ANALYSIS_SKIP_SECONDS = 15;
+
   constructor(audioContext, deckId) {
     this.audioContext = audioContext;
     this.deckId = deckId;
@@ -126,30 +130,28 @@ class BPMAnalyzer {
     // Reset BPM source tracking when calculating BPM for a new track
     this.bpmSource = null;
     this.lastManualTapTime = 0;
-    
+
     if (!audioBuffer || !audioBuffer.getChannelData) {
       console.warn(`BPM Analyzer: Invalid audio buffer for deck ${this.deckId}`);
-      return 120;
+      this.baseBPM = 0;
+      return 0;
     }
-    
+
     try {
-      let audioData = [];
-      
-      // Take the average of the two channels if stereo, otherwise use mono
-      if (audioBuffer.numberOfChannels == 2) {
-        const channel1Data = audioBuffer.getChannelData(0);
-        const channel2Data = audioBuffer.getChannelData(1);
-        const length = channel1Data.length;
-        for (let i = 0; i < length; i++) {
-          audioData[i] = (channel1Data[i] + channel2Data[i]) / 2;
-        }
-      } else {
-        audioData = audioBuffer.getChannelData(0);
-      }
-      
+      const audioData = this.buildAnalysisWindow(audioBuffer);
       const mt = new MusicTempo(audioData);
-      const detectedBPM = mt.tempo;
-      
+      // MusicTempo reports tempo as a formatted string, e.g. "128.000"
+      const detectedBPM = parseFloat(mt.tempo);
+
+      // It leaves tempo undefined when it can't find a beat. Reporting that as
+      // unknown beats inventing a number the user can't tell apart from a real
+      // reading — the old code silently turned "no idea" into 120 BPM.
+      if (!Number.isFinite(detectedBPM) || detectedBPM <= 0) {
+        console.warn(`BPM Analyzer: no tempo found for deck ${this.deckId}, use TAP`);
+        this.baseBPM = 0;
+        return 0;
+      }
+
       // Validate and correct BPM if needed
       const validatedBPM = this.validateAndCorrectBPM(detectedBPM);
       
@@ -158,9 +160,39 @@ class BPMAnalyzer {
       this.bpmSource = 'auto-detected';
       return validatedBPM;
     } catch (error) {
-      console.error(`BPM Analyzer: Detection failed for deck ${this.deckId}:`, error);
-      return 120; // Default fallback
+      // Leave the BPM unknown rather than guessing or keeping the previous
+      // track's value: SYNC and the beat map already skip a zero BPM, and TAP
+      // fills it in. The deck stays fully playable either way.
+      console.error(`BPM Analyzer: Detection failed for deck ${this.deckId}, use TAP:`, error);
+      this.baseBPM = 0;
+      return 0;
     }
+  }
+
+  /**
+   * MusicTempo wants a plain Array — it copies a Float32Array internally, which
+   * would double the peak memory — and its defaults assume 44.1kHz, so the rate
+   * is left untouched. Memory is bounded by analysing a window instead: tempo is
+   * effectively constant, so a slice gives the same answer as the whole track
+   * while keeping cost flat regardless of how long the file is.
+   */
+  buildAnalysisWindow(audioBuffer) {
+    const { sampleRate, length, numberOfChannels } = audioBuffer;
+
+    const windowLength = Math.min(length, Math.floor(BPMAnalyzer.ANALYSIS_WINDOW_SECONDS * sampleRate));
+    // Start a little in, since intros often have no drums to lock onto
+    const start = Math.min(Math.floor(BPMAnalyzer.ANALYSIS_SKIP_SECONDS * sampleRate), length - windowLength);
+
+    const left = audioBuffer.getChannelData(0);
+    const right = numberOfChannels > 1 ? audioBuffer.getChannelData(1) : null;
+
+    const audioData = new Array(windowLength);
+    for (let i = 0; i < windowLength; i++) {
+      const s = start + i;
+      audioData[i] = right ? (left[s] + right[s]) / 2 : left[s];
+    }
+
+    return audioData;
   }
 
   // Consolidated BPM validation with genre-aware correction
