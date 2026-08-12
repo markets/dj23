@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="images/logo-wordmark.png" alt="DJ23" width="260">
+  <img src="images/logo-wordmark.png" alt="DJ23" width="300">
 </p>
 
 <p align="center">
@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  🎛️ <strong><a href="https://dj23.netlify.app/">Try DJ23 Live →</a></strong>
+  🔊 <strong><a href="https://dj23.netlify.app/">Try DJ23 Live →</a></strong>
 </p>
 
 ---
@@ -83,6 +83,14 @@ Global: <kbd>Space</kbd> play/pause the active deck, <kbd>←</kbd> <kbd>→</kb
 
 Needs a modern browser with Web Audio and `ResizeObserver` — recent Chrome, Edge, Firefox or
 Safari. Recording uses `MediaRecorder`, which is unavailable in some older Safari versions.
+
+## 🆔 The name
+
+DJ23 has a little story behind it.
+
+The **D** comes from the name of my lovely daughter, and **23** is the year she was born.
+
+So, this one's for her ❤️
 
 ## 📃 License
 
