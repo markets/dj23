@@ -143,9 +143,7 @@ class BPMAnalyzer {
       // MusicTempo reports tempo as a formatted string, e.g. "128.000"
       const detectedBPM = parseFloat(mt.tempo);
 
-      // It leaves tempo undefined when it can't find a beat. Reporting that as
-      // unknown beats inventing a number the user can't tell apart from a real
-      // reading — the old code silently turned "no idea" into 120 BPM.
+      // It leaves tempo undefined when it can't find a beat
       if (!Number.isFinite(detectedBPM) || detectedBPM <= 0) {
         console.warn(`BPM Analyzer: no tempo found for deck ${this.deckId}, use TAP`);
         this.baseBPM = 0;
