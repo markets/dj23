@@ -251,11 +251,10 @@ class WaveformRenderer extends BaseWaveformRenderer {
 
 class BeatWaveformRenderer extends BaseWaveformRenderer {
   /**
-   * Envelope buckets per second. This is the resolution that decides whether a
-   * kick is visible at all: at 100/s a beat at 120bpm spans 50 buckets and a
-   * kick transient about 5. The old shared 1000-points-per-track array gave
-   * under 2 points per beat on a five minute track, which is why no amount of
-   * grid tuning made beat matching readable.
+   * Envelope buckets per second, which sets whether a kick is visible at all.
+   * At 100/s a beat at 120bpm spans 50 buckets and a kick transient about 5.
+   * Resolution is per second rather than per track, so it holds up on a ten
+   * minute mix as well as a two minute edit.
    */
   static BUCKETS_PER_SECOND = 100;
 
@@ -264,11 +263,9 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
   static HIGH_HZ = 4000;
 
   /**
-   * Target horizontal scale. The zoom window is derived from the canvas width
-   * so a beat occupies the same number of pixels on any screen — a fixed 30
-   * second window works out at 22px per beat on a desktop but only 6px on a
-   * phone, which is too cramped to read. Works out at the previous 30s default
-   * on a full-width desktop canvas.
+   * Target horizontal scale. The zoom window follows the canvas width so a beat
+   * occupies the same number of pixels on any screen — roughly 22px at 128bpm,
+   * whether that is a phone or a full-width desktop canvas.
    */
   static TARGET_PIXELS_PER_SECOND = 48;
   static MIN_ZOOM_SECONDS = 8;
@@ -305,7 +302,7 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
 
   /**
    * Splits the track into low / mid / high peak envelopes at a fixed time
-   * resolution, replacing the base class's single low-resolution array.
+   * resolution.
    *
    * Colouring the waveform by frequency content is what makes beat matching
    * work visually: the kick lands in the low band, so it shows up as a tall
@@ -369,10 +366,9 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
       high[bucket] = peakHigh;
     }
 
-    // One shared scale across the three bands, so the track keeps its dynamics
-    // — normalising each band on its own would stretch a quiet hi-hat to the
-    // same height as the kick and flatten everything out. The per-band gains
-    // then only compensate for music having naturally less energy up high.
+    // One shared scale across the three bands keeps the track's dynamics: a
+    // quiet hi-hat has to stay shorter than the kick. The per-band gains only
+    // compensate for music carrying naturally less energy up high.
     let peak = 0;
     for (let i = 0; i < buckets; i++) {
       if (low[i] > peak) peak = low[i];
@@ -391,7 +387,7 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     }
 
     this.bands = { low, mid, high, bucketsPerSecond: sampleRate / samplesPerBucket };
-    // Keeps the many `if (!this.waveformData)` guards in this class meaningful
+    // Satisfies the inherited "is a track loaded" checks in the drag handlers
     this.waveformData = low;
   }
 
@@ -546,7 +542,8 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
       this.zoom(direction);
     });
 
-    // Setup zoom button event listeners
+    // Scoped to this deck: every renderer runs this method, so a hardcoded id
+    // here would wire one button up to both waveforms
     document.getElementById(`zoomIn${this.deckId}`).addEventListener('click', () => {
       this.zoom(-10);
     });
@@ -595,13 +592,11 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     const windowStart = this.offsetSeconds;
     const playedUntil = deck.isPlaying || deck.isPaused ? deck.getCurrentTime() : -Infinity;
 
-    // One bar per whole pixel column, rather than one per audio sample. Sample
-    // positions land on fractional pixels that shift every frame, which is what
-    // made the old waveform shimmer while scrolling.
+    // One bar per whole pixel column. Anything landing on fractional pixels
+    // gets re-antialiased as the window scrolls, which reads as a shimmer.
     this.drawBands(width, centerY, pixelsPerSecond, windowStart, playedUntil);
     this.drawBeatGrid(width, height, deck);
 
-    // Playhead down the middle
     this.ctx.strokeStyle = Theme.color('color-playhead');
     this.ctx.lineWidth = 2;
     this.ctx.beginPath();
@@ -617,14 +612,13 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
    * band paints over the others where it dominates. A kick therefore reads as a
    * tall saturated column, while a hi-hat stays a short pale tick.
    *
-   * Each band is one batched path, so this is three fills per deck per frame
-   * regardless of how many columns are on screen.
+   * Each band is a single batched path, so the cost per frame stays flat no
+   * matter how many columns are on screen.
    */
   drawBands(width, centerY, pixelsPerSecond, windowStart, playedUntil) {
     const { low, mid, high, bucketsPerSecond } = this.bands;
     const secondsPerPixel = 1 / pixelsPerSecond;
 
-    // Back to front, so the low band paints over the others where it dominates
     const layers = [
       { data: high, colour: Theme.color('text-secondary') },
       { data: mid, colour: Theme.color('color-primary') },
@@ -656,10 +650,10 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
       this.ctx.fill();
     }
 
-    // Fade what has already played, as a single wash over the finished layers.
-    // Fading each band on its own would let the ones underneath show through and
-    // shift the hue across the playhead, which is exactly the comparison the two
-    // decks need to stay honest.
+    // Fade what has already played with one wash over the finished layers, so
+    // only the brightness changes at the playhead. Fading the bands separately
+    // would let the ones underneath show through and shift the hue, breaking
+    // the colour comparison between the two decks.
     if (playedUntil > windowStart) {
       const until = Math.min(width, Math.round((playedUntil - windowStart) * pixelsPerSecond));
       if (until > 0) {
@@ -674,11 +668,10 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
   }
 
   /**
-   * Faint, evenly weighted tick per beat. Deliberately no bar emphasis: which
-   * beat is the "one" can't be known without downbeat detection, and guessing
-   * it every fourth beat put a strong line in the wrong place often enough to
-   * mislead rather than help. The waveform itself carries the beat now, and
-   * this is only a metric reference behind it.
+   * Faint, evenly weighted tick per beat, sitting behind the waveform as a
+   * metric reference. Every beat is drawn the same on purpose: without downbeat
+   * detection there is no way to know which one is the "one", so emphasising
+   * every fourth would put a strong line wherever the count happened to start.
    */
   drawBeatGrid(width, height, deck) {
     const beats = deck.getBeatPositions();
