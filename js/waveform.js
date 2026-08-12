@@ -34,7 +34,9 @@ class BaseWaveformRenderer {
   /** Keep the backing store in sync with the fluid layout. */
   observeResize() {
     this.resizeObserver = new ResizeObserver(() => {
-      if (this.setupCanvas()) this.render();
+      if (!this.setupCanvas()) return;
+      this.onCanvasResized?.();
+      this.render();
     });
 
     this.resizeObserver.observe(this.canvas);
@@ -248,14 +250,149 @@ class WaveformRenderer extends BaseWaveformRenderer {
 }
 
 class BeatWaveformRenderer extends BaseWaveformRenderer {
+  /**
+   * Envelope buckets per second. This is the resolution that decides whether a
+   * kick is visible at all: at 100/s a beat at 120bpm spans 50 buckets and a
+   * kick transient about 5. The old shared 1000-points-per-track array gave
+   * under 2 points per beat on a five minute track, which is why no amount of
+   * grid tuning made beat matching readable.
+   */
+  static BUCKETS_PER_SECOND = 100;
+
+  // Crossover points for the three bands, in Hz
+  static LOW_HZ = 200;
+  static HIGH_HZ = 4000;
+
+  /**
+   * Target horizontal scale. The zoom window is derived from the canvas width
+   * so a beat occupies the same number of pixels on any screen — a fixed 30
+   * second window works out at 22px per beat on a desktop but only 6px on a
+   * phone, which is too cramped to read. Works out at the previous 30s default
+   * on a full-width desktop canvas.
+   */
+  static TARGET_PIXELS_PER_SECOND = 48;
+  static MIN_ZOOM_SECONDS = 8;
+  static MAX_ZOOM_SECONDS = 80;
+
   constructor(canvasId, deckId) {
     super(canvasId, deckId);
-    this.zoomLevel = 30; // Shows about 30 seconds of audio for beat matching
     this.offsetSeconds = 0; // Current offset from track start
-        
+    this.bands = null; // { low, mid, high } peak envelopes, see loadWaveformData
+    this.userZoomed = false; // Once zoomed by hand, stop auto-fitting the window
+
     this.setupCanvas();
+    this.zoomLevel = this.defaultZoom();
     this.observeResize();
     this.setupEventListeners();
+  }
+
+  /** Re-fit the window when the canvas changes size, e.g. on rotation. */
+  onCanvasResized() {
+    if (!this.userZoomed) this.zoomLevel = this.defaultZoom();
+  }
+
+  /** Zoom window that keeps the horizontal scale constant across screen sizes. */
+  defaultZoom() {
+    const width = this.canvas.clientWidth || 1440;
+    return Math.max(
+      BeatWaveformRenderer.MIN_ZOOM_SECONDS,
+      Math.min(
+        BeatWaveformRenderer.MAX_ZOOM_SECONDS,
+        width / BeatWaveformRenderer.TARGET_PIXELS_PER_SECOND
+      )
+    );
+  }
+
+  /**
+   * Splits the track into low / mid / high peak envelopes at a fixed time
+   * resolution, replacing the base class's single low-resolution array.
+   *
+   * Colouring the waveform by frequency content is what makes beat matching
+   * work visually: the kick lands in the low band, so it shows up as a tall
+   * saturated column that is easy to line up against the other deck. One pass
+   * over the PCM with two one-pole filters, no large temporaries.
+   */
+  loadWaveformData(audioBuffer) {
+    if (!audioBuffer) return;
+
+    const { sampleRate, length } = audioBuffer;
+    const samplesPerBucket = Math.max(1, Math.round(sampleRate / BeatWaveformRenderer.BUCKETS_PER_SECOND));
+    const buckets = Math.ceil(length / samplesPerBucket);
+
+    const low = new Float32Array(buckets);
+    const mid = new Float32Array(buckets);
+    const high = new Float32Array(buckets);
+
+    const left = audioBuffer.getChannelData(0);
+    const right = audioBuffer.numberOfChannels > 1 ? audioBuffer.getChannelData(1) : null;
+
+    // One-pole coefficients: y += (x - y) * k
+    const kLow = 1 - Math.exp(-2 * Math.PI * BeatWaveformRenderer.LOW_HZ / sampleRate);
+    const kHigh = 1 - Math.exp(-2 * Math.PI * BeatWaveformRenderer.HIGH_HZ / sampleRate);
+
+    let lowState = 0;
+    let highState = 0;
+    let peakLow = 0;
+    let peakMid = 0;
+    let peakHigh = 0;
+    let bucket = 0;
+    let inBucket = 0;
+
+    for (let i = 0; i < length; i++) {
+      const sample = right ? (left[i] + right[i]) * 0.5 : left[i];
+
+      lowState += (sample - lowState) * kLow;    // below LOW_HZ
+      highState += (sample - highState) * kHigh; // below HIGH_HZ
+
+      const lowValue = lowState < 0 ? -lowState : lowState;
+      const midSignal = highState - lowState;
+      const midValue = midSignal < 0 ? -midSignal : midSignal;
+      const highSignal = sample - highState;
+      const highValue = highSignal < 0 ? -highSignal : highSignal;
+
+      if (lowValue > peakLow) peakLow = lowValue;
+      if (midValue > peakMid) peakMid = midValue;
+      if (highValue > peakHigh) peakHigh = highValue;
+
+      if (++inBucket === samplesPerBucket) {
+        low[bucket] = peakLow;
+        mid[bucket] = peakMid;
+        high[bucket] = peakHigh;
+        bucket++;
+        inBucket = peakLow = peakMid = peakHigh = 0;
+      }
+    }
+
+    if (inBucket > 0 && bucket < buckets) {
+      low[bucket] = peakLow;
+      mid[bucket] = peakMid;
+      high[bucket] = peakHigh;
+    }
+
+    // One shared scale across the three bands, so the track keeps its dynamics
+    // — normalising each band on its own would stretch a quiet hi-hat to the
+    // same height as the kick and flatten everything out. The per-band gains
+    // then only compensate for music having naturally less energy up high.
+    let peak = 0;
+    for (let i = 0; i < buckets; i++) {
+      if (low[i] > peak) peak = low[i];
+      if (mid[i] > peak) peak = mid[i];
+      if (high[i] > peak) peak = high[i];
+    }
+
+    if (peak > 0) {
+      const apply = (data, gain) => {
+        const scale = gain / peak;
+        for (let i = 0; i < data.length; i++) data[i] = Math.min(1, data[i] * scale);
+      };
+      apply(low, 1);
+      apply(mid, 1.6);
+      apply(high, 2.2);
+    }
+
+    this.bands = { low, mid, high, bucketsPerSecond: sampleRate / samplesPerBucket };
+    // Keeps the many `if (!this.waveformData)` guards in this class meaningful
+    this.waveformData = low;
   }
 
   setupEventListeners() {
@@ -444,7 +581,7 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
   }
 
   render() {
-    if (!this.waveformData) {
+    if (!this.bands) {
       this.renderEmpty();
       return;
     }
@@ -456,104 +593,126 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
 
     const width = this.canvas.clientWidth;
     const height = this.canvas.clientHeight;
-    const duration = deck.getDuration();
-    const currentTime = deck.getCurrentTime();
-        
-    this.ctx.clearRect(0, 0, width, height);
-        
-    const totalSamples = this.waveformData.length;
-    
-    const windowStart = this.offsetSeconds;
-    const windowEnd = this.offsetSeconds + this.zoomLevel;
-    
-    const startRatio = Math.max(0, windowStart) / duration;
-    const endRatio = Math.min(1, windowEnd / duration);
-    
-    const startSample = Math.floor(startRatio * totalSamples);
-    const endSample = Math.floor(endRatio * totalSamples);
-    const visibleSamples = endSample - startSample;
-    
-    if (visibleSamples <= 0) return;
-
-    const pixelsPerSecond = width / this.zoomLevel;
-    const barWidth = pixelsPerSecond / (totalSamples / duration);
     const centerY = height / 2;
 
-    const drawOffsetPixels = windowStart < 0 ? -windowStart * pixelsPerSecond : 0;
+    this.ctx.clearRect(0, 0, width, height);
 
-    // Draw waveform with higher detail
-    this.ctx.fillStyle = Theme.color('border-secondary');
-    for (let i = 0; i < visibleSamples; i++) {
-      const sampleIndex = startSample + i;
-      if (sampleIndex >= this.waveformData.length) break;
-      
-      const barHeight = this.waveformData[sampleIndex] * centerY * 1.1;
-      const x = drawOffsetPixels + i * barWidth;
-      
-      if (x >= 0 && x < width) {
-        this.ctx.fillRect(x, centerY - barHeight, barWidth - 0.5, barHeight);
-        this.ctx.fillRect(x, centerY, barWidth - 0.5, barHeight);
-      }
-    }
+    const pixelsPerSecond = width / this.zoomLevel;
+    const windowStart = this.offsetSeconds;
+    const playedUntil = deck.isPlaying || deck.isPaused ? deck.getCurrentTime() : -Infinity;
 
-    // Draw played portion in zoom window
-    if (deck.isPlaying) {
-      const currentTime = deck.getCurrentTime();
-      if (currentTime >= Math.max(0, this.offsetSeconds) && 
-          currentTime <= this.offsetSeconds + this.zoomLevel) {
-        
-        const pixelsPerSecond = width / this.zoomLevel;
-        const currentTimePosition = (currentTime - this.offsetSeconds) * pixelsPerSecond;
-        
-        this.ctx.fillStyle = Theme.color('color-primary');
-        for (let i = 0; i < visibleSamples; i++) {
-          const x = drawOffsetPixels + i * barWidth;
-          if (x > currentTimePosition || x < 0 || x >= width) continue;
-          
-          const sampleIndex = startSample + i;
-          if (sampleIndex >= this.waveformData.length) break;
-                
-          const barHeight = this.waveformData[sampleIndex] * centerY * 1.1;
-          this.ctx.fillRect(x, centerY - barHeight, barWidth - 0.5, barHeight);
-          this.ctx.fillRect(x, centerY, barWidth - 0.5, barHeight);
-        }
-      }
-    }
+    // One bar per whole pixel column, rather than one per audio sample. Sample
+    // positions land on fractional pixels that shift every frame, which is what
+    // made the old waveform shimmer while scrolling.
+    this.drawBands(width, centerY, pixelsPerSecond, windowStart, playedUntil);
+    this.drawBeatGrid(width, height, deck);
 
-    // Draw beat markers (every second)
-    this.drawBeatMarkers(width, height, duration);
-    
-    // Draw red playhead line in center
-    const playheadX = width / 2;
-    
+    // Playhead down the middle
     this.ctx.strokeStyle = Theme.color('color-playhead');
     this.ctx.lineWidth = 2;
     this.ctx.beginPath();
-    this.ctx.moveTo(playheadX, 0);
-    this.ctx.lineTo(playheadX, height);
+    this.ctx.moveTo(width / 2, 0);
+    this.ctx.lineTo(width / 2, height);
     this.ctx.stroke();
-    
+
     this.updatePlayhead();
   }
 
-  drawBeatMarkers(width, height, duration) {
-    const windowDuration = Math.min(this.zoomLevel, duration - this.offsetSeconds);
-    const secondsPerPixel = windowDuration / width;
-    
-    this.ctx.strokeStyle = Theme.color('border-light');
-    this.ctx.lineWidth = 1;
-    this.ctx.setLineDash([2, 2]);
-    
-    // Draw vertical lines every second
-    for (let i = 0; i < windowDuration; i++) {
-      const x = (i / windowDuration) * width;
+  /**
+   * Draws the three bands back to front, each with its own height, so the low
+   * band paints over the others where it dominates. A kick therefore reads as a
+   * tall saturated column, while a hi-hat stays a short pale tick.
+   *
+   * Each band is one batched path, so this is three fills per deck per frame
+   * regardless of how many columns are on screen.
+   */
+  drawBands(width, centerY, pixelsPerSecond, windowStart, playedUntil) {
+    const { low, mid, high, bucketsPerSecond } = this.bands;
+    const secondsPerPixel = 1 / pixelsPerSecond;
+
+    // Back to front, so the low band paints over the others where it dominates
+    const layers = [
+      { data: high, colour: Theme.color('text-secondary') },
+      { data: mid, colour: Theme.color('color-primary') },
+      { data: low, colour: Theme.color('color-secondary') }
+    ];
+
+    for (const { data, colour } of layers) {
+      this.ctx.fillStyle = colour;
       this.ctx.beginPath();
-      this.ctx.moveTo(x, 0);
-      this.ctx.lineTo(x, height);
-      this.ctx.stroke();
+
+      for (let px = 0; px < width; px++) {
+        const time = windowStart + px * secondsPerPixel;
+        if (time < 0) continue;
+
+        const from = Math.floor(time * bucketsPerSecond);
+        const to = Math.floor((time + secondsPerPixel) * bucketsPerSecond);
+        if (from >= data.length) break;
+
+        let peak = 0;
+        for (let b = from; b <= to && b < data.length; b++) {
+          if (data[b] > peak) peak = data[b];
+        }
+        if (peak <= 0) continue;
+
+        const h = Math.max(1, peak * centerY);
+        this.ctx.rect(px, centerY - h, 1, h * 2);
+      }
+
+      this.ctx.fill();
     }
-    
-    this.ctx.setLineDash([]);
+
+    // Fade what has already played, as a single wash over the finished layers.
+    // Fading each band on its own would let the ones underneath show through and
+    // shift the hue across the playhead, which is exactly the comparison the two
+    // decks need to stay honest.
+    if (playedUntil > windowStart) {
+      const until = Math.min(width, Math.round((playedUntil - windowStart) * pixelsPerSecond));
+      if (until > 0) {
+        this.ctx.globalAlpha = 0.55;
+        this.ctx.fillStyle = Theme.color('bg-primary');
+        this.ctx.fillRect(0, 0, until, centerY * 2);
+        this.ctx.globalAlpha = 1;
+      }
+    }
+
+    this.ctx.globalAlpha = 1;
+  }
+
+  /**
+   * Faint, evenly weighted tick per beat. Deliberately no bar emphasis: which
+   * beat is the "one" can't be known without downbeat detection, and guessing
+   * it every fourth beat put a strong line in the wrong place often enough to
+   * mislead rather than help. The waveform itself carries the beat now, and
+   * this is only a metric reference behind it.
+   */
+  drawBeatGrid(width, height, deck) {
+    const beats = deck.getBeatPositions();
+    if (beats.length < 2) return; // BPM unknown, nothing trustworthy to draw
+
+    const pixelsPerSecond = width / this.zoomLevel;
+    const windowStart = this.offsetSeconds;
+    const windowEnd = windowStart + this.zoomLevel;
+
+    // Beats are evenly spaced, so the first visible one can be indexed directly
+    const interval = beats[1] - beats[0];
+    const from = Math.max(0, Math.floor((windowStart - beats[0]) / interval));
+    const tick = height * 0.16;
+
+    this.ctx.strokeStyle = Theme.color('border-primary');
+    this.ctx.lineWidth = 1;
+    this.ctx.beginPath();
+
+    for (let i = from; i < beats.length && beats[i] <= windowEnd; i++) {
+      if (beats[i] < windowStart) continue;
+      const x = Math.round((beats[i] - windowStart) * pixelsPerSecond) + 0.5;
+      this.ctx.moveTo(x, 0);
+      this.ctx.lineTo(x, tick);
+      this.ctx.moveTo(x, height - tick);
+      this.ctx.lineTo(x, height);
+    }
+
+    this.ctx.stroke();
   }
 
   renderEmpty() {
@@ -600,18 +759,20 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
 
   // Method to handle zoom changes from buttons
   zoom(direction) {
-    if (!this.waveformData) return;
-    
+    if (!this.bands) return;
+
     const zoomSensitivity = 0.4;
-    const minZoom = 8;
-    const maxZoom = 80;
-    
+
     // direction: 1 for zoom in (-), -1 for zoom out (+)
     const zoomDelta = direction * zoomSensitivity;
-    const newZoomLevel = Math.max(minZoom, Math.min(maxZoom, this.zoomLevel + zoomDelta));
-    
+    const newZoomLevel = Math.max(
+      BeatWaveformRenderer.MIN_ZOOM_SECONDS,
+      Math.min(BeatWaveformRenderer.MAX_ZOOM_SECONDS, this.zoomLevel + zoomDelta)
+    );
+
     // Only update if zoom level actually changed
     if (newZoomLevel !== this.zoomLevel) {
+      this.userZoomed = true;
       this.zoomLevel = newZoomLevel;
       // Re-render with new zoom level
       this.render();
