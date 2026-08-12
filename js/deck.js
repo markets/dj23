@@ -115,15 +115,27 @@ class Deck {
 
   async loadFile(file) {
     try {
+      // Drop the old track first so both buffers are never held at once
+      this.audioBuffer = null;
+
       const arrayBuffer = await file.arrayBuffer();
       this.audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-      this.bpmAnalyzer.calculateBPM(this.audioBuffer);
-      this.bpmAnalyzer.generateBeatMap(this.audioBuffer);
-      return true;
     } catch (error) {
       console.error('Error loading audio file:', error);
       return false;
     }
+
+    // Analysis is best-effort: it is the memory-hungry part, and a failure here
+    // must not cost the user the track. Without it the BPM is simply unknown
+    // and TAP takes over, so everything else stays usable.
+    try {
+      this.bpmAnalyzer.calculateBPM(this.audioBuffer);
+      this.bpmAnalyzer.generateBeatMap(this.audioBuffer);
+    } catch (error) {
+      console.error('Beat analysis failed, BPM unknown — use TAP:', error);
+    }
+
+    return true;
   }
 
   // Find the nearest beat position to the current time
@@ -1352,41 +1364,44 @@ class DeckController {
     // Show loading state
     trackInfo.classList.add('loading');
     trackInfo.querySelector('.track-name').textContent = 'Loading...';
-        
-    const success = await deck.loadFile(file);
-        
-    if (success) {
-      // Reset cues
-      deck.resetCuePoints();
+
+    try {
+      const success = await deck.loadFile(file);
+
+      if (success) {
+        // Reset cues
+        deck.resetCuePoints();
       
-      // Reset loops
-      deck.resetLoopPoints();
+        // Reset loops
+        deck.resetLoopPoints();
       
-      // Reset loop length slider UI
-      const loopLengthSlider = document.getElementById(`loopLength${this.deckId}`);
-      const loopLengthDisplay = document.getElementById(`loopLengthValue${this.deckId}`);
-      if (loopLengthSlider) loopLengthSlider.value = 100;
-      if (loopLengthDisplay) loopLengthDisplay.textContent = '100%';
+        // Reset loop length slider UI
+        const loopLengthSlider = document.getElementById(`loopLength${this.deckId}`);
+        const loopLengthDisplay = document.getElementById(`loopLengthValue${this.deckId}`);
+        if (loopLengthSlider) loopLengthSlider.value = 100;
+        if (loopLengthDisplay) loopLengthDisplay.textContent = '100%';
       
-      // Extract metadata and update track display
-      await this.extractAndDisplayMetadata(file);
-      this.updateTrackTime();
+        // Extract metadata and update track display
+        await this.extractAndDisplayMetadata(file);
+        this.updateTrackTime();
             
-      // Generate main waveform
-      const waveformRenderer = window.waveformRenderers[this.deckId];
-      await waveformRenderer.generateWaveform(deck.audioBuffer);
+        // Generate main waveform
+        const waveformRenderer = window.waveformRenderers[this.deckId];
+        await waveformRenderer.generateWaveform(deck.audioBuffer);
       
-      // Generate beat matching waveforms
-      const beatWaveformRenderer = window.beatWaveformRenderers[this.deckId];
-      await beatWaveformRenderer.generateWaveform(deck.audioBuffer);
+        // Generate beat matching waveforms
+        const beatWaveformRenderer = window.beatWaveformRenderers[this.deckId];
+        await beatWaveformRenderer.generateWaveform(deck.audioBuffer);
             
-      // Update BPM display
-      this.updateBPMDisplay();
-    } else {
-      trackInfo.querySelector('.track-name').textContent = 'Failed to load';
+        // Update BPM display
+        this.updateBPMDisplay();
+      } else {
+        trackInfo.querySelector('.track-name').textContent = 'Failed to load';
+      }
+    } finally {
+      // Whatever happened, never leave the deck stuck in the loading shimmer
+      trackInfo.classList.remove('loading');
     }
-        
-    trackInfo.classList.remove('loading');
   }
 
   async extractAndDisplayMetadata(file) {
@@ -1654,10 +1669,11 @@ class DeckController {
     if (!deck || !deck.audioBuffer) return;
 
     const baseBPM = deck.getBaseBPM(); // Get the original BPM
-    const pitchPercentage = ((deck.playbackRate - 1) * 100);
-    const adjustedBPM = Math.round(baseBPM * deck.playbackRate);
-    
-    document.getElementById(`bpm${this.deckId}`).textContent = adjustedBPM;
+
+    // A zero BPM means detection didn't get there — show it as unknown so the
+    // TAP button reads as the thing to do, rather than displaying a made-up number
+    document.getElementById(`bpm${this.deckId}`).textContent =
+      baseBPM > 0 ? Math.round(baseBPM * deck.playbackRate) : '--';
   }
 
   handleTap() {
