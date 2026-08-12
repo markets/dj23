@@ -542,22 +542,16 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
       if (!this.waveformData) return;
       
       // Determine zoom direction (zoom out on wheel down, zoom in on wheel up)
-      const direction = e.deltaY > 0 ? 1 : -1;
+      const direction = e.deltaY > 0 ? 2 : -2;
       this.zoom(direction);
     });
 
     // Setup zoom button event listeners
-    document.getElementById('zoomInA').addEventListener('click', () => {
-      this.zoom(-5);
+    document.getElementById(`zoomIn${this.deckId}`).addEventListener('click', () => {
+      this.zoom(-10);
     });
-    document.getElementById('zoomOutA').addEventListener('click', () => {
-      this.zoom(5);
-    });
-    document.getElementById('zoomInB').addEventListener('click', () => {
-      this.zoom(-5);
-    });
-    document.getElementById('zoomOutB').addEventListener('click', () => {
-      this.zoom(5);
+    document.getElementById(`zoomOut${this.deckId}`).addEventListener('click', () => {
+      this.zoom(10);
     });
   }
 
