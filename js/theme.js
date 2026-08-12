@@ -10,7 +10,10 @@ class Theme {
     if (!Theme.cache.has(name)) {
       const value = getComputedStyle(document.documentElement)
         .getPropertyValue(`--${name}`)
-        .trim();
+        .trim()
+        // The build may wrap a long value across lines; collapse it so the
+        // result is safe to interpolate into a colour string
+        .replace(/\s+/g, ' ');
       Theme.cache.set(name, value);
     }
 

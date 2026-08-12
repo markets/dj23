@@ -153,6 +153,11 @@ class Deck {
     return this.bpmAnalyzer.getPreviousBeat(currentTime);
   }
 
+  // Beat times in seconds, empty while the BPM is unknown
+  getBeatPositions() {
+    return this.bpmAnalyzer.beatPositions;
+  }
+
   play() {
     if (!this.audioBuffer) return;
 
