@@ -12,8 +12,6 @@
   🔊 <strong><a href="https://dj23.netlify.app/">Try DJ23 Live →</a></strong>
 </p>
 
----
-
 ## 🚀 Getting started
 
 * Clone, fork or download this repository
@@ -86,11 +84,11 @@ Safari. Recording uses `MediaRecorder`, which is unavailable in some older Safar
 
 ## 🆔 The name
 
-DJ23 has a little story behind it.
+DJ23 is a little tribute to my lovely daughter, Daniela.
 
-The **D** comes from the name of my lovely daughter, and **23** is the year she was born.
+The `D` comes from her name, and `23` is the year she was born.
 
-So, this one's for her ❤️
+So this one's for her ❤️
 
 ## 📃 License
 
