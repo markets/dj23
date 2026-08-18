@@ -99,7 +99,23 @@ class KeyboardShortcuts {
     }
   }
 
+  /** Text fields swallow the shortcuts: typing "search" in a box should not
+   *  stop deck A, cue deck B and nudge the pitch on the way through. Faders
+   *  and buttons are deliberately not covered — arrow keys on a focused fader
+   *  are the browser doing the right thing already. */
+  isTypingTarget(target) {
+    if (!target) return false;
+    if (target.isContentEditable) return true;
+    if (target.tagName === 'TEXTAREA') return true;
+    if (target.tagName !== 'INPUT') return false;
+
+    return ['text', 'search', 'email', 'url', 'password', 'number', 'tel']
+      .includes(target.type);
+  }
+
   handleKeyDown(e) {
+    if (this.isTypingTarget(e.target)) return;
+
     if (this.isModalOpen) {
       if (e.code === 'Escape') {
         this.hideModal();
@@ -249,6 +265,8 @@ class KeyboardShortcuts {
   }
 
   handleKeyUp(e) {
+    if (this.isTypingTarget(e.target)) return;
+
     // Handle CUE key releases for press-and-hold behavior
     const cueKeyMappings = {
       'KeyR': 'A',
