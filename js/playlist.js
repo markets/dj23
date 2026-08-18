@@ -326,8 +326,8 @@ class Playlist {
       <span class="playlist-bpm"></span>
       <span class="playlist-duration"></span>
       <div class="playlist-load">
-        <button type="button" class="playlist-load-btn" data-deck="A">A</button>
-        <button type="button" class="playlist-load-btn" data-deck="B">B</button>
+        <button class="playlist-load-btn" data-deck="A">A</button>
+        <button class="playlist-load-btn" data-deck="B">B</button>
       </div>`;
     this.fillRow(row, track);
     return row;

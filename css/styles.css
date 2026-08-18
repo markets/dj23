@@ -1801,28 +1801,6 @@ input[type="range"]::-moz-range-thumb {
   font-weight: 600;
 }
 
-.modal-close {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 2rem;
-  font-weight: bold;
-  cursor: pointer;
-  padding: 0;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-full);
-  transition: var(--transition-normal);
-}
-
-.modal-close:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-primary);
-}
-
 .modal-body {
   padding: var(--spacing-xl);
 }
@@ -2026,7 +2004,6 @@ input[type="range"]::-moz-range-thumb {
   height: 12px;
   cursor: pointer;
   background-color: var(--text-muted);
-  -webkit-mask: url('../images/icons/close.svg') center / contain no-repeat;
   mask: url('../images/icons/close.svg') center / contain no-repeat;
   transition: var(--transition-normal);
 }

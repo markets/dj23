@@ -596,15 +596,15 @@
     </div>
   </div>
 
-  <!-- Mobile Bottom Navigation -->
+  <!-- Play list panel -->
   <section class="playlist-panel" id="playlistPanel" aria-label="Track list" hidden>
     <header class="playlist-header">
       <h2 class="playlist-heading">Tracks <span class="playlist-count" id="playlistCount"></span></h2>
       <input type="search" id="playlistSearch" class="playlist-search" placeholder="Search…" aria-label="Search tracks">
       <input type="file" id="playlistFolderInput" class="playlist-folder-input" webkitdirectory directory multiple>
       <label for="playlistFolderInput" class="playlist-action">Add folder</label>
-      <button type="button" id="playlistClear" class="playlist-action">Clear</button>
-      <button type="button" id="playlistClose" class="icon-button" aria-label="Close track list">
+      <button id="playlistClear" class="playlist-action">Clear</button>
+      <button id="playlistClose" class="icon-button" aria-label="Close track list">
         <span aria-hidden="true">✕</span>
       </button>
     </header>
@@ -614,6 +614,7 @@
     </div>
   </section>
 
+  <!-- Mobile Bottom Navigation -->
   <nav class="mobile-bottom-nav">
     <button class="mobile-nav-btn" data-view="deckA">
       <span class="nav-icon">A</span>
@@ -634,7 +635,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h2>Keyboard Shortcuts</h2>
-        <button class="modal-close" id="closeShortcutsModal">&times;</button>
+        <button id="closeShortcutsModal" class="icon-button">x</button>
       </div>
       <div class="modal-body">
         <div class="shortcuts-grid">
