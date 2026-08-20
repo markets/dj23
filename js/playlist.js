@@ -338,11 +338,7 @@ class Playlist {
     row.querySelector('.playlist-track-title').textContent = track.title || track.name;
     row.querySelector('.playlist-track-artist').textContent = track.artist || '';
     row.querySelector('.playlist-duration').textContent = this.formatDuration(track.duration);
-
-    // Same rule the decks use: a zero BPM is detection having failed, and a
-    // made-up number is worse than an empty cell
-    const bpmCell = row.querySelector('.playlist-bpm');
-    bpmCell.textContent = track.bpm > 0 ? `${Math.round(track.bpm)} BPM` : '';
+    row.querySelector('.playlist-bpm').textContent = track.bpm > 0 ? `${Math.round(track.bpm)} BPM` : '';
   }
 
   updateRow(track) {
