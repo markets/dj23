@@ -53,14 +53,12 @@ through the Web Audio API.
 ### ⚡ Extras
 
 * **Track list** — drag a whole folder onto the page and every track in it shows up with
-  its artwork, artist and length, ready to load onto either deck. Search it, and each track
-  keeps its BPM once it has been through a deck.
+  its artwork, artist and length, ready to load onto either deck
 * **Sound pad** with 9 slots — airhorn, siren, scratch, clap, boom, laser, applause, drop and
   whoosh — and every slot can be replaced with your own audio file
 * **Record your mix** as it plays and download it as a WebM file
 * **Keyboard shortcuts** for everything you need mid-mix, with a `?` cheat sheet
 * **Responsive layout** — so you can even mix from your phone
-
 
 ## ⌨️ Keyboard shortcuts
 
