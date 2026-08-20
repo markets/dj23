@@ -1801,28 +1801,6 @@ input[type="range"]::-moz-range-thumb {
   font-weight: 600;
 }
 
-.modal-close {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 2rem;
-  font-weight: bold;
-  cursor: pointer;
-  padding: 0;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-full);
-  transition: var(--transition-normal);
-}
-
-.modal-close:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-primary);
-}
-
 .modal-body {
   padding: var(--spacing-xl);
 }
@@ -1949,7 +1927,227 @@ input[type="range"]::-moz-range-thumb {
 }
 
 /* ============================================================================
-   9. RESPONSIVE
+   9. TRACK LIST
+   ============================================================================ */
+.playlist-panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 110;
+  display: flex;
+  flex-direction: column;
+  /* Fixed, not max-height: a panel that shrinks to its contents lurches
+     every time the search filters a row out */
+  height: 45vh;
+  background: linear-gradient(to top, var(--bg-primary), var(--bg-secondary));
+  border-top: 1px solid var(--border-secondary);
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.6);
+}
+
+/* display: flex would otherwise win over the hidden attribute */
+.playlist-panel[hidden] {
+  display: none;
+}
+
+.playlist-panel.drag-over {
+  border-top-color: var(--color-primary);
+  box-shadow: 0 -8px 30px rgba(var(--color-primary-rgb), 0.35);
+}
+
+.playlist-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.playlist-heading {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.playlist-count {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.playlist-search {
+  flex: 1;
+  min-width: 0;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}
+
+.playlist-search:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+/* The stock clear button is a grey blob that ignores the theme. Masking a
+   glyph lets it take its colour from the palette like everything else.
+   WebKit-only pseudo — Firefox draws no clear button at all. */
+.playlist-search::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  cursor: pointer;
+  background-color: var(--text-muted);
+  mask: url('../images/icons/close.svg') center / contain no-repeat;
+  transition: var(--transition-normal);
+}
+
+.playlist-search::-webkit-search-cancel-button:hover {
+  background-color: var(--color-primary);
+}
+
+/* Hidden control behind its own label, same trick as the deck file inputs */
+.playlist-folder-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.playlist-action {
+  padding: var(--spacing-xs) var(--spacing-md);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: var(--transition-normal);
+}
+
+.playlist-action:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.playlist-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.playlist-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.playlist-row {
+  display: grid;
+  grid-template-columns: 40px 1fr auto auto auto;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.playlist-row:hover {
+  background: var(--bg-overlay);
+}
+
+.playlist-cover {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-tertiary);
+  overflow: hidden;
+}
+
+.playlist-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.playlist-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.playlist-track-title,
+.playlist-track-artist {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.playlist-track-title {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.playlist-track-artist {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.playlist-bpm {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+.playlist-duration {
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.playlist-load {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.playlist-load-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-normal);
+}
+
+.playlist-load-btn:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--bg-primary);
+}
+
+.playlist-empty {
+  margin: 0;
+  padding: var(--spacing-2xl) var(--spacing-lg);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* ============================================================================
+   10. RESPONSIVE
    ============================================================================ */
 @media (max-width: 768px) {
   /* Phones get one panel at a time, driven by the bottom nav */
@@ -2092,6 +2290,27 @@ input[type="range"]::-moz-range-thumb {
 
   body {
     padding-bottom: 72px;
+  }
+
+  /* Full-height sheet on phones: covering the bottom nav is steadier than
+     guessing its height, and the close button is right there in the header. */
+  .playlist-panel {
+    top: 0;
+    height: auto;
+  }
+
+  .playlist-header {
+    flex-wrap: wrap;
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  .playlist-search {
+    order: 1;
+    flex-basis: 100%;
+  }
+
+  .playlist-row {
+    padding: var(--spacing-sm) var(--spacing-md);
   }
 }
 

@@ -51,6 +51,9 @@
               <span>⬇ Download</span>
             </button>
           </div>
+          <button id="playlistToggle" class="icon-button" title="Track list" aria-label="Track list" aria-expanded="false" aria-controls="playlistPanel">
+            <span aria-hidden="true">≡</span>
+          </button>
           <button id="showShortcutsBtn" class="icon-button" title="Keyboard Shortcuts (?)" aria-label="Keyboard shortcuts">
             <span aria-hidden="true">?</span>
           </button>
@@ -593,6 +596,24 @@
     </div>
   </div>
 
+  <!-- Play list panel -->
+  <section class="playlist-panel" id="playlistPanel" aria-label="Track list" hidden>
+    <header class="playlist-header">
+      <h2 class="playlist-heading">Tracks <span class="playlist-count" id="playlistCount"></span></h2>
+      <input type="search" id="playlistSearch" class="playlist-search" placeholder="Search…" aria-label="Search tracks">
+      <input type="file" id="playlistFolderInput" class="playlist-folder-input" webkitdirectory directory multiple>
+      <label for="playlistFolderInput" class="playlist-action">Add folder</label>
+      <button id="playlistClear" class="playlist-action">Clear</button>
+      <button id="playlistClose" class="icon-button" aria-label="Close track list">
+        <span aria-hidden="true">✕</span>
+      </button>
+    </header>
+    <div class="playlist-body">
+      <ol class="playlist-rows" id="playlistRows"></ol>
+      <p class="playlist-empty" id="playlistEmpty">Drop a folder anywhere to fill your crate.</p>
+    </div>
+  </section>
+
   <!-- Mobile Bottom Navigation -->
   <nav class="mobile-bottom-nav">
     <button class="mobile-nav-btn" data-view="deckA">
@@ -614,7 +635,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h2>Keyboard Shortcuts</h2>
-        <button class="modal-close" id="closeShortcutsModal">&times;</button>
+        <button id="closeShortcutsModal" class="icon-button">✕</button>
       </div>
       <div class="modal-body">
         <div class="shortcuts-grid">
@@ -793,6 +814,7 @@
   <script src="js/recording.js"></script>
   <script src="js/settings.js"></script>
   <script src="js/mobile-nav.js"></script>
+  <script src="js/playlist.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>
