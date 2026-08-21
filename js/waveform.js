@@ -64,7 +64,6 @@ class BaseWaveformRenderer {
 
       const average = sum / blockSize;
       
-      // Enhanced energy calculation: Combine average and peak for better beat emphasis
       const energyFactor = Math.pow(average + (peak * 0.2), 1.2);
       
       waveformData.push(energyFactor);
@@ -113,7 +112,6 @@ class WaveformRenderer extends BaseWaveformRenderer {
         const seekTime = percentage * deck.getDuration();
         console.log(`Deck ${this.deckId}: Waveform clicked - seeking to ${seekTime.toFixed(2)}s (${(percentage * 100).toFixed(1)}%)`);
         deck.seek(seekTime);
-        // Immediately update playhead position after seeking
         this.updatePlayhead();
       } else {
         console.log(`Deck ${this.deckId}: No audio buffer available for seeking`);
@@ -169,12 +167,10 @@ class WaveformRenderer extends BaseWaveformRenderer {
     
     const duration = deck.getDuration();
     
-    // Draw CUE 1
     if (deck.cuePoints[1] !== null) {
       this.drawSingleCuePoint(deck.cuePoints[1], duration, width, height, 'CUE 1', 14);
     }
     
-    // Draw CUE 2
     if (deck.cuePoints[2] !== null) {
       this.drawSingleCuePoint(deck.cuePoints[2], duration, width, height, 'CUE 2', 28);
     }
@@ -184,7 +180,6 @@ class WaveformRenderer extends BaseWaveformRenderer {
     const cuePointColor = Theme.color('text-primary');
     const cuePosition = (cueTime / duration) * width;
     
-    // Draw cue line
     this.ctx.strokeStyle = cuePointColor;
     this.ctx.lineWidth = 2;
     this.ctx.setLineDash([]);
@@ -193,20 +188,16 @@ class WaveformRenderer extends BaseWaveformRenderer {
     this.ctx.lineTo(cuePosition, height);
     this.ctx.stroke();
     
-    // Improved text positioning with background for better readability
     this.ctx.font = 'bold 10px Inter';
     const textMetrics = this.ctx.measureText(label);
     
-    // Simple positioning: always render text to the right
     const textOffset = 8;
     const textWidth = textMetrics.width + 4;
     const textX = cuePosition + textOffset;
     
-    // Draw text background for better readability
     this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
     this.ctx.fillRect(textX - 2, textY - 10, textWidth, 12);
     
-    // Draw text
     this.ctx.fillStyle = cuePointColor;
     this.ctx.textAlign = 'left';
     this.ctx.fillText(label, textX, textY);
@@ -218,7 +209,6 @@ class WaveformRenderer extends BaseWaveformRenderer {
         
     this.ctx.clearRect(0, 0, width, height);
         
-    // Draw empty state
     this.ctx.strokeStyle = Theme.color('border-primary');
     this.ctx.lineWidth = 1;
     this.ctx.beginPath();
@@ -226,7 +216,6 @@ class WaveformRenderer extends BaseWaveformRenderer {
     this.ctx.lineTo(width, height / 2);
     this.ctx.stroke();
         
-    // Draw text
     this.ctx.fillStyle = Theme.color('border-light');
     this.ctx.font = '12px Inter';
     this.ctx.textAlign = 'center';
@@ -366,9 +355,8 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
       high[bucket] = peakHigh;
     }
 
-    // One shared scale across the three bands keeps the track's dynamics: a
-    // quiet hi-hat has to stay shorter than the kick. The per-band gains only
-    // compensate for music carrying naturally less energy up high.
+    // One shared scale keeps the dynamics — a quiet hi-hat stays shorter than
+    // the kick. The per-band gains only offset music's falling energy up high.
     let peak = 0;
     for (let i = 0; i < buckets; i++) {
       if (low[i] > peak) peak = low[i];
@@ -392,9 +380,8 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
   }
 
   setupEventListeners() {
-    // Grabbing the waveform is grabbing the record: same object, same physics,
-    // so the two surfaces cannot drift apart in feel. All this one contributes
-    // is how far a horizontal drag moves the track, which depends on the zoom.
+    // Grabbing the waveform is grabbing the record: same object, same physics.
+    // All this surface adds is how much track a horizontal drag covers.
     const platter = window.platters[this.deckId];
     if (platter) {
       new PlatterSurface(
@@ -404,13 +391,11 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
       );
     }
 
-    // Mouse wheel zoom functionality
     this.canvas.addEventListener('wheel', (e) => {
       e.preventDefault();
       
       if (!this.waveformData) return;
       
-      // Determine zoom direction (zoom out on wheel down, zoom in on wheel up)
       const direction = e.deltaY > 0 ? 2 : -2;
       this.zoom(direction);
     });
@@ -430,8 +415,7 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     const deck = window.audioEngine.getDeck(this.deckId);
     if (!deck || !deck.audioBuffer) return 0;
 
-    // The laid-out width, not the attribute: a hidden canvas measures zero and
-    // dividing by it would hand back Infinity
+    // The laid-out width, not the attribute: a hidden canvas measures zero
     const width = this.canvas.getBoundingClientRect().width;
     if (!width) return 0;
 
@@ -449,10 +433,8 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     const currentTime = deck.getCurrentTime();
     const duration = deck.getDuration();
     
-    // Center current time under the red line
     this.offsetSeconds = currentTime - this.zoomLevel / 2;
     
-    // Clamp to track duration bounds
     if (this.offsetSeconds + this.zoomLevel > duration) {
       this.offsetSeconds = Math.max(0, duration - this.zoomLevel);
     }
@@ -479,8 +461,8 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     const windowStart = this.offsetSeconds;
     const playedUntil = deck.isPlaying || deck.isPaused ? deck.getCurrentTime() : -Infinity;
 
-    // One bar per whole pixel column. Anything landing on fractional pixels
-    // gets re-antialiased as the window scrolls, which reads as a shimmer.
+    // One bar per whole pixel column: fractional ones get re-antialiased as the
+    // window scrolls, which reads as a shimmer
     this.drawBands(width, centerY, pixelsPerSecond, windowStart, playedUntil);
     this.drawBeatGrid(width, height, deck);
 
@@ -537,10 +519,9 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
       this.ctx.fill();
     }
 
-    // Fade what has already played with one wash over the finished layers, so
-    // only the brightness changes at the playhead. Fading the bands separately
-    // would let the ones underneath show through and shift the hue, breaking
-    // the colour comparison between the two decks.
+    // One wash over the finished layers, so only brightness changes at the
+    // playhead. Fading bands separately would shift the hue and break the
+    // colour comparison between decks.
     if (playedUntil > windowStart) {
       const until = Math.min(width, Math.round((playedUntil - windowStart) * pixelsPerSecond));
       if (until > 0) {
@@ -595,7 +576,6 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
         
     this.ctx.clearRect(0, 0, width, height);
         
-    // Draw empty state with just the center line
     this.ctx.strokeStyle = Theme.color('border-primary');
     this.ctx.lineWidth = 1;
     this.ctx.beginPath();
@@ -603,7 +583,6 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     this.ctx.lineTo(width, height / 2);
     this.ctx.stroke();
         
-    // Draw red playhead line in center
     this.ctx.strokeStyle = Theme.color('color-playhead');
     this.ctx.lineWidth = 2;
     this.ctx.beginPath();
@@ -611,7 +590,6 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     this.ctx.lineTo(width / 2, height);
     this.ctx.stroke();
     
-    // Draw text
     this.ctx.fillStyle = Theme.color('border-light');
     this.ctx.font = '12px Inter';
     this.ctx.textAlign = 'center';
@@ -631,7 +609,6 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     }
   }
 
-  // Method to handle zoom changes from buttons
   zoom(direction) {
     if (!this.bands) return;
 
@@ -644,11 +621,9 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
       Math.min(BeatWaveformRenderer.MAX_ZOOM_SECONDS, this.zoomLevel + zoomDelta)
     );
 
-    // Only update if zoom level actually changed
     if (newZoomLevel !== this.zoomLevel) {
       this.userZoomed = true;
       this.zoomLevel = newZoomLevel;
-      // Re-render with new zoom level
       this.render();
       console.log(`Beat waveform zoom changed to ${this.zoomLevel.toFixed(1)} seconds on deck ${this.deckId}`);
     }

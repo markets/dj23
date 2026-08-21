@@ -1,13 +1,15 @@
 /* ============================================================================
-   1. Design tokens
-   2. Base & layout
-   3. Top bar (header + global beat waveforms)
-   4. Shared primitives (panels, buttons, faders)
-   5. Decks
-   6. Center mixer
-   7. Modal
-   8. Mobile navigation
-   9. Responsive
+   1.  Design tokens
+   2.  Base & layout
+   3.  Top bar (header + global beat waveforms)
+   4.  Shared primitives (panels, buttons, faders)
+   5.  Decks
+   6.  Center mixer
+   7.  Modal
+   8.  Mobile navigation
+   9.  Track list
+   10. Responsive
+   11. Scrollbar
    ============================================================================ */
 
 /* ============================================================================
@@ -2331,7 +2333,7 @@ input[type="range"]::-moz-range-thumb {
 }
 
 /* ============================================================================
-   SCROLLBAR
+   11. SCROLLBAR
    ============================================================================ */
 ::-webkit-scrollbar {
   width: 8px;

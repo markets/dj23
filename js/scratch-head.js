@@ -1,17 +1,11 @@
 /**
  * A read head this app owns, for as long as a record is in someone's hand.
  *
- * Normal playback stays on an AudioBufferSourceNode, which is good at exactly
- * one thing: running forwards at a steady rate. Everything a scratch needs is
- * the opposite — stopping dead, reversing, changing speed every few
- * milliseconds — and none of it can be expressed as a rate on that node, so the
- * deck used to fake it by splicing a new source in at every direction change.
- * Splices are what clicks are.
- *
- * Here the position is a fractional sample index and the rate is an audio-rate
- * parameter, so zero means silence in place, negative means backwards, and
- * nothing is ever spliced. Only a window of the track is held: enough to
- * scratch through, not a second copy of the whole thing.
+ * An AudioBufferSourceNode only runs forwards at a steady rate, and a scratch
+ * needs the opposite: stopping dead, reversing, changing speed every few
+ * milliseconds. Here the position is a fractional sample index and the rate is
+ * an audio-rate parameter, so zero is silence in place, negative is backwards,
+ * and nothing is spliced. Only a window of the track is held.
  *
  * Loaded through AudioWorklet.addModule, so this file must never be a <script>.
  */
@@ -30,10 +24,9 @@ class ScratchHead extends AudioWorkletProcessor {
   static REPORT_EVERY = 4;
 
   /**
-   * Rate below which the output fades away. A stationary record is silent — the
-   * groove is not moving under the needle — and holding the head still would
-   * otherwise repeat one sample forever, which is a DC offset, not a hold.
-   * Fading with speed rather than cutting at a threshold keeps it click-free.
+   * Rate below which the output fades away. A stationary record is silent, and
+   * repeating one sample forever is a DC offset rather than a hold; fading with
+   * speed instead of cutting at a threshold keeps it click-free.
    */
   static GATE_RATE = 0.05;
 
@@ -51,7 +44,6 @@ class ScratchHead extends AudioWorkletProcessor {
   handle(message) {
     switch (message.type) {
       case 'load':
-        // Already copies, handed over as transferables: no allocation here
         this.channels = message.channels.map((data) => new Float32Array(data));
         this.position = message.position * sampleRate;
         break;
@@ -68,9 +60,8 @@ class ScratchHead extends AudioWorkletProcessor {
   }
 
   /**
-   * Four-point Hermite interpolation. Linear is fine at a steady 1x, but a
-   * scratch spends its time at rates linear interpolation turns into audible
-   * grit, and this is the cheapest step up that sounds clean.
+   * Four-point Hermite interpolation: linear is fine at a steady 1x, but turns
+   * to audible grit at the rates a scratch spends its time at.
    */
   sampleAt(data, position) {
     const index = Math.floor(position);
@@ -114,8 +105,7 @@ class ScratchHead extends AudioWorkletProcessor {
 
       this.position += speed;
 
-      // Running off either end is a hand dragging the record past its edge:
-      // stay put rather than wrap or crash
+      // A hand dragging the record past its edge: stay put rather than wrap
       if (this.position < 0) this.position = 0;
       else if (this.position > last) this.position = last;
     }

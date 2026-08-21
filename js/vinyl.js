@@ -1,24 +1,15 @@
 /**
  * The feel of a turntable, shared by the two surfaces you can grab: the vinyl
- * platter and the beat-matching waveform. Each surface only has to report how
- * far the record moved; everything about what that does to the audio lives
- * here, so the two behave identically by construction rather than by anyone
- * remembering to keep them in step.
+ * platter and the beat-matching waveform. Each surface only reports how far the
+ * record moved, so the two behave identically by construction.
  *
- * What a real deck does and this reproduces: a hand on the record stops it
- * dead, pushing it forward plays at the speed of your hand, and letting go of a
- * running deck lets the motor pull it back up to pitch.
- *
- * While a record is held the audio comes from a worklet read head (see
- * js/scratch-head.js) whose rate is free to be zero or negative, so direction
- * is not a special case and nothing is ever spliced. Normal playback stays on
- * the buffer source, and the two hand off at grab and release — the moments a
- * real deck is discontinuous anyway. Where the worklet is unavailable this
- * falls back to splicing sources and a reversed window, which sounds worse but
- * works.
- *
- * Either way the gesture code only ever says "the record moved N seconds",
- * which is why the engine underneath could be replaced without touching it.
+ * A hand on the record stops it dead, pushing it plays at the speed of your
+ * hand, and letting go of a running deck lets the motor pull it back to pitch.
+ * While it is held the audio comes from a worklet read head (js/scratch-head.js)
+ * whose rate may be zero or negative, so direction is not a special case and
+ * nothing is spliced; normal playback stays on the buffer source and the two
+ * hand off at grab and release. Without the worklet it falls back to splicing
+ * sources and a reversed window, which sounds worse but works.
  */
 class Platter {
   /** 33⅓ rpm, the same 1.8s per turn the CSS spin animation uses. */
@@ -101,10 +92,8 @@ class Platter {
   }
 
   /**
-   * Called by a surface for every scrap of movement it sees. Non-finite input
-   * is dropped rather than trusted: velocity is a running average, so a single
-   * Infinity would turn into NaN on the next frame and stick to the rate for
-   * the rest of the session.
+   * Non-finite input is dropped: velocity is a running average, so one Infinity
+   * becomes NaN on the next frame and sticks for the session.
    */
   moveBy(deltaSeconds) {
     if (!this.isHeld || !Number.isFinite(deltaSeconds)) return;
@@ -112,10 +101,8 @@ class Platter {
   }
 
   /**
-   * Hand movement becomes audio here, once per frame rather than once per
-   * event. That is deliberate: holding the record perfectly still produces no
-   * events at all, and only a frame loop can notice the absence and let the
-   * speed decay to a stop.
+   * Once per frame rather than once per event: holding the record perfectly
+   * still produces no events, and only a frame loop notices the absence.
    */
   tick() {
     if (!this.isHeld) return;
@@ -145,8 +132,8 @@ class Platter {
     const deck = this.deck;
 
     if (this.usingHead) {
-      // One continuous head: no direction case, no splice, and a rate of zero
-      // is a stopped record rather than one repeated sample
+      // One continuous head: no direction case, no splice, and zero is a stopped
+      // record rather than one repeated sample
       const rate = Math.max(-Platter.MAX_RATE, Math.min(this.velocity, Platter.MAX_RATE));
       deck.setScratchHeadRate(rate);
       deck.keepScratchWindow(this.headTime);
@@ -165,8 +152,8 @@ class Platter {
 
     if (this.velocity < -Platter.MIN_AUDIBLE_RATE) {
       this.follow(true);
-      // The sign belongs to the reported position: the source itself plays the
-      // reversed window forwards, which is what makes the track run back
+      // The sign belongs to the reported position; the source plays the reversed
+      // window forwards
       deck.setScratchRate(Math.max(this.velocity, -Platter.MAX_RATE));
       return;
     }
@@ -188,8 +175,7 @@ class Platter {
       return;
     }
 
-    // Audio runs at its own rate and slides away from the hand; pulling it back
-    // is what keeps the gesture mapped one to one onto the track
+    // Audio slides away from the hand at its own rate; this keeps it one to one
     if (Math.abs(deck.getCurrentTime() - this.headTime) > Platter.MAX_DRIFT) restart();
   }
 
@@ -200,8 +186,7 @@ class Platter {
     if (this.isAudible || deck.source) deck.stopSource();
     this.isAudible = false;
 
-    // Rate zero pins the reported position, so the playhead and the waveforms
-    // follow the hand instead of drifting on while nothing is audible
+    // Rate zero pins the reported position, so the playhead follows the hand
     deck.setScratchRate(0, this.headTime);
   }
 
@@ -227,9 +212,8 @@ class Platter {
       return;
     }
 
-    // On the fallback path, reversed counts as needing a restart: letting go of
-    // a backwards pull has to put the track the right way round again, not ramp
-    // the reversed window up to full speed
+    // On the fallback path, letting go of a backwards pull has to turn the track
+    // the right way round, not ramp the reversed window up to speed
     if (!this.usingHead && (!this.isAudible || deck.isReversed)) {
       deck.playFrom(this.headTime);
       this.isAudible = true;
@@ -242,8 +226,7 @@ class Platter {
   /** The motor never stopped, so it drags the record back up to pitch. */
   spinUp() {
     const deck = this.deck;
-    // From a backwards pull the platter has to come through zero first, which a
-    // real deck also does, so the ramp starts wherever the hand left it
+    // From a backwards pull the ramp comes through zero, as a real deck does
     const from = Math.max(-Platter.MAX_RATE, Math.min(this.velocity, Platter.MAX_RATE));
     const to = deck.playbackRate;
     const startedAt = Platter.now();
@@ -269,9 +252,8 @@ class Platter {
   }
 
   /**
-   * Give the head back at the end of the ramp. Doing it here rather than at
-   * release means the swap happens at the pitch rate and at a known position,
-   * so the one splice left in a whole gesture lands where nothing is changing.
+   * Give the head back at the end of the ramp, not at release: the swap then
+   * happens at the pitch rate, so the one splice left lands on nothing.
    */
   finishSpinUp() {
     const deck = this.deck;
@@ -288,9 +270,8 @@ class Platter {
   }
 
   /**
-   * While the record is in your hand the CSS animation is a lie, so the angle
-   * comes straight off the position instead. Dragging the waveform turns the
-   * record too, which falls out of both surfaces sharing this object.
+   * Under a hand the CSS animation is a lie, so the angle comes off the position
+   * instead. Dragging the waveform turns the record too, for free.
    */
   showHeldAngle() {
     if (!this.vinylElement) return;
@@ -306,8 +287,7 @@ class Platter {
     this.vinylElement.style.transform = '';
     if (!resumeSpinning) return;
 
-    // Start the animation at the angle the hand left it at, so the record picks
-    // up where it was rather than snapping back to zero
+    // Resume at the angle the hand left, not back at zero
     const phase = this.headTime % Platter.SECONDS_PER_REVOLUTION;
     this.vinylElement.style.animationDelay = `-${phase.toFixed(3)}s`;
     this.vinylElement.classList.add('spinning');
@@ -326,9 +306,8 @@ class Platter {
 
 /**
  * Pointer plumbing for one grabbable surface. Pointer events cover mouse and
- * touch in a single path, and pointer capture keeps the gesture alive once the
- * cursor leaves the element — which is most of any real scratch — so none of
- * this needs document-level listeners.
+ * touch in one path, and capture keeps the gesture alive once the cursor leaves
+ * the element, so none of this needs document-level listeners.
  */
 class PlatterSurface {
   constructor(element, platter, toSeconds) {
@@ -351,8 +330,8 @@ class PlatterSurface {
     this.pointerId = event.pointerId;
     this.lastEvent = event;
 
-    // Capture can be refused if the pointer is already gone; losing it costs
-    // events once the cursor leaves the element, not the whole gesture
+    // Refused if the pointer is already gone; that costs events off-element,
+    // not the gesture
     try {
       this.element.setPointerCapture(event.pointerId);
     } catch (error) {
@@ -365,10 +344,8 @@ class PlatterSurface {
   onMove(event) {
     if (event.pointerId !== this.pointerId) return;
 
-    // One pointermove per frame hides every sample the OS actually delivered in
-    // between, and a fast scratch lives in exactly those samples: read at frame
-    // rate, a flick becomes two or three straight lines. Walking the coalesced
-    // path recovers the real gesture where the browser exposes it.
+    // One pointermove per frame hides the samples in between, and a fast scratch
+    // lives in those: read at frame rate, a flick becomes three straight lines
     const coalesced = event.getCoalescedEvents ? event.getCoalescedEvents() : [];
     const path = coalesced.length ? coalesced : [event];
 

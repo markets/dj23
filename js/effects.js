@@ -30,12 +30,9 @@ class EffectsEngine {
     this.effectNodes.phaserDry = this.audioContext.createGain();
     this.effectNodes.phaserDry.gain.value = 1;
     
-    // Add feedback for more character
     this.effectNodes.phaserFeedback = this.audioContext.createGain();
     this.effectNodes.phaserFeedback.gain.value = 0.3; // Moderate feedback for warmth
     
-    // Use 6 filters with more musical frequency distribution
-    // Based on common phaser pedal designs - covering a wider frequency range
     const phaserFreqs = [200, 400, 800, 1600, 3200, 6400];
     const phaserQs = [2.0, 2.5, 2.8, 2.5, 2.0, 1.5]; // Varying Q values for more natural sound
     
@@ -66,12 +63,10 @@ class EffectsEngine {
   }
 
   connectEffectChain() {
-    // Connect delay feedback loop
     this.effectNodes.delay.connect(this.effectNodes.delayFeedback);
     this.effectNodes.delayFeedback.connect(this.effectNodes.delay);
     this.effectNodes.delay.connect(this.effectNodes.delayGain);
 
-    // Connect phaser
     for (let i = 0; i < this.effectNodes.phaser.length; i++) {
       if (i === 0) {
         // First filter connects from source (will be connected in play method)
@@ -80,28 +75,23 @@ class EffectsEngine {
       }
     }
     
-    // Add feedback from the last phaser stage back to the first for more character
     if (this.effectNodes.phaser.length > 0) {
       const lastPhaser = this.effectNodes.phaser[this.effectNodes.phaser.length - 1];
       lastPhaser.connect(this.effectNodes.phaserFeedback);
       this.effectNodes.phaserFeedback.connect(this.effectNodes.phaser[0]);
     }
     
-    // Connect phaser LFO through gain node for proper modulation to all filters
     this.effectNodes.phaserLFO.connect(this.effectNodes.phaserLFOGain);
     for (let i = 0; i < this.effectNodes.phaser.length; i++) {
       this.effectNodes.phaserLFOGain.connect(this.effectNodes.phaser[i].frequency);
     }
     
-    // Connect flanger feedback loop
     this.effectNodes.flanger.connect(this.effectNodes.flangerFeedback);
     this.effectNodes.flangerFeedback.connect(this.effectNodes.flanger);
 
-    // Connect flanger LFO through gain node for proper modulation
     this.effectNodes.flangerLFO.connect(this.effectNodes.flangerLFOGain);
     this.effectNodes.flangerLFOGain.connect(this.effectNodes.flanger.delayTime);
 
-    // Main effect chain will be connected when source is created
   }
 
   startEffectOscillators() {
@@ -115,7 +105,6 @@ class EffectsEngine {
   }
 
   createReverbImpulse() {
-    // Create a more dramatic reverb impulse for better audibility
     const length = this.audioContext.sampleRate * 3; // Longer reverb tail (3 seconds)
     const impulse = this.audioContext.createBuffer(2, length, this.audioContext.sampleRate);
         
@@ -125,7 +114,6 @@ class EffectsEngine {
         const decay = Math.pow(1 - i / length, 1.2); // Slower decay for more prominent reverb
         const noise = (Math.random() * 2 - 1);
         
-        // Add some early reflections for more character
         let amplitude = decay;
         if (i < this.audioContext.sampleRate * 0.1) { // First 100ms
           amplitude *= (1 + Math.sin(i / 1000) * 0.3); // Add early reflection pattern
@@ -138,7 +126,6 @@ class EffectsEngine {
     this.effectNodes.reverb.buffer = impulse;
   }
 
-  // Effect parameter control methods
   setReverb(value) {
     if (this.effectNodes.reverbGain) {
       const wetLevel = Math.pow(value / 100, 0.7) * 1.2; // Exponential curve, max 120%
@@ -155,26 +142,21 @@ class EffectsEngine {
 
   setPhaser(value) {
     if (this.effectNodes.phaserGain) {
-      // Smoother wet/dry mix for more musical phasing
       const wetLevel = (value / 100) * 0.8;
       const dryLevel = Math.max(1 - (wetLevel * 0.5), 0.3);
       this.effectNodes.phaserGain.gain.value = wetLevel;
       this.effectNodes.phaserDry.gain.value = dryLevel;
       
-      // More musical LFO modulation with exponential curve
       if (this.effectNodes.phaserLFOGain) {
-        // Use exponential curve for more natural sweep
         const modDepth = Math.pow(value / 100, 0.6) * 600; // Slightly increased modulation depth
         this.effectNodes.phaserLFOGain.gain.value = modDepth;
       }
       
-      // Dynamic feedback based on effect intensity for more character
       if (this.effectNodes.phaserFeedback) {
         const feedbackAmount = (value / 100) * 0.4; // Increase feedback with effect intensity
         this.effectNodes.phaserFeedback.gain.value = feedbackAmount;
       }
       
-      // Slower, more musical LFO frequency range
       if (this.effectNodes.phaserLFO) {
         const minFreq = 0.08;
         const maxFreq = 0.5;
@@ -190,7 +172,6 @@ class EffectsEngine {
     }
   }
 
-  // Get effect nodes for connection in audio chain
   getEffectNodes() {
     return this.effectNodes;
   }
@@ -202,7 +183,6 @@ class EffectsController {
     this.setupEffectControls();
   }
 
-  // Utility function for creating effect slider handlers
   createEffectSliderHandler(effectName, deckMethod) {
     const slider = document.getElementById(`${effectName}${this.deckId}`);
     if (!slider) return;

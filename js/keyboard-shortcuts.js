@@ -17,7 +17,6 @@ class KeyboardShortcuts {
     document.addEventListener('keyup', (e) => this.handleKeyUp(e));
   }
 
-  // Helper function for deck transport controls
   controlDeck(deckId, action) {
     const deckController = window.mixerController.deckControllers[deckId];
 
@@ -34,7 +33,6 @@ class KeyboardShortcuts {
     }
   }
 
-  // Helper function for CUE press-and-hold behavior
   handleCuePress(deckId, keyCode) {
     if (this.cueKeysPressed.has(keyCode)) return; // Already pressed
 
@@ -42,7 +40,6 @@ class KeyboardShortcuts {
     this.getDeck(deckId).startCueMode();
   }
 
-  // Helper function for CUE release
   handleCueRelease(deckId, keyCode) {
     if (!this.cueKeysPressed.has(keyCode)) return; // Not pressed
 
@@ -50,7 +47,6 @@ class KeyboardShortcuts {
     this.getDeck(deckId).stopCueMode();
   }
 
-  // Helper function for pitch bend press-and-hold behavior
   handlePitchBendPress(deckId, keyCode, direction) {
     if (this.pitchBendKeysPressed.has(keyCode)) return; // Already pressed
 
@@ -58,7 +54,6 @@ class KeyboardShortcuts {
     this.getDeck(deckId).pitchBend(direction);
   }
 
-  // Helper function for pitch bend release
   handlePitchBendRelease(deckId, keyCode) {
     if (!this.pitchBendKeysPressed.has(keyCode)) return; // Not pressed
 
@@ -66,12 +61,10 @@ class KeyboardShortcuts {
     this.getDeck(deckId).stopPitchBend();
   }
 
-  // Helper function for button clicks
   clickButton(buttonId) {
     document.getElementById(buttonId)?.click();
   }
 
-  // Helper function to get deck
   getDeck(deckId) {
     return window.audioEngine.getDeck(deckId);
   }
@@ -123,7 +116,6 @@ class KeyboardShortcuts {
       return;
     }
 
-    // Prevent default for our shortcuts
     const shortcuts = [
       'Space', 'KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyA', 'KeyS',
       'KeyU', 'KeyI', 'KeyO', 'KeyP', 'KeyJ', 'KeyK',
@@ -164,46 +156,36 @@ class KeyboardShortcuts {
     }
 
     const shortcuts = {
-      // General controls
       'Space': () => this.controlDeck('A', 'play'),
       
-      // LEFT SIDE - Deck A Controls
       'KeyQ': () => this.controlDeck('A', 'play'),
       'KeyW': () => this.controlDeck('A', 'pause'),
       'KeyE': () => this.controlDeck('A', 'stop'),
       'KeyR': () => this.handleCuePress('A', 'KeyR'),
       
-      // LEFT SIDE - Deck A Cue Points (1-2)
       'Digit1': () => this.handleCuePoint(e, 'A', 1),
       'Digit2': () => this.handleCuePoint(e, 'A', 2),
       
-      // LEFT SIDE - Deck A Pitch Bend
       'KeyA': () => this.handlePitchBendPress('A', 'KeyA', -1),
       'KeyS': () => this.handlePitchBendPress('A', 'KeyS', 1),
       
-      // LEFT SIDE - Deck A Loop Controls
       'KeyZ': () => this.clickButton('loopInA'),
       'KeyX': () => this.clickButton('loopOutA'),
       
-      // RIGHT SIDE - Deck B Controls
       'KeyU': () => this.controlDeck('B', 'play'),
       'KeyI': () => this.controlDeck('B', 'pause'),
       'KeyO': () => this.controlDeck('B', 'stop'),
       'KeyP': () => this.handleCuePress('B', 'KeyP'),
       
-      // RIGHT SIDE - Deck B Cue Points (8-9)
       'Digit8': () => this.handleCuePoint(e, 'B', 1),
       'Digit9': () => this.handleCuePoint(e, 'B', 2),
       
-      // RIGHT SIDE - Deck B Pitch Bend
       'KeyJ': () => this.handlePitchBendPress('B', 'KeyJ', -1),
       'KeyK': () => this.handlePitchBendPress('B', 'KeyK', 1),
       
-      // RIGHT SIDE - Deck B Loop Controls
       'KeyN': () => this.clickButton('loopInB'),
       'KeyM': () => this.clickButton('loopOutB'),
       
-      // Crossfader and Master Volume
       'ArrowLeft': () => this.adjustCrossfader(-5),
       'ArrowRight': () => this.adjustCrossfader(5),
       'ArrowUp': () => this.adjustMasterVolume(5),
@@ -240,7 +222,6 @@ class KeyboardShortcuts {
       masterVolume.value = newValue;
       masterVolume.dispatchEvent(new Event('input'));
       
-      // Update display
       const display = masterVolume.parentElement.querySelector('.volume-display');
       if (display) {
         display.textContent = newValue + '%';
@@ -267,7 +248,6 @@ class KeyboardShortcuts {
   handleKeyUp(e) {
     if (this.isTypingTarget(e.target)) return;
 
-    // Handle CUE key releases for press-and-hold behavior
     const cueKeyMappings = {
       'KeyR': 'A',
       'KeyP': 'B'
@@ -278,7 +258,6 @@ class KeyboardShortcuts {
       this.handleCueRelease(deckId, e.code);
     }
 
-    // Handle pitch bend key releases for press-and-hold behavior
     const pitchBendKeyMappings = {
       'KeyA': 'A',
       'KeyS': 'A',

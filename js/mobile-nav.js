@@ -21,12 +21,10 @@ class MobileNavigation {
       });
     });
     
-    // Initialize view on mobile
     if (window.innerWidth <= MobileNavigation.MOBILE_BREAKPOINT) {
       this.switchView(this.currentView);
     }
     
-    // Handle resize events with debouncing
     window.addEventListener('resize', () => {
       clearTimeout(this.resizeTimeout);
       this.resizeTimeout = setTimeout(() => {
@@ -39,7 +37,6 @@ class MobileNavigation {
     if (window.innerWidth <= MobileNavigation.MOBILE_BREAKPOINT) {
       this.switchView(this.currentView);
     } else {
-      // Reset visibility on desktop
       this.deckA.classList.remove('mobile-hidden', 'mobile-visible');
       this.centerMixer.classList.remove('mobile-hidden', 'mobile-visible');
       this.deckB.classList.remove('mobile-hidden', 'mobile-visible');

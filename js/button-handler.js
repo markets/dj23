@@ -35,12 +35,10 @@ class ButtonHandler {
       onStop();
     };
 
-    // Mouse events
     button.addEventListener('mousedown', startPress);
     button.addEventListener('mouseup', stopPress);
     button.addEventListener('mouseleave', stopPress);
 
-    // Touch events
     button.addEventListener('touchstart', startPress);
     button.addEventListener('touchend', stopPress);
     button.addEventListener('touchcancel', stopPress);

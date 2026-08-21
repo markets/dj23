@@ -12,29 +12,21 @@ class BPMAnalyzer {
   /** How far an onset may sit from a grid position and still count. */
   static ONSET_TOLERANCE_SECONDS = 0.07;
 
-  /**
-   * Onsets weaker than this share of the loudest ones are left out of the
-   * scoring. The beat is carried by the biggest hits: in a dembow the kicks sit
-   * on the quarter notes while the snares syncopate off them, so judging every
-   * onset equally is what makes reggaeton look like a track at twice its tempo.
-   */
+  /** Quiet onsets are left out: the beat is carried by the biggest hits. */
   static STRONG_ONSET_SHARE = 0.5;
 
   /** Corner frequency of the band the kick is looked for in. */
   static LOW_BAND_HZ = 150;
 
   /**
-   * How well the whole mix has to fit some grid before it is trusted over the
-   * kick alone. A two-step break puts kick and snare on alternate beats, which
-   * fits a grid almost perfectly; a dembow syncopates and fits nothing well.
+   * How well the whole mix has to fit a grid before it is trusted over the kick
+   * alone. A two-step break fits one tightly; a dembow fits nothing well.
    */
   static FULL_BAND_TRUST = 0.7;
 
   /**
-   * Below this, no octave explains the music and the tracker has most likely
-   * missed the period itself rather than its multiple — in which case there is
-   * nothing to choose between and second-guessing it only moves the answer
-   * further away.
+   * Below this nothing explains the music, so the tracker probably missed the
+   * period rather than its multiple, and overriding it only makes things worse.
    */
   static CONFIDENCE_FLOOR = 0.45;
 
@@ -50,18 +42,14 @@ class BPMAnalyzer {
     this.audioContext = audioContext;
     this.deckId = deckId;
     
-    // Beat tracking properties
     this.beatPositions = []; // Array of beat positions in seconds
     this.lastBeatTime = 0;   // Time of the last detected beat
     this.beatInterval = 0.5; // Current beat interval in seconds (will be calculated)
     
-    // Store original BPM for pitch-adjusted calculations
     this.baseBPM = 120; // Default BPM, will be updated when track loads
     
-    // Audio start detection
     this.audioStartOffset = 0; // Time when actual audio content starts (after silence)
     
-    // BPM source tracking for priority system
     this.bpmSource = null; // Can be: null, 'auto-detected', 'manual'
     this.lastManualTapTime = 0; // Track when user last used TAP
   }
@@ -74,26 +62,20 @@ class BPMAnalyzer {
     const channelData = audioBuffer.getChannelData(0);
     const sampleRate = audioBuffer.sampleRate;
     
-    // Threshold for detecting "silence" - adjust as needed
     const silenceThreshold = 0.01; // 1% of max amplitude
     
-    // Look for the first sample that exceeds the threshold
-    // Check samples in chunks to be more efficient
     const chunkSize = sampleRate * 0.1; // 100ms chunks
     
     for (let i = 0; i < channelData.length; i += chunkSize) {
       const chunkEnd = Math.min(i + chunkSize, channelData.length);
       
-      // Calculate RMS for this chunk
       let sumSquares = 0;
       for (let j = i; j < chunkEnd; j++) {
         sumSquares += channelData[j] * channelData[j];
       }
       const rms = Math.sqrt(sumSquares / (chunkEnd - i));
       
-      // If this chunk has significant audio content
       if (rms > silenceThreshold) {
-        // Go back and find the more precise start within this chunk
         for (let k = i; k < chunkEnd; k++) {
           if (Math.abs(channelData[k]) > silenceThreshold * 0.5) {
             const startTime = k / sampleRate;
@@ -111,17 +93,13 @@ class BPMAnalyzer {
   generateBeatMap(audioBuffer) {
     if (!audioBuffer || this.baseBPM <= 0) return;
     
-    // Detect when actual audio content starts
     this.audioStartOffset = this.detectAudioStart(audioBuffer);
     
-    // Calculate beat interval from BPM
     this.beatInterval = 60 / this.baseBPM;
     
-    // Generate beat positions throughout the track, starting from audio start
     this.beatPositions = [];
     const duration = audioBuffer.duration;
     
-    // Start from the first beat at the audio start offset
     for (let time = this.audioStartOffset; time < duration; time += this.beatInterval) {
       this.beatPositions.push(time);
     }
@@ -129,7 +107,6 @@ class BPMAnalyzer {
     console.log(`Generated ${this.beatPositions.length} beats for ${duration.toFixed(2)}s track at ${this.baseBPM} BPM, starting from ${this.audioStartOffset.toFixed(3)}s`);
   }
 
-  // Find the nearest beat position to the current time
   findNearestBeat(currentTime) {
     if (this.beatPositions.length === 0) return currentTime;
     
@@ -147,7 +124,6 @@ class BPMAnalyzer {
     return nearestBeat;
   }
 
-  // Get the next beat after current time
   getNextBeat(currentTime) {
     for (const beatTime of this.beatPositions) {
       if (beatTime > currentTime) {
@@ -157,7 +133,6 @@ class BPMAnalyzer {
     return currentTime; // If no next beat found, return current time
   }
 
-  // Get the previous beat before current time
   getPreviousBeat(currentTime) {
     let previousBeat = 0; // Start from beginning if no previous beat found
     for (const beatTime of this.beatPositions) {
@@ -170,7 +145,6 @@ class BPMAnalyzer {
   }
 
   calculateBPM(audioBuffer) {
-    // Reset BPM source tracking when calculating BPM for a new track
     this.bpmSource = null;
     this.lastManualTapTime = 0;
 
@@ -193,7 +167,6 @@ class BPMAnalyzer {
         return 0;
       }
 
-      // Half-time readings are the common failure, not a wrong number
       const validatedBPM = this.correctTempoOctave(detectedBPM, mt, audioData, audioBuffer.sampleRate);
       
       console.log(`BPM Analyzer: Detected ${detectedBPM} -> Validated ${validatedBPM} BPM for deck ${this.deckId}`);
@@ -201,9 +174,7 @@ class BPMAnalyzer {
       this.bpmSource = 'auto-detected';
       return validatedBPM;
     } catch (error) {
-      // Leave the BPM unknown rather than guessing or keeping the previous
-      // track's value: SYNC and the beat map already skip a zero BPM, and TAP
-      // fills it in. The deck stays fully playable either way.
+      // Unknown beats guessing: SYNC and the beat map skip a zero BPM, TAP fills it
       console.error(`BPM Analyzer: Detection failed for deck ${this.deckId}, use TAP:`, error);
       this.baseBPM = 0;
       return 0;
@@ -211,11 +182,9 @@ class BPMAnalyzer {
   }
 
   /**
-   * MusicTempo wants a plain Array — it copies a Float32Array internally, which
-   * would double the peak memory — and its defaults assume 44.1kHz, so the rate
-   * is left untouched. Memory is bounded by analysing a window instead: tempo is
-   * effectively constant, so a slice gives the same answer as the whole track
-   * while keeping cost flat regardless of how long the file is.
+   * MusicTempo wants a plain Array, and copies a Float32Array internally. Tempo
+   * is effectively constant, so a window gives the same answer as the whole
+   * track at a cost that does not grow with the file.
    */
   buildAnalysisWindow(audioBuffer) {
     const { sampleRate, length, numberOfChannels } = audioBuffer;
@@ -236,30 +205,12 @@ class BPMAnalyzer {
     return audioData;
   }
 
-  // Consolidated BPM validation with genre-aware correction
   /**
-   * Which octave of the detected tempo is the real one.
-   *
-   * Beat trackers are reliable about the *period* and unreliable about which
-   * multiple of it a listener would call the tempo. Deciding that from a BPM
-   * range is what this used to do — anything over 160 was assumed to be a
-   * double-time error — and it turned every makina track into half its tempo.
-   *
-   * So each candidate octave is scored against the onsets the tracker already
-   * found, on two counts that pull in opposite directions:
-   *
-   *   recall    how much onset energy lands on the grid. A grid that is too
-   *             slow scores badly here: it explains every other kick and
-   *             ignores the rest.
-   *   precision how many grid positions actually have an onset. A grid that is
-   *             too fast scores badly here: half of it is silence.
-   *
-   * Neither alone is enough — recall prefers ever-faster grids, precision
-   * prefers ever-slower ones — so the two are combined, and the result is
-   * weighted by where listeners hear tempo at all. That last part is what
-   * settles reggaeton: the dembow puts real snares off the beat, so the
-   * eighth-note grid explains the onsets nearly as well as the quarter-note
-   * one, and the tie is broken towards the tempo a person would count.
+   * Which octave of the detected tempo is the real one. Trackers are reliable
+   * about the period and unreliable about which multiple of it a listener would
+   * call the tempo, so each octave is scored against the onsets on two counts
+   * that pull opposite ways: recall punishes grids too slow to explain every
+   * kick, precision punishes grids so fast that half of them is silence.
    */
   correctTempoOctave(detectedBPM, mt, audioData, sampleRate) {
     let bpm = detectedBPM;
@@ -285,10 +236,9 @@ class BPMAnalyzer {
 
     if (!candidates.length) return Math.round(bpm);
 
-    // Whether the whole mix lands on a grid at all decides which layer to
-    // believe. A two-step break fits one tightly, and there the snares are as
-    // much part of the pulse as the kick; a dembow fits none, and there only
-    // the kick is on the beat at all.
+    // Whether the mix lands on a grid at all decides which layer to believe: in
+    // a two-step break the snares are as much the pulse as the kick, in a
+    // dembow only the kick is on the beat
     const bestFit = Math.max(...candidates.map((entry) => entry.full));
     const trustFullBand = bestFit >= BPMAnalyzer.FULL_BAND_TRUST || !lowBand;
 
@@ -315,8 +265,7 @@ class BPMAnalyzer {
     if (!Array.isArray(flux) || !Array.isArray(peaks) || !Array.isArray(events)) return null;
     if (peaks.length < 12) return null;
 
-    // The envelope is normalised to zero mean, so it runs negative and has to
-    // be shifted before anything is weighted by it
+    // Normalised to zero mean, so it runs negative and needs shifting first
     let floor = Infinity;
     for (const value of flux) if (value < floor) floor = value;
 
@@ -339,17 +288,10 @@ class BPMAnalyzer {
   }
 
   /**
-   * Onsets from the low end of the mix only.
-   *
-   * This is what settles reggaeton. A dembow syncopates its snares off the beat
-   * — the pattern lands on sixteenths 0, 3, 6, 8, 11 and 14 — and no grid fits
-   * that, so judged on the full mix the eighth-note grid explains more of it
-   * than the quarter-note grid does and the tempo comes out doubled. Below a
-   * couple of hundred hertz the snares are gone and the kick is left on
-   * sixteenths 0 and 8, which only the quarter-note grid fits.
-   *
-   * Spectral flux would not do: it is computed across the whole spectrum, where
-   * a broadband snare outweighs a low kick.
+   * Onsets from the low end only, which is what settles reggaeton: a dembow
+   * lands on sixteenths 0, 3, 6, 8, 11, 14 and no grid fits that, but below a
+   * couple of hundred hertz only the kick is left, on 0 and 8. Spectral flux
+   * covers the whole spectrum, where a broadband snare outweighs a low kick.
    */
   lowBandOnsets(audioData, sampleRate) {
     if (!audioData || !audioData.length || !sampleRate) return null;
@@ -484,18 +426,14 @@ class BPMAnalyzer {
     return Math.exp(-0.5 * Math.pow(octavesFromCentre / BPMAnalyzer.TEMPO_PRIOR_WIDTH, 2));
   }
 
-  // Public methods to access BPM information
   getBPM(playbackRate = 1) {
-    // Return the current BPM adjusted for pitch changes
     return Math.round(this.baseBPM * playbackRate);
   }
 
   getBaseBPM() {
-    // Return the original BPM without pitch adjustments
     return this.baseBPM;
   }
 
-  // Method to manually set BPM (used by TAP functionality)
   setBPM(bpm, audioBuffer) {
     if (!bpm || typeof bpm !== 'number' || bpm <= 0 || bpm > 300) {
       console.warn(`BPM Analyzer: Invalid BPM value ${bpm} for deck ${this.deckId}`);
@@ -513,12 +451,10 @@ class BPMAnalyzer {
     return true;
   }
 
-  // Get the audio start offset (time when actual content begins)
   getAudioStartOffset() {
     return this.audioStartOffset;
   }
 
-  // Update the manual tap time (should be called with current playback time)
   updateManualTapTime(currentTime) {
     if (this.bpmSource === 'manual') {
       this.lastManualTapTime = currentTime;

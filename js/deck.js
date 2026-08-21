@@ -14,10 +14,8 @@ class Deck {
   static RATE_GLIDE_SECONDS = 0.004;
 
   /**
-   * How much track the scratch head is handed. It has to be a copy — the
-   * worklet cannot be given the AudioBuffer's own views without detaching the
-   * buffer normal playback still needs — so a whole track would mean a second
-   * copy of it in memory. Twenty seconds is more than any gesture covers.
+   * How much track the scratch head is handed. It has to be copied, so a whole
+   * track would mean holding a second one; no gesture covers twenty seconds.
    */
   static SCRATCH_WINDOW_SECONDS = 20;
 
@@ -43,15 +41,12 @@ class Deck {
     this.volume = 0.75;
     this.pitchRange = Deck.DEFAULT_PITCH_RANGE;
 
-    // Audio time tracking for accurate position with pitch changes
     this.lastRateChangeTime = 0;
     this.lastRateChangePosition = 0;
     this.previousPlaybackRate = 1;
 
-    // Pre-listen functionality
     this.isPreListenEnabled = false;
 
-    // Initialize BPM analyzer
     this.bpmAnalyzer = new BPMAnalyzer(audioContext, deckId);
 
     // Rate the platter is imposing while the record is held, null when the
@@ -69,19 +64,15 @@ class Deck {
     this.scratchHeadPosition = 0;
     this.scratchWindow = null;
 
-    // Pitch bend properties
     this.isPitchBending = false;
     this.originalPitchBeforeBend = undefined;
 
-    // Back-spin properties
     this.isBackSpinning = false;
 
-    // CUE points
     this.cuePoints = { 1: null, 2: null };
     this.isCueActive = false; // Track if CUE is currently being held/active
     this.defaultCuePoint = null; // Auto-set cue point for when no manual cue points exist
 
-    // Loop points
     this.loopStart = null;
     this.loopEnd = null;
     this.originalLoopEnd = null; // Store the original loop end point
@@ -97,18 +88,15 @@ class Deck {
   }
 
   setupAudioNodes() {
-    // Main output gain node
     this.gainNode = this.audioContext.createGain();
     this.gainNode.gain.value = this.volume;
 
-    // Cue output gain node
     this.cueGainNode = this.audioContext.createGain();
     this.cueGainNode.gain.value = 0; // Start with pre-listen disabled
 
     this.globalGainNode = this.audioContext.createGain();
     this.globalGainNode.gain.value = 1.0;
 
-    // Create splitter and merger nodes that will be reused
     this.splitter = this.audioContext.createChannelSplitter(2);
     this.merger = this.audioContext.createChannelMerger(2);
 
@@ -150,9 +138,8 @@ class Deck {
       return false;
     }
 
-    // Analysis is best-effort: it is the memory-hungry part, and a failure here
-    // must not cost the user the track. Without it the BPM is simply unknown
-    // and TAP takes over, so everything else stays usable.
+    // Best-effort: this is the memory-hungry part, and losing it costs only the
+    // BPM readout, which TAP can fill in.
     try {
       this.bpmAnalyzer.calculateBPM(this.audioBuffer);
       this.bpmAnalyzer.generateBeatMap(this.audioBuffer);
@@ -165,17 +152,14 @@ class Deck {
     return true;
   }
 
-  // Find the nearest beat position to the current time
   findNearestBeat(currentTime) {
     return this.bpmAnalyzer.findNearestBeat(currentTime);
   }
 
-  // Get the next beat after current time
   getNextBeat(currentTime) {
     return this.bpmAnalyzer.getNextBeat(currentTime);
   }
 
-  // Get the previous beat before current time
   getPreviousBeat(currentTime) {
     return this.bpmAnalyzer.getPreviousBeat(currentTime);
   }
@@ -200,11 +184,9 @@ class Deck {
 
     this.connectSource();
 
-    // Start from the saved resume time
     this.source.start(0, resumeTime);
     this.startTime = this.audioContext.currentTime - resumeTime;
     
-    // Initialize audio time tracking
     this.lastRateChangeTime = this.audioContext.currentTime;
     this.lastRateChangePosition = resumeTime;
     this.previousPlaybackRate = this.playbackRate;
@@ -219,67 +201,54 @@ class Deck {
 
   /** Wire whatever is producing audio through effects, EQ and out to both buses. */
   connectFrom(origin) {
-    // Its own gain, not globalGainNode: that one is the EQ's GAIN band and the
-    // VU meters read it, so borrowing it for a fade would move the user's knob
+    // Its own gain: globalGainNode is the EQ's GAIN band, which the VU meters
+    // read, so fading on it would move the user's knob
     this.sourceGain = this.audioContext.createGain();
 
-    // A restart jumps the read head, and a jump in a waveform is a step, which
-    // is what a click is. Coming up from zero keeps the incoming source from
-    // opening mid-waveform at full amplitude — measured, that is a 0.99 step
-    // turned into 0. The outgoing source is still cut abruptly: overlapping the
-    // two would need the shared effect chain to carry both at once, which this
-    // graph cannot do without duplicating connections. Splices stop existing
-    // altogether once an AudioWorklet owns the read head.
+    // A restart opens mid-waveform, and that step is the click. Fading in from
+    // zero removes it; the outgoing source is still cut abruptly, since the
+    // shared effect chain cannot carry both at once.
     const now = this.audioContext.currentTime;
     this.sourceGain.gain.setValueAtTime(0, now);
     this.sourceGain.gain.linearRampToValueAtTime(1, now + Deck.DECLICK_SECONDS);
 
-    // Connect the main effect chain
     origin.connect(this.sourceGain);
     this.sourceGain.connect(this.effectNodes.filter);
     this.effectNodes.filter.connect(this.eqNodes.low);
     this.eqNodes.low.connect(this.eqNodes.mid);
     this.eqNodes.mid.connect(this.eqNodes.high);
 
-    // Use the persistent splitter and merger nodes
     this.eqNodes.high.connect(this.splitter);
 
     // Main dry signal path
     this.eqNodes.high.connect(this.globalGainNode);
     this.globalGainNode.connect(this.gainNode);
 
-    // Connect reverb send (wet/dry mix)
     this.splitter.connect(this.effectNodes.reverb);
     this.effectNodes.reverb.connect(this.effectNodes.reverbGain);
     this.effectNodes.reverbGain.connect(this.globalGainNode);
 
-    // Connect delay send
     this.splitter.connect(this.effectNodes.delay);
     this.effectNodes.delayGain.connect(this.globalGainNode);
 
-    // Connect phaser effect chain
     if (this.effectNodes.phaser && this.effectNodes.phaser.length > 0) {
       let phaserInput = this.splitter;
 
-      // Connect phaser chain
       for (let i = 0; i < this.effectNodes.phaser.length; i++) {
         phaserInput.connect(this.effectNodes.phaser[i]);
         phaserInput = this.effectNodes.phaser[i];
       }
 
-      // Connect phaser output through gain control
       phaserInput.connect(this.effectNodes.phaserGain);
       this.effectNodes.phaserGain.connect(this.globalGainNode);
     }
 
-    // Connect flanger effect
     if (this.effectNodes.flanger) {
       this.splitter.connect(this.effectNodes.flanger);
       this.effectNodes.flanger.connect(this.effectNodes.flangerGain);
       this.effectNodes.flangerGain.connect(this.globalGainNode);
     }
 
-    // Route to both main and cue outputs
     this.globalGainNode.connect(this.gainNode);
     this.globalGainNode.connect(this.cueGainNode);
     
@@ -288,9 +257,8 @@ class Deck {
   }
 
   /**
-   * Rate the source runs at. When the reversed window is playing, the source
-   * moves forward through backwards audio, so it takes the size of the rate
-   * while the sign stays with the reported position.
+   * The reversed window plays forwards through backwards audio, so the source
+   * takes the size of the rate and the sign stays with the reported position.
    */
   applySourceRate() {
     if (!this.source) return;
@@ -299,10 +267,8 @@ class Deck {
     const target = this.isReversed ? Math.abs(rate) : rate;
     const param = this.source.playbackRate;
 
-    // Under a hand the rate changes every frame, and stepping an audio param at
-    // frame rate is audible as zipper noise. Gliding there over a few
-    // milliseconds is most of what separates a scratch that sounds continuous
-    // from one that sounds sampled. The pitch fader still gets an exact value.
+    // Stepping the rate once a frame is audible as zipper noise, so under a hand
+    // it glides. The pitch fader still gets an exact value.
     if (this.scratchRate === null) {
       param.cancelScheduledValues(this.audioContext.currentTime);
       param.value = target;
@@ -314,9 +280,8 @@ class Deck {
 
   /**
    * A reversed copy of a short stretch around `position`, built on demand.
-   * Reversing the whole track is what the back-spin does, and at a hundred-odd
-   * megabytes for a long track it is far too much to hold just in case someone
-   * pulls the record backwards. A few seconds costs under two.
+   * Reversing a whole track, as the back-spin does, costs a hundred-odd
+   * megabytes; five seconds costs under two.
    */
   ensureReverseWindow(position) {
     const existing = this.reverseWindow;
@@ -325,8 +290,7 @@ class Deck {
     }
 
     const duration = this.getDuration();
-    // A little lead past the hand, so a stroke that turns around right here
-    // still has audio in front of it
+    // A little lead, so a stroke turning around here still has audio ahead
     const endTime = Math.min(duration, position + 0.25);
     const startTime = Math.max(0, endTime - Deck.REVERSE_WINDOW_SECONDS);
     if (endTime - startTime < 0.05) return null;
@@ -349,12 +313,7 @@ class Deck {
     return this.reverseWindow;
   }
 
-  /**
-   * Play backwards from `position`. Pulling a record back is audible on a real
-   * deck, and going quiet instead is the most obviously wrong thing about
-   * scratching here — this is the stopgap until an AudioWorklet owns the read
-   * head and the direction stops being a special case.
-   */
+  /** Play backwards from `position`, for when the worklet head is unavailable. */
   playReverseFrom(position) {
     if (!this.audioBuffer) return;
 
@@ -380,9 +339,8 @@ class Deck {
   }
 
   /**
-   * Build the worklet read head. Started when a track loads so the first grab
-   * does not have to wait on a module fetch, and deliberately forgiving: any
-   * failure just leaves scratching on the old spliced-source path.
+   * Build the worklet read head, at track load so the first grab does not wait
+   * on the module fetch. Any failure leaves scratching on the spliced path.
    */
   prepareScratchHead() {
     if (this.scratchHead || this.scratchHeadLoading) return this.scratchHeadLoading;
@@ -425,8 +383,7 @@ class Deck {
 
     const channels = [];
     for (let channel = 0; channel < this.audioBuffer.numberOfChannels; channel++) {
-      // A copy: handing over the AudioBuffer's own view would detach the buffer
-      // that normal playback is still going to use
+      // A copy: handing over the AudioBuffer's own view would detach it
       const copy = new Float32Array(
         this.audioBuffer.getChannelData(channel).subarray(first, first + length)
       );
@@ -530,18 +487,16 @@ class Deck {
       this.sourceGain = null;
     }
     
-    // Disconnect all audio nodes to prevent multiple connections accumulating
-    // This prevents audio degradation when loading new tracks after using gain controls
+    // Every node downstream, or connections accumulate across restarts and the
+    // signal degrades
     if (this.globalGainNode) {
       this.globalGainNode.disconnect();
     }
     if (this.gainNode) {
       this.gainNode.disconnect();
-      // Reconnect analyser if it exists (for VU meters)
       if (this.analyser) this.gainNode.connect(this.analyser);
     }
     
-    // Disconnect EQ nodes which also connect to gain nodes
     if (this.eqNodes) {
       if (this.eqNodes.high) this.eqNodes.high.disconnect();
       if (this.eqNodes.mid) this.eqNodes.mid.disconnect();
@@ -549,11 +504,9 @@ class Deck {
       if (this.eqNodes.filter) this.eqNodes.filter.disconnect();
     }
     
-    // Disconnect the splitter which is the source of multiple effect connections
     if (this.splitter) this.splitter.disconnect();
     if (this.merger) this.merger.disconnect();
 
-    // Disconnect the output effect nodes that connect to gain nodes
     if (this.effectNodes) {
       if (this.effectNodes.filter) this.effectNodes.filter.disconnect();
       if (this.effectNodes.reverbGain) this.effectNodes.reverbGain.disconnect();
@@ -570,16 +523,13 @@ class Deck {
       this.gainNode.gain.value = this.volume;
     }
 
-    // Update cue mixdown when volume changes
     window.mixerController.updateCueMixdown();
   }
 
-  // Pre-listen functionality
   enablePreListen() {
     this.isPreListenEnabled = true;
     console.log(`Deck ${this.deckId}: Pre-listen enabled`);
 
-    // Update the cue mixdown
     window.mixerController.updateCueMixdown();
   }
 
@@ -587,7 +537,6 @@ class Deck {
     this.isPreListenEnabled = false;
     console.log(`Deck ${this.deckId}: Pre-listen disabled`);
 
-    // Update the cue mixdown
     window.mixerController.updateCueMixdown();
   }
 
@@ -605,7 +554,7 @@ class Deck {
   setPitch(value) {
     const pitch = Math.max(-this.pitchRange, Math.min(this.pitchRange, value));
 
-    // Update tracking variables if playing to maintain accurate time
+    // Snapshot the position before the rate changes under it
     if (this.isPlaying) {
       const currentTime = this.getCurrentTime();
       this.lastRateChangeTime = this.audioContext.currentTime;
@@ -637,13 +586,11 @@ class Deck {
 
   setFilter(value) {
     if (this.effectNodes.filter) {
-      // Use logarithmic scale for more musical frequency response
-      // Map 0-100% in INVERSE direction for traditional DJ filter behavior
+
       const minFreq = 100; // 100Hz minimum (full filtering at 100%)
       const maxFreq = 15000; // 15kHz maximum (no filtering at 0%)
       
-      // Invert the value so slider works as expected
-      // 0% = no filtering (15kHz), 100% = heavy filtering (100Hz)
+      // Inverted, as DJ filters are: 0% is open at 15 kHz, 100% closed at 100 Hz
       const invertedValue = (100 - value) / 100;
       const logMin = Math.log(minFreq);
       const logMax = Math.log(maxFreq);
@@ -678,20 +625,17 @@ class Deck {
   }
 
   getCurrentTime() {
-    // While the worklet holds the head it is the only thing that knows where
-    // the record is; the wall-clock estimate below assumes a steady rate
+    // Only the worklet knows where the record is; the estimate below assumes a
+    // steady rate
     if (this.isScratchHeadEngaged) return this.scratchHeadPosition;
 
     if (!this.isPlaying) return this.isPaused ? this.pauseTime : 0;
     
-    // Calculate time since last rate change
     const currentWallClockTime = this.audioContext.currentTime;
     const wallClockElapsedSinceRateChange = currentWallClockTime - this.lastRateChangeTime;
     
-    // Calculate audio time elapsed since last rate change using current playback rate
     const audioTimeElapsedSinceRateChange = wallClockElapsedSinceRateChange * this.getEffectiveRate();
     
-    // Add to the position we were at when the rate last changed
     return this.lastRateChangePosition + audioTimeElapsedSinceRateChange;
   }
 
@@ -704,7 +648,6 @@ class Deck {
     const wasPlaying = this.isPlaying;
     const duration = this.getDuration();
 
-    // Clamp time to valid range
     time = Math.max(0, Math.min(time, duration));
 
     console.log(`Deck ${this.deckId}: Seeking to ${time.toFixed(2)}s (duration: ${duration.toFixed(2)}s, was playing: ${wasPlaying})`);
@@ -722,28 +665,23 @@ class Deck {
     console.log(`Deck ${this.deckId}: Seek completed - current time: ${this.getCurrentTime().toFixed(2)}s`);
   }
 
-  // CUE point methods
   resetCuePoints() {
     this.cuePoints = { 1: null, 2: null };
     this.defaultCuePoint = null;
     console.log(`Deck ${this.deckId}: CUE points reset`);
   }
 
-  // Loop cleanup method
   resetLoopPoints() {
-    // Stop any active looping
     if (this.isLooping) {
       this.stopLoopMonitoring();
       this.isLooping = false;
     }
     
-    // Reset loop points
     this.loopStart = null;
     this.loopEnd = null;
     this.originalLoopEnd = null;
     this.loopLengthPercentage = 100;
     
-    // Update UI to reflect cleared loop state
     this.controller.updateLoopInState(false, false);
     this.controller.updateLoopOutState(false);
     
@@ -764,7 +702,6 @@ class Deck {
     }
   }
 
-  // Jump to next beat
   jumpToNextBeat() {
     if (!this.audioBuffer) {
       console.log(`Deck ${this.deckId}: Cannot jump to next beat - no audio buffer loaded`);
@@ -777,7 +714,6 @@ class Deck {
     console.log(`Deck ${this.deckId}: Jumped to next beat at ${nextBeatTime.toFixed(3)}s`);
   }
 
-  // Jump to previous beat
   jumpToPreviousBeat() {
     if (!this.audioBuffer) {
       console.log(`Deck ${this.deckId}: Cannot jump to previous beat - no audio buffer loaded`);
@@ -790,13 +726,10 @@ class Deck {
     console.log(`Deck ${this.deckId}: Jumped to previous beat at ${previousBeatTime.toFixed(3)}s`);
   }
 
-  // Helper method to find the most recently set cue point
   getLastCueTime() {
-    // Check for manual cue points (prioritize CUE 2 over CUE 1)
     if (this.cuePoints[2] !== null) return this.cuePoints[2];
     if (this.cuePoints[1] !== null) return this.cuePoints[1];
     
-    // If no manual cue points are set, use the default cue point
     if (this.defaultCuePoint !== null) {
       console.log(`Deck ${this.deckId}: Using default CUE at ${this.defaultCuePoint}s`);
       return this.defaultCuePoint;
@@ -805,23 +738,18 @@ class Deck {
     return 0;
   }
 
-  // CUE mode methods for press-and-hold behavior
   startCueMode() {
     if (!this.audioBuffer) return;
     
-    // Ensure we have a default cue point set
     this.ensureDefaultCuePoint();
     
-    // If not playing, go to cue point and start playing
     if (!this.isPlaying) {
       this.seek(this.getLastCueTime());
     }
     
-    // Start playing and mark as cue active
     this.isCueActive = true;
     this.play();
     
-    // Update CUE button visual state
     this.controller.updateCueState(true);
     
     console.log(`Deck ${this.deckId}: CUE mode started`);
@@ -840,21 +768,17 @@ class Deck {
   stopCueMode() {
     if (!this.isCueActive) return;
     
-    // Stop playing and return to cue point
     this.pause();
     this.seek(this.getLastCueTime());
     
     this.isCueActive = false;
     
-    // Update CUE button visual state
     this.controller.updateCueState(false);
     
     console.log(`Deck ${this.deckId}: CUE mode stopped`);
   }
 
-  // Loop methods
   setLoopIn() {
-    // If loop points already exist, clear them for a fresh start
     if (this.loopStart !== null || this.loopEnd !== null) {
       this.isLooping = false;
       this.stopLoopMonitoring();
@@ -864,7 +788,6 @@ class Deck {
       this.loopLengthPercentage = 100;
       console.log(`Deck ${this.deckId}: Loop points cleared for fresh start`);
       
-      // Clear UI states
       this.controller.updateLoopInState(false);
       this.controller.updateLoopOutState(false);
       return;
@@ -873,7 +796,6 @@ class Deck {
     this.loopStart = this.findNearestBeat(this.getCurrentTime());
     console.log(`Deck ${this.deckId}: Loop IN set at ${this.loopStart}s`);
     
-    // Show only IN as active
     this.controller.updateLoopInState(true);
     this.controller.updateLoopOutState(false);
   }
@@ -889,7 +811,6 @@ class Deck {
       this.loopLengthPercentage = 100;
       console.log(`Deck ${this.deckId}: Loop disabled and points cleared`);
       
-      // Clear all UI states and enable IN button
       this.controller.updateLoopInState(false, false);
       this.controller.updateLoopOutState(false);
       return;
@@ -898,7 +819,6 @@ class Deck {
     // Only allow setting OUT if IN is already set
     if (this.loopStart === null) {
       console.log(`Deck ${this.deckId}: Cannot set Loop OUT - Loop IN must be set first`);
-      // Ensure UI state remains correct when validation fails
       this.controller.updateLoopOutState(false);
       return;
     }
@@ -908,7 +828,6 @@ class Deck {
     this.loopLengthPercentage = 100; // Reset to 100% when setting new loop out
     console.log(`Deck ${this.deckId}: Loop OUT set at ${this.loopEnd}s`);
     
-    // Automatically start the loop after setting OUT
     this.isLooping = true;
     this.startLoopMonitoring();
     console.log(`Deck ${this.deckId}: Loop started automatically`);
@@ -948,19 +867,15 @@ class Deck {
     }
   }
 
-  /**
-   * Rate actually feeding the source: whatever the platter is imposing while
-   * the record is in someone's hand, the pitch fader's rate otherwise.
-   */
+  /** The platter's rate while the record is held, the pitch fader's otherwise. */
   getEffectiveRate() {
     return this.scratchRate === null ? this.playbackRate : this.scratchRate;
   }
 
   /**
    * Hand the rate to the platter; null gives it back to the pitch fader.
-   * `position` pins where the head is for time reporting, which is what keeps
-   * the playhead honest at rate zero, when the audio is silent but the record
-   * is still moving under a hand.
+   * `position` pins the reported head, which matters at rate zero — silent, but
+   * still moving under a hand.
    */
   setScratchRate(rate, position = null) {
     if (this.isPlaying) {
@@ -973,9 +888,8 @@ class Deck {
   }
 
   /**
-   * Start the source at an exact position without disturbing transport state,
-   * so the platter can restart audio mid-gesture as the record changes
-   * direction. Unlike seek() this stays quiet and skips the stop() reset.
+   * Start at an exact position without disturbing transport state, so the
+   * platter can restart mid-gesture. Unlike seek() it skips the stop() reset.
    */
   playFrom(position) {
     this.isReversed = false;
@@ -992,9 +906,7 @@ class Deck {
     this.isPaused = true;
   }
 
-  // Pitch bend methods
   pitchBend(direction) {
-    // Store the original pitch when starting pitch bend
     if (!this.isPitchBending) {
       this.originalPitchBeforeBend = this.getPitch();
       this.isPitchBending = true;
@@ -1006,24 +918,20 @@ class Deck {
 
   stopPitchBend() {
     if (this.isPitchBending && this.originalPitchBeforeBend !== undefined) {
-      // Restore the original pitch
       this.setPitch(this.originalPitchBeforeBend);
       this.isPitchBending = false;
       this.originalPitchBeforeBend = undefined;
     }
   }
 
-  // Back-spin method
   async startBackSpin() {
     if (this.isBackSpinning || !this.audioBuffer || !this.source) return;
 
     this.isBackSpinning = true;
     const currentTime = this.getCurrentTime();
 
-    // Stop the current source
     this.stopSource();
 
-    // Create reversed buffer
     const reversedBuffer = this.audioContext.createBuffer(
       this.audioBuffer.numberOfChannels,
       this.audioBuffer.length,
@@ -1038,11 +946,9 @@ class Deck {
       }
     }
 
-    // Create new source for reversed playback
     this.source = this.audioContext.createBufferSource();
     this.source.buffer = reversedBuffer;
 
-    // Connect audio chain
     this.source.connect(this.effectNodes.filter);
     this.effectNodes.filter.connect(this.eqNodes.low);
     this.eqNodes.low.connect(this.eqNodes.mid);
@@ -1058,14 +964,11 @@ class Deck {
     this.source.playbackRate.setValueAtTime(2.5, now);
     this.source.playbackRate.exponentialRampToValueAtTime(0.15, now + duration);
 
-    // Start from current position in reversed buffer
     const reversedStartTime = Math.max(0, reversedBuffer.duration - currentTime);
     this.source.start(now, reversedStartTime, duration);
 
-    // Stop and pause after effect
     setTimeout(() => {
       this.isBackSpinning = false;
-      // Call controller's pause method to properly update UI state
       this.controller.pause();
     }, duration * 1000);
   }
@@ -1075,17 +978,14 @@ class Deck {
   }
 
   getBPM() {
-    // Return the current BPM adjusted for pitch changes
     return this.bpmAnalyzer.getBPM(this.playbackRate);
   }
 
   getBaseBPM() {
-    // Return the original BPM without pitch adjustments
     return this.bpmAnalyzer.getBaseBPM();
   }
 
   getAudioStartOffset() {
-    // Return the time when actual audio content starts
     return this.bpmAnalyzer.getAudioStartOffset();
   }
 
@@ -1103,7 +1003,6 @@ class Deck {
     return dataArray;
   }
 
-  // Get the current global gain value (from EQ gain control)
   getGlobalGain() {
     return this.globalGainNode ? this.globalGainNode.gain.value : 1.0;
   }
@@ -1122,11 +1021,9 @@ class DeckController {
     
     this.setupEventListeners();
     
-    // Initialize effects controller for this deck
     this.effectsController = new EffectsController(deckId);
   }
 
-  // Reset TAP functionality when loading a new track
   resetTapState() {
     this.tapTimes = [];
     if (this.tapTimeout) {
@@ -1135,21 +1032,18 @@ class DeckController {
     }
   }
 
-  // Utility function for creating deck method button handlers
   createDeckMethodHandler(buttonName, deckMethod, ...args) {
     window.buttonHandler.createClickHandler(`${buttonName}${this.deckId}`, () => {
       window.buttonHandler.callDeckMethod(this.deckId, deckMethod, ...args);
     });
   }
 
-  // Utility function for creating controller method button handlers
   createControllerMethodHandler(buttonName, controllerMethod) {
     window.buttonHandler.createClickHandler(`${buttonName}${this.deckId}`, () => {
       this[controllerMethod]();
     });
   }
 
-  // Utility function for creating slider handlers with unified pattern
   createSliderHandler(sliderId, deckMethod, displayOptions = {}) {
     const slider = document.getElementById(sliderId);
     if (!slider) return;
@@ -1161,7 +1055,6 @@ class DeckController {
         deck[deckMethod](value);
       }
 
-      // Update display element if configured
       if (displayOptions.updateDisplay !== false) {
         const displayElement = displayOptions.displayElement || e.target.nextElementSibling;
         if (displayElement) {
@@ -1170,7 +1063,6 @@ class DeckController {
         }
       }
 
-      // Call additional callback if provided
       if (displayOptions.callback && typeof displayOptions.callback === 'function') {
         displayOptions.callback(value);
       }
@@ -1178,7 +1070,6 @@ class DeckController {
   }
 
   setupEventListeners() {
-    // File input
     const fileInput = document.getElementById(`fileInput${this.deckId}`);
     fileInput.addEventListener('change', async (e) => {
       const file = e.target.files[0];
@@ -1187,18 +1078,14 @@ class DeckController {
       }
     });
 
-    // Drag and drop functionality
     this.setupDragAndDrop();
 
-    // Transport controls
     this.createControllerMethodHandler('play', 'play');
     this.createControllerMethodHandler('pause', 'pause');
     this.createControllerMethodHandler('stop', 'stop');
 
-    // Back-spin button
     this.createDeckMethodHandler('backSpin', 'startBackSpin');
 
-    // CUE button - press and hold behavior
     window.buttonHandler.createPressAndHoldHandler(
       `cue${this.deckId}`,
       () => {
@@ -1213,14 +1100,12 @@ class DeckController {
     // the element, for the spin animation
     this.vinylElement = document.getElementById(`vinyl${this.deckId}`);
 
-    // Pitch control (vertical)
     this.createSliderHandler(`pitch${this.deckId}`, 'setPitch', {
       displayElement: document.getElementById(`pitchDisplay${this.deckId}`),
       suffix: '%',
       callback: () => this.updateBPMDisplay()
     });
 
-    // EQ controls
     ['high', 'mid', 'low', 'gain'].forEach(band => {
       this.createSliderHandler(`${band}${this.deckId}`, 'setEQ', {
         updateDisplay: false, // We'll handle display manually because setEQ needs band parameter
@@ -1229,7 +1114,6 @@ class DeckController {
           if (deck) {
             deck.setEQ(band, value);
           }
-          // Update display manually
           const slider = document.getElementById(`${band}${this.deckId}`);
           if (slider && slider.parentNode && slider.parentNode.nextElementSibling) {
             slider.parentNode.nextElementSibling.textContent = value;
@@ -1237,19 +1121,16 @@ class DeckController {
         }
       });
 
-      // EQ KILL button - press and hold behavior
       window.buttonHandler.createPressAndHoldHandler(
         `${band}Kill${this.deckId}`,
         () => {
           const deck = window.audioEngine.getDeck(this.deckId);
           const slider = document.getElementById(`${band}${this.deckId}`);
           if (deck && slider) {
-            // Store original value before killing
             slider.dataset.originalValue = slider.value;
             // Set to minimum value (-25) to "kill" the band
             slider.value = -25;
             deck.setEQ(band, -25);
-            // Update display
             if (slider.parentNode && slider.parentNode.nextElementSibling) {
               slider.parentNode.nextElementSibling.textContent = '-25';
             }
@@ -1259,30 +1140,24 @@ class DeckController {
           const deck = window.audioEngine.getDeck(this.deckId);
           const slider = document.getElementById(`${band}${this.deckId}`);
           if (deck && slider && slider.dataset.originalValue !== undefined) {
-            // Restore original value when kill button is released
             const originalValue = parseInt(slider.dataset.originalValue);
             slider.value = originalValue;
             deck.setEQ(band, originalValue);
-            // Update display
             if (slider.parentNode && slider.parentNode.nextElementSibling) {
               slider.parentNode.nextElementSibling.textContent = originalValue.toString();
             }
-            // Clean up stored value
             delete slider.dataset.originalValue;
           }
         },
         { updateActiveState: true }
       );
 
-      // EQ RESET button - click behavior
       window.buttonHandler.createClickHandler(`${band}Reset${this.deckId}`, () => {
         const deck = window.audioEngine.getDeck(this.deckId);
         const slider = document.getElementById(`${band}${this.deckId}`);
         if (deck && slider) {
-          // Reset to 0
           slider.value = 0;
           deck.setEQ(band, 0);
-          // Update display
           if (slider.parentNode && slider.parentNode.nextElementSibling) {
             slider.parentNode.nextElementSibling.textContent = '0';
           }
@@ -1290,15 +1165,12 @@ class DeckController {
       });
     });
 
-    // Volume control
     this.createSliderHandler(`volume${this.deckId}`, 'setVolume', { suffix: '%' });
 
-    // Effects controls
     ['filter', 'reverb', 'delay', 'phaser', 'flanger'].forEach(effect => {
       this.createSliderHandler(`${effect}${this.deckId}`, `set${effect.charAt(0).toUpperCase() + effect.slice(1)}`);
     });
 
-    // Pitch bend buttons - press and hold behavior
     window.buttonHandler.createPressAndHoldHandler(
       `pitchBendPlus${this.deckId}`,
       () => window.buttonHandler.callDeckMethod(this.deckId, 'pitchBend', 1),
@@ -1313,25 +1185,20 @@ class DeckController {
       { updateActiveState: false }
     );
 
-    // Pitch reset button
     window.buttonHandler.createClickHandler(`pitchReset${this.deckId}`, () => {
       this.resetPitch();
     });
 
-    // CUE point controls
     this.createDeckMethodHandler('cue1', 'jumpToCue', 1);
     this.createDeckMethodHandler('cue2', 'jumpToCue', 2);
     this.createDeckMethodHandler('setCue1', 'setCuePoint', 1);
     this.createDeckMethodHandler('setCue2', 'setCuePoint', 2);
 
-    // Beat navigation controls
     this.createDeckMethodHandler('previousBeat', 'jumpToPreviousBeat');
     this.createDeckMethodHandler('nextBeat', 'jumpToNextBeat');
 
-    // TAP
     this.createControllerMethodHandler('tap', 'handleTap');
 
-    // Loop controls
     this.createDeckMethodHandler('loopIn', 'setLoopIn');
     this.createDeckMethodHandler('loopOut', 'setLoopOut');
     this.createSliderHandler(`loopLength${this.deckId}`, 'setLoopLength', {
@@ -1339,7 +1206,6 @@ class DeckController {
       suffix: '%'
     });
 
-    // Reset effects
     this.createControllerMethodHandler('resetFilters', 'resetFilters');
   }
 
@@ -1347,12 +1213,10 @@ class DeckController {
     const deckElement = document.getElementById(`deck${this.deckId}`);
     if (!deckElement) return;
 
-    // Helper function to check if file is audio
     const isAudioFile = (file) => {
       return file && file.type && file.type.startsWith('audio/');
     };
 
-    // Prevent default drag behaviors
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
       deckElement.addEventListener(eventName, (e) => {
         e.preventDefault();
@@ -1360,15 +1224,12 @@ class DeckController {
       });
     });
 
-    // Handle drag enter
     deckElement.addEventListener('dragenter', (e) => {
-      // Check if dragged item contains files
       if (e.dataTransfer && e.dataTransfer.types.includes('Files')) {
         deckElement.classList.add('drag-active');
       }
     });
 
-    // Handle drag over (hovering)
     deckElement.addEventListener('dragover', (e) => {
       if (e.dataTransfer && e.dataTransfer.types.includes('Files')) {
         // Check if the files appear to be audio (we can't fully validate without dropping)
@@ -1380,14 +1241,12 @@ class DeckController {
           deckElement.classList.add('drag-over');
           deckElement.classList.remove('drag-invalid');
         } else if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
-          // Has files but not audio
           deckElement.classList.add('drag-invalid');
           deckElement.classList.remove('drag-over');
         }
       }
     });
 
-    // Handle drag leave
     deckElement.addEventListener('dragleave', (e) => {
       // Only remove classes if we're leaving the deck element itself
       // (not just moving between child elements)
@@ -1396,16 +1255,13 @@ class DeckController {
       }
     });
 
-    // Handle file drop
     deckElement.addEventListener('drop', async (e) => {
-      // Remove all drag classes
       deckElement.classList.remove('drag-active', 'drag-over', 'drag-invalid');
       
       const files = Array.from(e.dataTransfer.files);
       
       if (files.length === 0) return;
       
-      // Find the first audio file
       const audioFile = files.find(isAudioFile);
       
       if (audioFile) {
@@ -1413,13 +1269,11 @@ class DeckController {
         
         console.log(`Deck ${this.deckId}: Successfully loaded track via drag and drop: ${audioFile.name}`);
       } else {
-        // Show error feedback for invalid file types
         deckElement.classList.add('drag-invalid');
         setTimeout(() => {
           deckElement.classList.remove('drag-invalid');
         }, 2000);
         
-        // Provide user-friendly error message
         const trackInfo = document.getElementById(`trackInfo${this.deckId}`);
         const originalContent = trackInfo.innerHTML;
         trackInfo.style.color = Theme.color('color-secondary');
@@ -1441,16 +1295,13 @@ class DeckController {
     const deck = window.audioEngine.getDeck(this.deckId);
     const trackInfo = document.getElementById(`trackInfo${this.deckId}`);
         
-    // Stop current track if playing before loading new one
     this.stop();
     
-    // Reset TAP state for new track
     this.resetTapState();
     
     // Reset pitch to 0% when loading new track for consistent BPM calculation
     this.resetPitch();
         
-    // Show loading state
     trackInfo.classList.add('loading');
     trackInfo.querySelector('.track-name').textContent = 'Loading...';
 
@@ -1458,31 +1309,24 @@ class DeckController {
       const success = await deck.loadFile(file);
 
       if (success) {
-        // Reset cues
         deck.resetCuePoints();
       
-        // Reset loops
         deck.resetLoopPoints();
       
-        // Reset loop length slider UI
         const loopLengthSlider = document.getElementById(`loopLength${this.deckId}`);
         const loopLengthDisplay = document.getElementById(`loopLengthValue${this.deckId}`);
         if (loopLengthSlider) loopLengthSlider.value = 100;
         if (loopLengthDisplay) loopLengthDisplay.textContent = '100%';
       
-        // Extract metadata and update track display
         await this.extractAndDisplayMetadata(file);
         this.updateTrackTime();
             
-        // Generate main waveform
         const waveformRenderer = window.waveformRenderers[this.deckId];
         await waveformRenderer.generateWaveform(deck.audioBuffer);
       
-        // Generate beat matching waveforms
         const beatWaveformRenderer = window.beatWaveformRenderers[this.deckId];
         await beatWaveformRenderer.generateWaveform(deck.audioBuffer);
             
-        // Update BPM display
         this.updateBPMDisplay();
       } else {
         trackInfo.querySelector('.track-name').textContent = 'Failed to load';
@@ -1495,50 +1339,40 @@ class DeckController {
 
   async extractAndDisplayMetadata(file) {
     return new Promise((resolve) => {
-      // Store reference to this context for use in callback
       const self = this;
       
-      // Get deck instance to access bpmAnalyzer
       const deck = window.audioEngine.getDeck(self.deckId);
       
-      // Use jsmediatags to extract metadata
       window.jsmediatags.read(file, {
         onSuccess: (tag) => {
           const tags = tag.tags;
           let displayTitle = '';
           
-          // Extract artist and title
           const artist = tags.artist || '';
           const title = tags.title || '';
           const album = tags.album || '';
           
-          // Format display title
           if (artist && title) {
             displayTitle = `${artist} - ${title}`;
           } else if (title) {
             displayTitle = title;
           } else {
-            // Fallback to filename parsing
             displayTitle = self.parseFilenameForMetadata(file.name);
           }
           
-          // Update track name display
           const trackNameElement = document.querySelector(`#trackInfo${self.deckId} .track-name`);
           trackNameElement.textContent = displayTitle;
           
-          // Add album info if available
           if (album) {
             trackNameElement.title = `Album: ${album}`;
           }
           
-          // Handle album cover
           self.displayAlbumCover(tags.picture);
           
           resolve();
         },
         onError: (error) => {
           console.log('Metadata extraction failed:', error);
-          // Fallback to filename parsing
           const trackNameElement = document.querySelector(`#trackInfo${self.deckId} .track-name`);
           trackNameElement.textContent = self.parseFilenameForMetadata(file.name);
           self.displayAlbumCover(null);
@@ -1549,10 +1383,8 @@ class DeckController {
   }
 
   parseFilenameForMetadata(filename) {
-    // Remove file extension
     const nameWithoutExt = filename.replace(/\.[^/.]+$/, '');
     
-    // Try to parse common patterns
     const patterns = [
       /^(\d+[\s\-_]*)?(.+?)\s*[\-_]\s*(.+)$/, // "01 - Artist - Title" or "Artist - Title"
       /^(.+?)[\s\-_]+(.+)$/                   // "Artist Title" or "Artist_Title"
@@ -1568,7 +1400,6 @@ class DeckController {
       }
     }
     
-    // If no pattern matches, return cleaned filename
     return nameWithoutExt.trim();
   }
 
@@ -1577,16 +1408,13 @@ class DeckController {
     
     if (pictureData && pictureData.data) {
       try {
-        // Create blob from picture data
         const byteArray = new Uint8Array(pictureData.data);
         const blob = new Blob([byteArray], { type: pictureData.format });
         const imageUrl = URL.createObjectURL(blob);
         
-        // Set image source and show it
         albumCoverElement.src = imageUrl;
         albumCoverElement.style.display = 'block';
         
-        // Clean up previous blob URL
         if (albumCoverElement.dataset.blobUrl) {
           URL.revokeObjectURL(albumCoverElement.dataset.blobUrl);
         }
@@ -1604,7 +1432,6 @@ class DeckController {
     const albumCoverElement = document.getElementById(`albumCover${this.deckId}`);
     albumCoverElement.style.display = 'none';
     
-    // Clean up blob URL if exists
     if (albumCoverElement.dataset.blobUrl) {
       URL.revokeObjectURL(albumCoverElement.dataset.blobUrl);
       delete albumCoverElement.dataset.blobUrl;
@@ -1617,11 +1444,9 @@ class DeckController {
       deck.play();
       this.updatePlayingState(true);
       this.updatePauseState(false);
-      // Start vinyl animation
       if (this.vinylElement && !this.isScratching) {
         this.vinylElement.classList.add('spinning');
       }
-      // Resume waveform animations
       if (window.waveformRenderers && window.waveformRenderers[this.deckId]) {
         window.waveformRenderers[this.deckId].startAnimation();
       }
@@ -1637,7 +1462,6 @@ class DeckController {
       deck.pause();
       this.updatePlayingState(false);
       this.updatePauseState(true);
-      // Stop vinyl animation
       if (this.vinylElement) {
         this.vinylElement.classList.remove('spinning');
       }
@@ -1650,11 +1474,9 @@ class DeckController {
       deck.stop();
       this.updatePlayingState(false);
       this.updatePauseState(false);
-      // Stop vinyl animation
       if (this.vinylElement) {
         this.vinylElement.classList.remove('spinning');
       }
-      // Force waveform update to show position at beginning
       if (window.waveformRenderers && window.waveformRenderers[this.deckId]) {
         window.waveformRenderers[this.deckId].updatePlayhead();
         window.waveformRenderers[this.deckId].render();
@@ -1709,7 +1531,6 @@ class DeckController {
   resetFilters() {
     const deck = window.audioEngine.getDeck(this.deckId);
 
-    // Reset effects controls only (not EQ)
     const effects = [
       { id: 'filter', defaultValue: 0 },
       { id: 'reverb', defaultValue: 0 },
@@ -1742,14 +1563,11 @@ class DeckController {
   resetPitch() {
     const deck = window.audioEngine.getDeck(this.deckId);
 
-    // Reset pitch to 0%
     deck.setPitch(0);
     
-    // Update the slider and display
     document.getElementById(`pitch${this.deckId}`).value = 0;
     document.getElementById(`pitchDisplay${this.deckId}`).textContent = '0%';
     
-    // Update BPM display
     this.updateBPMDisplay();
   }
 
@@ -1769,33 +1587,26 @@ class DeckController {
     const now = Date.now();
     const deck = window.audioEngine.getDeck(this.deckId);
 
-    // Initialize tap intervals array if not exists
     if (!this.tapIntervals) {
       this.tapIntervals = [];
     }
 
-    // If we have a previous tap, calculate the interval
     if (this.lastTapTime) {
       const interval = now - this.lastTapTime;
       this.tapIntervals.push(interval);
       
-      // Keep only the last 8 intervals (rolling window)
       this.tapIntervals = this.tapIntervals.slice(-8);
     }
     
-    // Store current tap time as the last tap
     this.lastTapTime = now;
     
-    // Provide visual feedback
     const tapButton = document.getElementById(`tap${this.deckId}`);
     tapButton.classList.add('active');
     
-    // Clear previous timeout
     if (this.tapTimeout) {
       clearTimeout(this.tapTimeout);
     }
     
-    // Remove active class after 150ms
     this.tapTimeout = setTimeout(() => {
       tapButton.classList.remove('active');
     }, 150);

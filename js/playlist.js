@@ -6,10 +6,8 @@ class Playlist {
   static AUDIO_EXTENSIONS = /\.(mp3|m4a|aac|wav|flac|ogg|opus|aif|aiff)$/i;
 
   constructor() {
-    // The list is deliberately session-only. A dropped File cannot be
-    // reopened after a reload, so a restored list would be a list of rows
-    // that refuse to play — better to start empty and have the folder
-    // dropped again.
+    // Session-only: a dropped File cannot be reopened after a reload, so a
+    // restored list would be rows that refuse to play
     this.tracks = [];
     this.rowsById = new Map();
     this.filter = '';
@@ -71,9 +69,8 @@ class Playlist {
       this.loadToDeck(row.dataset.id, button.dataset.deck);
     });
 
-    // Folders are dropped on the window, not just the panel: the point of the
-    // feature is that you drag a folder in and it appears. Decks stop 'drop'
-    // from bubbling, so a folder dropped on a deck never reaches here.
+    // Dropped anywhere on the window, since the point is that you drag a folder
+    // in and it appears. Decks stop 'drop' bubbling, so those never reach here.
     ['dragenter', 'dragover'].forEach(name => {
       window.addEventListener(name, (e) => {
         if (!this.dragCarriesFiles(e)) return;
@@ -146,8 +143,8 @@ class Playlist {
 
     if (!entry.isDirectory) return;
 
-    // readEntries hands back the directory in batches (100 at a time in
-    // Chrome) and signals the end with an empty one, so it has to be drained.
+    // readEntries hands back batches of 100 and signals the end with an empty
+    // one, so it has to be drained
     const reader = entry.createReader();
     while (true) {
       const batch = await new Promise((resolve) => reader.readEntries(resolve, () => resolve([])));
@@ -185,8 +182,7 @@ class Playlist {
       fresh.push(track);
     }
 
-    // Newest at the top: after dropping a second folder you want to see what
-    // you just added, not scroll past the first one to find it.
+    // Newest first: after a second folder you want what you just added
     this.tracks = [...fresh, ...this.tracks];
 
     this.render();
@@ -381,10 +377,8 @@ class Playlist {
 
     await controller.loadTrack(track.file);
 
-    // Tempo is only knowable once the deck has decoded and analysed the file,
-    // so this is the one moment the row can learn it. It sticks for the
-    // session, which is the point: the second time you reach for a track its
-    // BPM is already on the row.
+    // The deck analyses on load, so this is the one moment the row can learn the
+    // tempo; it sticks, so the second reach for a track already shows it
     track.bpm = window.audioEngine.getDeck(deckId)?.getBaseBPM() || null;
     this.updateRow(track);
   }

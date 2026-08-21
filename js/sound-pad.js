@@ -151,7 +151,6 @@ class SoundPad {
         const value = parseInt(e.target.value);
         this.volume = value / 100;
         
-        // Update volume of all currently playing sounds
         this.activeGainNodes.forEach(gainNode => {
           gainNode.gain.value = this.volume;
         });

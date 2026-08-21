@@ -26,18 +26,14 @@ class AudioEngine {
     try {
       this.audioContext = new AudioContext({ sampleRate: 44100 });
 
-      // Create stereo channel merger for CUE (left) and MAIN (right) outputs
       this.channelMerger = this.audioContext.createChannelMerger(2);
 
-      // Create separate gain nodes for CUE and MAIN outputs
       this.cueGain = this.audioContext.createGain();
       this.masterGain = this.audioContext.createGain();
 
-      // Set initial volumes
       this.cueGain.gain.value = 0.5;
       this.masterGain.gain.value = 0.75;
 
-      // Create a media stream destination for recording
       this.mediaStreamDestination = this.audioContext.createMediaStreamDestination();
 
       this.setOutputRouting(this.outputRouting);
@@ -45,7 +41,6 @@ class AudioEngine {
       this.decks.A = new Deck(this.audioContext, this.masterGain, this.cueGain, 'A');
       this.decks.B = new Deck(this.audioContext, this.masterGain, this.cueGain, 'B');
 
-      // Set initial deck volumes
       this.decks.A.setVolume(100);
       this.decks.B.setVolume(0);
 
@@ -124,7 +119,6 @@ class AudioEngine {
     try {
       this.recordedChunks = [];
       
-      // Use audio/webm;codecs=opus for best compatibility
       const options = { mimeType: 'audio/webm;codecs=opus' };
       
       // Fallback for browsers that don't support the preferred codec

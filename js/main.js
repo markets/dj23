@@ -31,16 +31,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   console.log('✅ Ready to mix!');
     
-  // Mobile browsers keep the audio context suspended until a user gesture, and
-  // can re-suspend it when the page goes to the background. Listening on every
-  // gesture rather than only the first means an early stray tap — a scroll, the
-  // bottom nav — can't swallow the one chance to start audio.
+  // Mobile suspends the audio context until a gesture, and again on backgrounding.
+  // Every gesture, not just the first, so a stray tap cannot swallow the chance.
   const resume = () => window.audioEngine?.resumeContext();
   document.addEventListener('pointerdown', resume);
   document.addEventListener('keydown', resume);
 });
 
-// Separate the sticky top bar from the content scrolling underneath it
 function setupStickyTopbar() {
   const topbar = document.getElementById('appTopbar');
   if (!topbar) return;
