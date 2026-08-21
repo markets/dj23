@@ -1982,7 +1982,7 @@ input[type="range"]::-moz-range-thumb {
 .playlist-search {
   flex: 1;
   min-width: 0;
-  padding: var(--spacing-xs) var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-sm);
   border: 1px solid var(--border-secondary);
   border-radius: var(--radius-sm);
   background: var(--bg-primary);
@@ -2001,8 +2001,8 @@ input[type="range"]::-moz-range-thumb {
 .playlist-search::-webkit-search-cancel-button {
   -webkit-appearance: none;
   appearance: none;
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   cursor: pointer;
   background-color: var(--text-muted);
   mask: url('../images/icons/close.svg') center / contain no-repeat;
@@ -2023,7 +2023,7 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .playlist-action {
-  padding: var(--spacing-xs) var(--spacing-md);
+  padding: var(--spacing-md);
   border: 1px solid var(--border-secondary);
   border-radius: var(--radius-sm);
   background: var(--bg-tertiary);
