@@ -3,6 +3,24 @@ class Deck {
   static PITCH_RANGES = [8, 16, 32, 64];
   static DEFAULT_PITCH_RANGE = 32;
 
+  /** How much of the track is kept reversed for backwards scratching. */
+  static REVERSE_WINDOW_SECONDS = 5;
+
+  /** Fade over a source restart, long enough to hide the step, short enough
+   *  not to be heard as a gap. */
+  static DECLICK_SECONDS = 0.005;
+
+  /** Time constant the scratch rate glides over, instead of stepping. */
+  static RATE_GLIDE_SECONDS = 0.004;
+
+  /**
+   * How much track the scratch head is handed. It has to be a copy — the
+   * worklet cannot be given the AudioBuffer's own views without detaching the
+   * buffer normal playback still needs — so a whole track would mean a second
+   * copy of it in memory. Twenty seconds is more than any gesture covers.
+   */
+  static SCRATCH_WINDOW_SECONDS = 20;
+
   constructor(audioContext, mainOutput, cueOutput, deckId) {
     this.audioContext = audioContext;
     this.mainOutput = mainOutput;
@@ -15,6 +33,7 @@ class Deck {
     this.cueGainNode = null;
     this.eqNodes = {};
     this.effectNodes = {};
+    this.sourceGain = null;
 
     this.isPlaying = false;
     this.isPaused = false;
@@ -35,15 +54,20 @@ class Deck {
     // Initialize BPM analyzer
     this.bpmAnalyzer = new BPMAnalyzer(audioContext, deckId);
 
-    // Scratching properties
-    this.isScratching = false;
-    this.originalPlaybackRate = 1;
-    this.wasPlayingBeforeScratch = false;
-    this.scratchMomentum = 0;
-    this.currentScratchRate = 0;
-    this.lastScratchInput = 0;
-    this.lastScratchTime = 0;
-    this.scratchDecelerationInterval = null;
+    // Rate the platter is imposing while the record is held, null when the
+    // pitch fader is back in charge. See Platter in js/vinyl.js.
+    this.scratchRate = null;
+    this.isReversed = false;
+    this.reverseWindow = null;
+
+    // The worklet read head, used only while the record is held. Normal
+    // playback stays on the buffer source, so this is allowed to be missing:
+    // if the module never loads, scratching falls back to splicing sources.
+    this.scratchHead = null;
+    this.scratchHeadLoading = null;
+    this.isScratchHeadEngaged = false;
+    this.scratchHeadPosition = 0;
+    this.scratchWindow = null;
 
     // Pitch bend properties
     this.isPitchBending = false;
@@ -117,6 +141,7 @@ class Deck {
     try {
       // Drop the old track first so both buffers are never held at once
       this.audioBuffer = null;
+      this.reverseWindow = null;
 
       const arrayBuffer = await file.arrayBuffer();
       this.audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
@@ -134,6 +159,8 @@ class Deck {
     } catch (error) {
       console.error('Beat analysis failed, BPM unknown — use TAP:', error);
     }
+
+    this.prepareScratchHead();
 
     return true;
   }
@@ -166,12 +193,50 @@ class Deck {
 
     this.stopSource(); // Use stopSource instead of stop() to preserve pause state
 
+    this.isReversed = false;
     this.source = this.audioContext.createBufferSource();
     this.source.buffer = this.audioBuffer;
-    this.source.playbackRate.value = this.playbackRate;
+    this.applySourceRate();
+
+    this.connectSource();
+
+    // Start from the saved resume time
+    this.source.start(0, resumeTime);
+    this.startTime = this.audioContext.currentTime - resumeTime;
+    
+    // Initialize audio time tracking
+    this.lastRateChangeTime = this.audioContext.currentTime;
+    this.lastRateChangePosition = resumeTime;
+    this.previousPlaybackRate = this.playbackRate;
+    
+    this.isPlaying = true;
+    this.isPaused = false;
+  }
+
+  connectSource() {
+    this.connectFrom(this.source);
+  }
+
+  /** Wire whatever is producing audio through effects, EQ and out to both buses. */
+  connectFrom(origin) {
+    // Its own gain, not globalGainNode: that one is the EQ's GAIN band and the
+    // VU meters read it, so borrowing it for a fade would move the user's knob
+    this.sourceGain = this.audioContext.createGain();
+
+    // A restart jumps the read head, and a jump in a waveform is a step, which
+    // is what a click is. Coming up from zero keeps the incoming source from
+    // opening mid-waveform at full amplitude — measured, that is a 0.99 step
+    // turned into 0. The outgoing source is still cut abruptly: overlapping the
+    // two would need the shared effect chain to carry both at once, which this
+    // graph cannot do without duplicating connections. Splices stop existing
+    // altogether once an AudioWorklet owns the read head.
+    const now = this.audioContext.currentTime;
+    this.sourceGain.gain.setValueAtTime(0, now);
+    this.sourceGain.gain.linearRampToValueAtTime(1, now + Deck.DECLICK_SECONDS);
 
     // Connect the main effect chain
-    this.source.connect(this.effectNodes.filter);
+    origin.connect(this.sourceGain);
+    this.sourceGain.connect(this.effectNodes.filter);
     this.effectNodes.filter.connect(this.eqNodes.low);
     this.eqNodes.low.connect(this.eqNodes.mid);
     this.eqNodes.mid.connect(this.eqNodes.high);
@@ -220,18 +285,220 @@ class Deck {
     
     this.gainNode.connect(this.mainOutput);
     this.cueGainNode.connect(this.cueOutput);
+  }
 
-    // Start from the saved resume time
-    this.source.start(0, resumeTime);
-    this.startTime = this.audioContext.currentTime - resumeTime;
-    
-    // Initialize audio time tracking
+  /**
+   * Rate the source runs at. When the reversed window is playing, the source
+   * moves forward through backwards audio, so it takes the size of the rate
+   * while the sign stays with the reported position.
+   */
+  applySourceRate() {
+    if (!this.source) return;
+
+    const rate = this.getEffectiveRate();
+    const target = this.isReversed ? Math.abs(rate) : rate;
+    const param = this.source.playbackRate;
+
+    // Under a hand the rate changes every frame, and stepping an audio param at
+    // frame rate is audible as zipper noise. Gliding there over a few
+    // milliseconds is most of what separates a scratch that sounds continuous
+    // from one that sounds sampled. The pitch fader still gets an exact value.
+    if (this.scratchRate === null) {
+      param.cancelScheduledValues(this.audioContext.currentTime);
+      param.value = target;
+      return;
+    }
+
+    param.setTargetAtTime(target, this.audioContext.currentTime, Deck.RATE_GLIDE_SECONDS);
+  }
+
+  /**
+   * A reversed copy of a short stretch around `position`, built on demand.
+   * Reversing the whole track is what the back-spin does, and at a hundred-odd
+   * megabytes for a long track it is far too much to hold just in case someone
+   * pulls the record backwards. A few seconds costs under two.
+   */
+  ensureReverseWindow(position) {
+    const existing = this.reverseWindow;
+    if (existing && position <= existing.endTime && position >= existing.startTime) {
+      return existing;
+    }
+
+    const duration = this.getDuration();
+    // A little lead past the hand, so a stroke that turns around right here
+    // still has audio in front of it
+    const endTime = Math.min(duration, position + 0.25);
+    const startTime = Math.max(0, endTime - Deck.REVERSE_WINDOW_SECONDS);
+    if (endTime - startTime < 0.05) return null;
+
+    const rate = this.audioBuffer.sampleRate;
+    const firstSample = Math.floor(startTime * rate);
+    const length = Math.floor((endTime - startTime) * rate);
+    const channels = this.audioBuffer.numberOfChannels;
+
+    const buffer = this.audioContext.createBuffer(channels, length, rate);
+    for (let channel = 0; channel < channels; channel++) {
+      const source = this.audioBuffer.getChannelData(channel);
+      const target = buffer.getChannelData(channel);
+      for (let i = 0; i < length; i++) {
+        target[i] = source[firstSample + length - 1 - i];
+      }
+    }
+
+    this.reverseWindow = { buffer, startTime, endTime };
+    return this.reverseWindow;
+  }
+
+  /**
+   * Play backwards from `position`. Pulling a record back is audible on a real
+   * deck, and going quiet instead is the most obviously wrong thing about
+   * scratching here — this is the stopgap until an AudioWorklet owns the read
+   * head and the direction stops being a special case.
+   */
+  playReverseFrom(position) {
+    if (!this.audioBuffer) return;
+
+    const window = this.ensureReverseWindow(position);
+    if (!window) return;
+
+    this.stopSource();
+
+    this.isReversed = true;
+    this.source = this.audioContext.createBufferSource();
+    this.source.buffer = window.buffer;
+    this.applySourceRate();
+
+    this.connectSource();
+
+    // Mirrored: later in the track is earlier in the reversed window
+    this.source.start(0, Math.max(0, window.endTime - position));
+
     this.lastRateChangeTime = this.audioContext.currentTime;
-    this.lastRateChangePosition = resumeTime;
-    this.previousPlaybackRate = this.playbackRate;
-    
+    this.lastRateChangePosition = position;
     this.isPlaying = true;
     this.isPaused = false;
+  }
+
+  /**
+   * Build the worklet read head. Started when a track loads so the first grab
+   * does not have to wait on a module fetch, and deliberately forgiving: any
+   * failure just leaves scratching on the old spliced-source path.
+   */
+  prepareScratchHead() {
+    if (this.scratchHead || this.scratchHeadLoading) return this.scratchHeadLoading;
+
+    this.scratchHeadLoading = this.audioContext.audioWorklet
+      .addModule('js/scratch-head.js')
+      .then(() => {
+        this.scratchHead = new AudioWorkletNode(this.audioContext, 'scratch-head', {
+          numberOfInputs: 0,
+          outputChannelCount: [2]
+        });
+
+        this.scratchHead.port.onmessage = ({ data }) => {
+          if (this.scratchWindow) {
+            this.scratchHeadPosition = this.scratchWindow.startTime + data.position;
+          }
+        };
+      })
+      .catch((error) => {
+        console.warn(`Deck ${this.deckId}: no worklet read head, scratching stays spliced:`, error);
+      });
+
+    return this.scratchHeadLoading;
+  }
+
+  scratchHeadAvailable() {
+    return Boolean(this.scratchHead && this.audioBuffer);
+  }
+
+  /** Copy the stretch of track around `position` over to the read head. */
+  loadScratchWindow(position) {
+    const sampleRate = this.audioBuffer.sampleRate;
+    const half = Deck.SCRATCH_WINDOW_SECONDS / 2;
+    const startTime = Math.max(0, Math.min(position - half, this.getDuration() - Deck.SCRATCH_WINDOW_SECONDS));
+    const clampedStart = Math.max(0, startTime);
+    const endTime = Math.min(this.getDuration(), clampedStart + Deck.SCRATCH_WINDOW_SECONDS);
+
+    const first = Math.floor(clampedStart * sampleRate);
+    const length = Math.max(1, Math.floor((endTime - clampedStart) * sampleRate));
+
+    const channels = [];
+    for (let channel = 0; channel < this.audioBuffer.numberOfChannels; channel++) {
+      // A copy: handing over the AudioBuffer's own view would detach the buffer
+      // that normal playback is still going to use
+      const copy = new Float32Array(
+        this.audioBuffer.getChannelData(channel).subarray(first, first + length)
+      );
+      channels.push(copy.buffer);
+    }
+
+    this.scratchWindow = { startTime: clampedStart, endTime };
+    this.scratchHeadPosition = position;
+    this.scratchHead.port.postMessage(
+      { type: 'load', channels, position: position - clampedStart },
+      channels
+    );
+  }
+
+  /** Hand the read head over to the worklet, from `position`. */
+  engageScratchHead(position) {
+    if (!this.scratchHeadAvailable()) return false;
+
+    this.stopSource();
+    this.loadScratchWindow(position);
+    this.connectFrom(this.scratchHead);
+    this.scratchHead.port.postMessage({ type: 'start' });
+
+    this.isScratchHeadEngaged = true;
+    this.isReversed = false;
+    this.isPlaying = true;
+    this.isPaused = false;
+    return true;
+  }
+
+  /** Signed, and free to be zero or negative: that is the whole point of it. */
+  setScratchHeadRate(rate) {
+    if (!this.isScratchHeadEngaged) return;
+
+    this.scratchRate = rate;
+    this.scratchHead.parameters.get('rate')
+      .setTargetAtTime(rate, this.audioContext.currentTime, Deck.RATE_GLIDE_SECONDS);
+  }
+
+  /** Pull the head back onto the hand when the two have drifted apart. */
+  nudgeScratchHead(position) {
+    if (!this.isScratchHeadEngaged || !this.scratchWindow) return;
+
+    this.scratchHead.port.postMessage({
+      type: 'seek',
+      position: position - this.scratchWindow.startTime
+    });
+    this.scratchHeadPosition = position;
+  }
+
+  /** Slide the window along when a long drag approaches its edge. */
+  keepScratchWindow(position) {
+    if (!this.isScratchHeadEngaged || !this.scratchWindow) return;
+
+    const { startTime, endTime } = this.scratchWindow;
+    const margin = 2;
+    const atStart = startTime > 0 && position - startTime < margin;
+    const atEnd = endTime < this.getDuration() && endTime - position < margin;
+
+    if (atStart || atEnd) this.loadScratchWindow(position);
+  }
+
+  /** Take the head back, and report where the record ended up. */
+  releaseScratchHead() {
+    if (!this.isScratchHeadEngaged) return null;
+
+    this.scratchHead.port.postMessage({ type: 'stop' });
+    this.scratchHead.disconnect();
+    this.isScratchHeadEngaged = false;
+    this.scratchRate = null;
+
+    return this.scratchHeadPosition;
   }
 
   pause() {
@@ -248,14 +515,7 @@ class Deck {
     this.isPlaying = false;
     this.isPaused = false;
     this.pauseTime = 0;
-    
-    // Clean up scratch deceleration if active
-    if (this.scratchDecelerationInterval) {
-      clearInterval(this.scratchDecelerationInterval);
-      this.scratchDecelerationInterval = null;
-    }
-    this.currentScratchRate = 0;
-    this.scratchMomentum = 0;
+    this.scratchRate = null;
   }
 
   stopSource() {
@@ -263,6 +523,11 @@ class Deck {
       this.source.stop();
       this.source.disconnect();
       this.source = null;
+    }
+
+    if (this.sourceGain) {
+      this.sourceGain.disconnect();
+      this.sourceGain = null;
     }
     
     // Disconnect all audio nodes to prevent multiple connections accumulating
@@ -296,12 +561,7 @@ class Deck {
       if (this.effectNodes.phaserGain) this.effectNodes.phaserGain.disconnect();
       if (this.effectNodes.flangerGain) this.effectNodes.flangerGain.disconnect();
     }
-    
-    // Also clean up scratch deceleration when source is stopped
-    if (this.scratchDecelerationInterval) {
-      clearInterval(this.scratchDecelerationInterval);
-      this.scratchDecelerationInterval = null;
-    }
+
   }
 
   setVolume(value) {
@@ -354,9 +614,7 @@ class Deck {
     }
 
     this.playbackRate = 1 + (pitch / 100);
-    if (this.source) {
-      this.source.playbackRate.value = this.playbackRate;
-    }
+    this.applySourceRate();
 
     return pitch;
   }
@@ -420,6 +678,10 @@ class Deck {
   }
 
   getCurrentTime() {
+    // While the worklet holds the head it is the only thing that knows where
+    // the record is; the wall-clock estimate below assumes a steady rate
+    if (this.isScratchHeadEngaged) return this.scratchHeadPosition;
+
     if (!this.isPlaying) return this.isPaused ? this.pauseTime : 0;
     
     // Calculate time since last rate change
@@ -427,7 +689,7 @@ class Deck {
     const wallClockElapsedSinceRateChange = currentWallClockTime - this.lastRateChangeTime;
     
     // Calculate audio time elapsed since last rate change using current playback rate
-    const audioTimeElapsedSinceRateChange = wallClockElapsedSinceRateChange * this.playbackRate;
+    const audioTimeElapsedSinceRateChange = wallClockElapsedSinceRateChange * this.getEffectiveRate();
     
     // Add to the position we were at when the rate last changed
     return this.lastRateChangePosition + audioTimeElapsedSinceRateChange;
@@ -686,109 +948,48 @@ class Deck {
     }
   }
 
-  // Scratching functionality
-  startScratch() {
-    this.isScratching = true;
-    this.originalPlaybackRate = this.playbackRate;
+  /**
+   * Rate actually feeding the source: whatever the platter is imposing while
+   * the record is in someone's hand, the pitch fader's rate otherwise.
+   */
+  getEffectiveRate() {
+    return this.scratchRate === null ? this.playbackRate : this.scratchRate;
+  }
+
+  /**
+   * Hand the rate to the platter; null gives it back to the pitch fader.
+   * `position` pins where the head is for time reporting, which is what keeps
+   * the playhead honest at rate zero, when the audio is silent but the record
+   * is still moving under a hand.
+   */
+  setScratchRate(rate, position = null) {
     if (this.isPlaying) {
-      this.wasPlayingBeforeScratch = true;
+      this.lastRateChangeTime = this.audioContext.currentTime;
+      this.lastRateChangePosition = position === null ? this.getCurrentTime() : position;
     }
-    
-    // Initialize scratch properties
-    this.scratchMomentum = 0;
-    this.currentScratchRate = 0;
-    this.lastScratchTime = Date.now();
-    
-    // Stop any existing deceleration
-    if (this.scratchDecelerationInterval) {
-      clearInterval(this.scratchDecelerationInterval);
-      this.scratchDecelerationInterval = null;
-    }
+
+    this.scratchRate = rate;
+    this.applySourceRate();
   }
 
-  scratch(speed) {
-    if (!this.isScratching || !this.source) return;
-
-    const currentTime = Date.now();
-    const deltaTime = Math.max(currentTime - this.lastScratchTime, 1); // Minimum 1ms to avoid division by zero
-    this.lastScratchTime = currentTime;
-    
-    // Store the raw input for momentum calculation
-    this.lastScratchInput = speed;
-    
-    // Apply a more realistic speed curve - exponential for better feel
-    let mappedSpeed = speed;
-    if (Math.abs(speed) > 0.1) {
-      const sign = Math.sign(speed);
-      const absSpeed = Math.abs(speed);
-      // Use a power curve for more natural feel at different speeds
-      mappedSpeed = sign * Math.pow(absSpeed / 10, 0.7) * 8;
-    }
-    
-    // Apply momentum and interpolation for smoother transitions
-    const momentumFactor = 0.15; // How much momentum to apply
-    const interpolationFactor = Math.min(deltaTime / 16, 1); // Smooth interpolation based on time (16ms = 60fps)
-    
-    // Calculate target scratch rate with momentum
-    const targetRate = mappedSpeed + (this.scratchMomentum * momentumFactor);
-    
-    // Smooth interpolation towards target rate
-    this.currentScratchRate += (targetRate - this.currentScratchRate) * interpolationFactor * 0.3;
-    
-    // Update momentum based on current input
-    this.scratchMomentum += (speed - this.scratchMomentum) * 0.2;
-    
-    // Clamp the final rate to prevent extreme values
-    const finalRate = Math.max(-5, Math.min(5, this.currentScratchRate));
-
-    if (this.source.playbackRate) {
-      this.source.playbackRate.value = this.originalPlaybackRate + finalRate;
-    }
+  /**
+   * Start the source at an exact position without disturbing transport state,
+   * so the platter can restart audio mid-gesture as the record changes
+   * direction. Unlike seek() this stays quiet and skips the stop() reset.
+   */
+  playFrom(position) {
+    this.isReversed = false;
+    this.pauseTime = position;
+    this.isPaused = true;
+    this.play();
   }
 
-  stopScratch() {
-    this.isScratching = false;
-    
-    // Start realistic deceleration instead of instant stop
-    this.startScratchDeceleration();
-    
-    this.wasPlayingBeforeScratch = false;
-  }
-  
-  startScratchDeceleration() {
-    // Clear any existing deceleration
-    if (this.scratchDecelerationInterval) {
-      clearInterval(this.scratchDecelerationInterval);
-    }
-    
-    // Start deceleration process
-    const decelerationRate = 0.85; // How quickly it slows down (0.8 = 20% reduction per frame)
-    const minSpeed = 0.01; // Minimum speed threshold before stopping
-    
-    this.scratchDecelerationInterval = setInterval(() => {
-      if (!this.source || !this.source.playbackRate) {
-        clearInterval(this.scratchDecelerationInterval);
-        this.scratchDecelerationInterval = null;
-        return;
-      }
-      
-      // Apply deceleration to current scratch rate and momentum
-      this.currentScratchRate *= decelerationRate;
-      this.scratchMomentum *= decelerationRate;
-      
-      // If speed is very low, stop the deceleration
-      if (Math.abs(this.currentScratchRate) < minSpeed) {
-        this.source.playbackRate.value = this.originalPlaybackRate || this.playbackRate;
-        this.currentScratchRate = 0;
-        this.scratchMomentum = 0;
-        clearInterval(this.scratchDecelerationInterval);
-        this.scratchDecelerationInterval = null;
-      } else {
-        // Continue applying the decelerating rate
-        const finalRate = Math.max(-5, Math.min(5, this.currentScratchRate));
-        this.source.playbackRate.value = this.originalPlaybackRate + finalRate;
-      }
-    }, 16); // ~60fps for smooth deceleration
+  /** Leave the deck stopped where the record was left, rather than at zero. */
+  pauseAt(position) {
+    this.stopSource();
+    this.pauseTime = position;
+    this.isPlaying = false;
+    this.isPaused = true;
   }
 
   // Pitch bend methods
@@ -1008,9 +1209,9 @@ class DeckController {
       }
     );
 
-    // Vinyl scratching
+    // The vinyl is grabbable through Platter (js/vinyl.js); all this needs is
+    // the element, for the spin animation
     this.vinylElement = document.getElementById(`vinyl${this.deckId}`);
-    this.setupVinylControls();
 
     // Pitch control (vertical)
     this.createSliderHandler(`pitch${this.deckId}`, 'setPitch', {
@@ -1140,123 +1341,6 @@ class DeckController {
 
     // Reset effects
     this.createControllerMethodHandler('resetFilters', 'resetFilters');
-  }
-
-  setupVinylControls() {
-    if (!this.vinylElement) return;
-
-    let isDragging = false;
-    let lastAngle = 0;
-    let startAngle = 0;
-
-    // Mouse events for scratching
-    this.vinylElement.addEventListener('mousedown', (e) => {
-      isDragging = true;
-      this.isScratching = true;
-      const rect = this.vinylElement.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      startAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
-      lastAngle = startAngle;
-      
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.startScratch();
-      }
-    });
-
-    document.addEventListener('mousemove', (e) => {
-      if (!isDragging || !this.isScratching) return;
-
-      const rect = this.vinylElement.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      const currentAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
-      
-      let angleDiff = currentAngle - lastAngle;
-      
-      // Handle angle wrap-around
-      if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
-      if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
-      
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        // Convert angle difference to scratch speed
-        const scratchSpeed = angleDiff * 10; // Adjust multiplier for sensitivity
-        deck.scratch(scratchSpeed);
-      }
-      
-      lastAngle = currentAngle;
-    });
-
-    document.addEventListener('mouseup', () => {
-      if (isDragging) {
-        isDragging = false;
-        this.isScratching = false;
-        
-        const deck = window.audioEngine.getDeck(this.deckId);
-        if (deck) {
-          deck.stopScratch();
-        }
-      }
-    });
-
-    // Touch events for mobile scratching
-    this.vinylElement.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      const touch = e.touches[0];
-      const rect = this.vinylElement.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      
-      isDragging = true;
-      this.isScratching = true;
-      startAngle = Math.atan2(touch.clientY - centerY, touch.clientX - centerX);
-      lastAngle = startAngle;
-      
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        deck.startScratch();
-      }
-    });
-
-    this.vinylElement.addEventListener('touchmove', (e) => {
-      e.preventDefault();
-      if (!isDragging || !this.isScratching) return;
-
-      const touch = e.touches[0];
-      const rect = this.vinylElement.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      const currentAngle = Math.atan2(touch.clientY - centerY, touch.clientX - centerX);
-      
-      let angleDiff = currentAngle - lastAngle;
-      
-      // Handle angle wrap-around
-      if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
-      if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
-      
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck) {
-        const scratchSpeed = angleDiff * 10;
-        deck.scratch(scratchSpeed);
-      }
-      
-      lastAngle = currentAngle;
-    });
-
-    this.vinylElement.addEventListener('touchend', (e) => {
-      e.preventDefault();
-      if (isDragging) {
-        isDragging = false;
-        this.isScratching = false;
-        
-        const deck = window.audioEngine.getDeck(this.deckId);
-        if (deck) {
-          deck.stopScratch();
-        }
-      }
-    });
   }
 
   setupDragAndDrop() {

@@ -1016,6 +1016,13 @@ input[type="range"]::-moz-range-thumb {
   cursor: grabbing;
 }
 
+/* Both grabbable surfaces are driven by pointer events, so the browser must
+   not take the gesture for scrolling or pinch-zoom first */
+.vinyl-record,
+.beat-waveform-global-fullwidth {
+  touch-action: none;
+}
+
 .vinyl-record.spinning {
   animation: spin 1.8s linear infinite;
 }
@@ -1198,8 +1205,13 @@ input[type="range"]::-moz-range-thumb {
   padding: 8px 4px;
 }
 
+.reset-btn {
+  padding: var(--spacing-md) var(--spacing-lg);
+}
+
 .cue-point-btn:hover,
-.set-cue-btn:hover {
+.set-cue-btn:hover,
+.reset-btn:hover {
   transform: translateY(-1px);
 }
 
@@ -1297,17 +1309,6 @@ input[type="range"]::-moz-range-thumb {
 .reset-section {
   margin-top: var(--spacing-md);
   text-align: center;
-}
-
-.reset-btn {
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border-radius: var(--radius-lg);
-  font-weight: 600;
-  font-size: 0.85rem;
-}
-
-.reset-btn:hover {
-  transform: translateY(-1px);
 }
 
 /* --- Deck states ---------------------------------------------------------- */
@@ -1732,7 +1733,7 @@ input[type="range"]::-moz-range-thumb {
 
 .sound-pad-volume-control {
   text-align: center;
-  margin-top: var(--spacing-md);
+  margin-top: var(--spacing-lg);
 }
 
 /* ============================================================================
@@ -1981,7 +1982,7 @@ input[type="range"]::-moz-range-thumb {
 .playlist-search {
   flex: 1;
   min-width: 0;
-  padding: var(--spacing-xs) var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-sm);
   border: 1px solid var(--border-secondary);
   border-radius: var(--radius-sm);
   background: var(--bg-primary);
@@ -2000,8 +2001,8 @@ input[type="range"]::-moz-range-thumb {
 .playlist-search::-webkit-search-cancel-button {
   -webkit-appearance: none;
   appearance: none;
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   cursor: pointer;
   background-color: var(--text-muted);
   mask: url('../images/icons/close.svg') center / contain no-repeat;
@@ -2022,7 +2023,7 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .playlist-action {
-  padding: var(--spacing-xs) var(--spacing-md);
+  padding: var(--spacing-md);
   border: 1px solid var(--border-secondary);
   border-radius: var(--radius-sm);
   background: var(--bg-tertiary);

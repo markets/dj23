@@ -392,144 +392,17 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
   }
 
   setupEventListeners() {
-    // Handle scratching for beat view waveforms
-    let isDragging = false;
-    let lastX = 0;
-    let scratchStartTime = 0;
-    let wasPlayingBeforeScratch = false;
-
-    this.canvas.addEventListener('mousedown', (e) => {
-      if (!this.waveformData) return;
-      
-      isDragging = true;
-      this.canvas.style.cursor = 'grabbing';
-      
-      const rect = this.canvas.getBoundingClientRect();
-      lastX = e.clientX - rect.left;
-      
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck && deck.audioBuffer) {
-        // Start scratching
-        wasPlayingBeforeScratch = deck.isPlaying;
-        deck.startScratch();
-        scratchStartTime = deck.getCurrentTime();
-        console.log(`Beat waveform scratch started on deck ${this.deckId}`);
-      }
-    });
-
-    document.addEventListener('mousemove', (e) => {
-      if (!isDragging || !this.waveformData) return;
-      
-      const rect = this.canvas.getBoundingClientRect();
-      const currentX = e.clientX - rect.left;
-      const deltaX = currentX - lastX;
-      
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck && deck.audioBuffer) {
-        // Convert horizontal movement to both position control AND scratch
-        // This provides full control of the record position while scratching
-        const sensitivity = 0.02; // Adjust for scratch sensitivity
-        const scratchSpeed = deltaX * sensitivity;
-        
-        // Calculate new position based on scratch movement for position control
-        const windowDuration = Math.min(this.zoomLevel, deck.getDuration() - this.offsetSeconds);
-        const timePerPixel = windowDuration / rect.width;
-        const timeOffset = deltaX * timePerPixel;
-        const newTime = Math.max(0, Math.min(deck.getDuration(), deck.getCurrentTime() - timeOffset));
-        
-        // Seek to new position for full record control
-        deck.seek(newTime);
-        
-        // Also apply scratch effect for audio feedback
-        deck.scratch(scratchSpeed * 15); // Scale for audio scratching
-      }
-      
-      lastX = currentX;
-    });
-
-    document.addEventListener('mouseup', () => {
-      if (isDragging) {
-        isDragging = false;
-        this.canvas.style.cursor = 'pointer';
-        
-        const deck = window.audioEngine.getDeck(this.deckId);
-        if (deck && deck.audioBuffer) {
-          // Stop scratching
-          deck.stopScratch();
-          
-          // Leave track at current position instead of resuming playback
-          // This gives full control of the record position
-          console.log(`Beat waveform scratch stopped on deck ${this.deckId} - staying at current position`);
-        }
-      }
-    });
-
-    // Touch events for mobile scratching
-    this.canvas.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      if (!this.waveformData) return;
-      
-      const touch = e.touches[0];
-      const rect = this.canvas.getBoundingClientRect();
-      
-      isDragging = true;
-      lastX = touch.clientX - rect.left;
-      
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck && deck.audioBuffer) {
-        wasPlayingBeforeScratch = deck.isPlaying;
-        deck.startScratch();
-        scratchStartTime = deck.getCurrentTime();
-        console.log(`Beat waveform touch scratch started on deck ${this.deckId}`);
-      }
-    });
-
-    this.canvas.addEventListener('touchmove', (e) => {
-      e.preventDefault();
-      if (!isDragging || !this.waveformData) return;
-      
-      const touch = e.touches[0];
-      const rect = this.canvas.getBoundingClientRect();
-      const currentX = touch.clientX - rect.left;
-      const deltaX = currentX - lastX;
-      
-      const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck && deck.audioBuffer) {
-        // Convert horizontal movement to both position control AND scratch for touch
-        const sensitivity = 0.02;
-        const scratchSpeed = deltaX * sensitivity;
-        
-        // Calculate new position based on scratch movement for position control
-        const windowDuration = Math.min(this.zoomLevel, deck.getDuration() - this.offsetSeconds);
-        const timePerPixel = windowDuration / rect.width;
-        const timeOffset = deltaX * timePerPixel;
-        const newTime = Math.max(0, Math.min(deck.getDuration(), deck.getCurrentTime() - timeOffset));
-        
-        // Seek to new position for full record control
-        deck.seek(newTime);
-        
-        // Also apply scratch effect for audio feedback
-        deck.scratch(scratchSpeed * 15);
-      }
-      
-      lastX = currentX;
-    });
-
-    this.canvas.addEventListener('touchend', (e) => {
-      e.preventDefault();
-      if (isDragging) {
-        isDragging = false;
-        
-        const deck = window.audioEngine.getDeck(this.deckId);
-        if (deck && deck.audioBuffer) {
-          deck.stopScratch();
-          
-          // Leave track at current position instead of resuming playback
-          // This gives full control of the record position
-          console.log(`Beat waveform touch scratch stopped on deck ${this.deckId} - staying at current position`);
-        }
-      }
-    });
+    // Grabbing the waveform is grabbing the record: same object, same physics,
+    // so the two surfaces cannot drift apart in feel. All this one contributes
+    // is how far a horizontal drag moves the track, which depends on the zoom.
+    const platter = window.platters[this.deckId];
+    if (platter) {
+      new PlatterSurface(
+        this.canvas,
+        platter,
+        PlatterSurface.horizontalGesture(() => this.secondsPerPixel())
+      );
+    }
 
     // Mouse wheel zoom functionality
     this.canvas.addEventListener('wheel', (e) => {
@@ -550,6 +423,20 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     document.getElementById(`zoomOut${this.deckId}`).addEventListener('click', () => {
       this.zoom(10);
     });
+  }
+
+  /** How much of the track one horizontal pixel covers at the current zoom. */
+  secondsPerPixel() {
+    const deck = window.audioEngine.getDeck(this.deckId);
+    if (!deck || !deck.audioBuffer) return 0;
+
+    // The laid-out width, not the attribute: a hidden canvas measures zero and
+    // dividing by it would hand back Infinity
+    const width = this.canvas.getBoundingClientRect().width;
+    if (!width) return 0;
+
+    const visible = Math.min(this.zoomLevel, deck.getDuration() - this.offsetSeconds);
+    return Math.max(0, visible) / width;
   }
 
   updateZoomWindow() {
