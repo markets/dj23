@@ -1733,7 +1733,7 @@ input[type="range"]::-moz-range-thumb {
 
 .sound-pad-volume-control {
   text-align: center;
-  margin-top: var(--spacing-md);
+  margin-top: var(--spacing-lg);
 }
 
 /* ============================================================================
