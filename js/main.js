@@ -3,6 +3,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     
   await window.audioEngine.initialize();
     
+  // Before the renderers: the beat waveforms attach themselves to these
+  window.platters.A = new Platter('A');
+  window.platters.B = new Platter('B');
+
   window.waveformRenderers.A = new WaveformRenderer('waveformA', 'A');
   window.waveformRenderers.B = new WaveformRenderer('waveformB', 'B');
     
