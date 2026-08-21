@@ -1200,15 +1200,13 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .cue-point-btn,
-.set-cue-btn,
-.reset-btn {
+.set-cue-btn {
   font-size: clamp(0.68rem, 0.85vw, 0.8rem);
   padding: 8px 4px;
 }
 
-/* Sized by its label instead of by a grid cell, so it needs real side padding */
 .reset-btn {
-  padding-inline: var(--spacing-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
 }
 
 .cue-point-btn:hover,
