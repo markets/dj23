@@ -25,7 +25,8 @@ const attempt = (label, run) => {
 self.onmessage = ({ data }) => {
   self.postMessage({
     id: data.id,
-    bpm: attempt('tempo', () => analyzer.analyseWindow(
+    // Decks ask for the key alone; they measured the tempo as they loaded
+    bpm: data.tempo === false ? null : attempt('tempo', () => analyzer.analyseWindow(
       BPMAnalyzer.tempoSlice(data.samples, data.sampleRate), data.sampleRate)) || 0,
     key: attempt('key', () => KeyAnalyzer.detect(data.samples, data.sampleRate))
   });

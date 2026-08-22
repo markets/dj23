@@ -15,9 +15,6 @@ class Playlist {
 
     this.analysisQueue = [];
     this.isAnalysing = false;
-    this.worker = null;
-    this.pendingAnalyses = new Map();
-    this.nextAnalysisId = 0;
 
     this.cacheElements();
     if (!this.panel) return;
@@ -210,7 +207,7 @@ class Playlist {
   }
 
   async runAnalysis() {
-    if (!this.ensureWorker()) return;
+    if (!window.trackAnalyser.ensureWorker()) return;
 
     this.isAnalysing = true;
 
@@ -249,45 +246,13 @@ class Playlist {
 
     try {
       const buffer = await context.decodeAudioData(await track.file.arrayBuffer());
-      // Long enough for the key, which reads steadier across sections; tempo
-      // takes its own shorter slice out of this inside the worker
-      const samples = BPMAnalyzer.buildWorkerWindow(buffer, KeyAnalyzer.ANALYSIS_SECONDS);
-      return await this.requestAnalysis(samples, buffer.sampleRate);
+      return await window.trackAnalyser.analyse(buffer);
     } catch (error) {
       console.warn(`Playlist: could not analyse ${track.name}:`, error);
       return { bpm: 0, key: null };
     }
   }
 
-  requestAnalysis(samples, sampleRate) {
-    return new Promise((resolve) => {
-      const id = this.nextAnalysisId++;
-      this.pendingAnalyses.set(id, resolve);
-      // Transferred, not copied: the window is megabytes
-      this.worker.postMessage({ id, samples, sampleRate }, [samples.buffer]);
-    });
-  }
-
-  /** Without a worker there is no background analysis: doing this work on the
-   *  main thread would stall the mixer for the length of the folder. */
-  ensureWorker() {
-    if (this.worker) return this.worker;
-
-    try {
-      this.worker = new Worker('js/bpm-worker.js');
-      this.worker.onmessage = ({ data }) => {
-        const resolve = this.pendingAnalyses.get(data.id);
-        if (!resolve) return;
-        this.pendingAnalyses.delete(data.id);
-        resolve({ bpm: data.bpm, key: data.key });
-      };
-    } catch (error) {
-      console.warn('Playlist: no worker, tempo stays blank until a deck loads:', error);
-      this.worker = null;
-    }
-
-    return this.worker;
-  }
 
   /** Tags and duration for every new track, a few files at a time. */
   async hydrate(tracks) {
@@ -481,7 +446,7 @@ class Playlist {
     const controller = window.mixerController?.deckControllers?.[deckId];
     if (!controller) return;
 
-    await controller.loadTrack(track.file);
+    await controller.loadTrack(track.file, track.key);
 
     // The deck analyses on load, so this is the one moment the row can learn the
     // tempo; it sticks, so the second reach for a track already shows it

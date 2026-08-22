@@ -19,19 +19,23 @@ class BPMAnalyzer {
   static LOW_BAND_HZ = 150;
 
   /**
-   * How well the whole mix has to fit a grid before it is trusted over the kick
-   * alone. A two-step break fits one tightly; a dembow fits nothing well.
-   */
-  static FULL_BAND_TRUST = 0.7;
-
-  /**
    * Below this nothing explains the music, so the tracker probably missed the
    * period rather than its multiple, and overriding it only makes things worse.
+   * Real tracks score 0.37 and up, so this only catches genuine confusion.
    */
-  static CONFIDENCE_FLOOR = 0.45;
+  static CONFIDENCE_FLOOR = 0.3;
+
+  /**
+   * How much better one octave has to explain the kick before the listener
+   * prior is ignored. Four on the floor scores 1.0 against 0.67 for its half —
+   * a ratio of 1.5, and unarguable. A dembow scores about 1.03 either way,
+   * because its syncopation fits both grids, and that is where the prior earns
+   * its keep.
+   */
+  static EVIDENCE_DECISIVE = 1.25;
 
   /** Where listeners hear tempo, and how wide that is, in octaves. */
-  static TEMPO_PRIOR_CENTRE = 120;
+  static TEMPO_PRIOR_CENTRE = 110;
   static TEMPO_PRIOR_WIDTH = 0.9;
 
   /** Outside this a reading is an octave error, not a genre. */
@@ -258,34 +262,36 @@ class BPMAnalyzer {
     while (bpm < BPMAnalyzer.MIN_BPM) bpm *= 2;
     while (bpm > BPMAnalyzer.MAX_BPM) bpm /= 2;
 
-    const fullBand = this.strongOnsets(this.collectOnsets(mt));
-    const lowBand = this.lowBandOnsets(audioData, sampleRate);
-    if (!fullBand && !lowBand) return Math.round(bpm);
+    // The kick, and the whole mix only where there is no usable kick. Judged
+    // against a real library the kick alone beat every combination of the two:
+    // in a dembow the snares syncopate off the beat and fit the half-note grid
+    // well enough to pull the answer to twice the tempo.
+    const onsets = this.lowBandOnsets(audioData, sampleRate)
+      || this.strongOnsets(this.collectOnsets(mt));
+    if (!onsets) return Math.round(bpm);
 
-    const candidates = [];
+    const scored = [];
     for (const multiple of BPMAnalyzer.OCTAVE_CANDIDATES) {
       const candidate = bpm * multiple;
       if (candidate < BPMAnalyzer.MIN_BPM || candidate > BPMAnalyzer.MAX_BPM) continue;
 
-      candidates.push({
-        bpm: candidate,
-        full: fullBand ? this.scoreGrid(fullBand, candidate) : 0,
-        low: lowBand ? this.scoreGrid(lowBand, candidate) : 0,
-        prior: BPMAnalyzer.tempoPrior(candidate)
-      });
+      scored.push({ bpm: candidate, evidence: this.scoreGrid(onsets, candidate) });
+    }
+    if (!scored.length) return Math.round(bpm);
+
+    scored.sort((a, b) => b.evidence - a.evidence);
+
+    // Where the kick plainly picks one octave, that is the answer; the prior is
+    // only there to settle the ties, which is most of what reggaeton produces.
+    const [leader, runnerUp] = scored;
+    if (!runnerUp || runnerUp.evidence <= 0 ||
+        leader.evidence / runnerUp.evidence >= BPMAnalyzer.EVIDENCE_DECISIVE) {
+      return Math.round(leader.bpm);
     }
 
-    if (!candidates.length) return Math.round(bpm);
-
-    // Whether the mix lands on a grid at all decides which layer to believe: in
-    // a two-step break the snares are as much the pulse as the kick, in a
-    // dembow only the kick is on the beat
-    const bestFit = Math.max(...candidates.map((entry) => entry.full));
-    const trustFullBand = bestFit >= BPMAnalyzer.FULL_BAND_TRUST || !lowBand;
-
     let best = null;
-    for (const entry of candidates) {
-      const score = (trustFullBand ? entry.full : entry.low) * entry.prior;
+    for (const entry of scored) {
+      const score = entry.evidence * BPMAnalyzer.tempoPrior(entry.bpm);
       if (!best || score > best.score) best = { bpm: entry.bpm, score };
     }
 
