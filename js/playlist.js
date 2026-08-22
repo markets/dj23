@@ -401,8 +401,7 @@ class Playlist {
     row.querySelector('.playlist-duration').textContent = this.formatDuration(track.duration);
     row.querySelector('.playlist-bpm').textContent = track.bpm > 0 ? `${Math.round(track.bpm)} BPM` : '';
 
-    // Camelot on the row, the musical name on hover: the wheel is what tells
-    // you what mixes with what
+    // Camelot on the row, the musical name on hover
     const keyCell = row.querySelector('.playlist-key');
     keyCell.textContent = track.key ? track.key.camelot : '';
     keyCell.title = track.key ? track.key.name : '';

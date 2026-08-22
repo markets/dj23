@@ -1,10 +1,7 @@
 /**
  * The one connection to the analysis worker, shared by the track list and the
- * decks. Both want tempo and key computed off the main thread, and neither
- * should own the worker.
- *
- * Falls back to nothing rather than to the main thread: doing this work here
- * would stall the mixer for as long as it takes.
+ * decks. Where it cannot start there is no analysis: doing this work on the
+ * main thread would stall the mixer for as long as it takes.
  */
 class TrackAnalyser {
   constructor() {
@@ -13,7 +10,6 @@ class TrackAnalyser {
     this.nextId = 0;
   }
 
-  /** The worker, or null if it cannot start. */
   ensureWorker() {
     if (this.worker) return this.worker;
 
@@ -35,15 +31,14 @@ class TrackAnalyser {
   }
 
   /**
-   * `{ bpm, key }` for a decoded buffer. Decks pass `tempo: false` — they have
-   * already measured it while building their beat map, and the worker would
-   * only be repeating the work.
+   * `{ bpm, key }` for a decoded buffer. Decks pass `tempo: false`: they measured
+   * it themselves while building their beat map.
    */
   analyse(audioBuffer, { tempo = true } = {}) {
     if (!this.ensureWorker() || !audioBuffer) return Promise.resolve({ bpm: null, key: null });
 
-    // Long enough for the key, which reads steadier across sections; the worker
-    // takes the shorter tempo stretch out of the same samples
+    // Long enough for the key; the worker takes its shorter tempo stretch out of
+    // the same samples
     const samples = BPMAnalyzer.buildWorkerWindow(audioBuffer, KeyAnalyzer.ANALYSIS_SECONDS);
 
     return new Promise((resolve) => {

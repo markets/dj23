@@ -1,27 +1,21 @@
 /**
  * Musical key of a track, as a Camelot code.
  *
- * Two steps: fold the spectrum into the twelve pitch classes, then see which
- * of the twenty-four keys that distribution looks most like. The profiles are
- * Krumhansl and Kessler's, measured from listeners rating how well each note
- * fits a key, so the match is against how music in a key actually behaves
- * rather than against its scale.
+ * Fold the spectrum into the twelve pitch classes, then see which of the
+ * twenty-four keys that distribution looks most like. The profiles are
+ * Krumhansl and Kessler's, rated by listeners, so the match is against how
+ * music in a key behaves rather than against its scale.
  *
- * Camelot rather than note names because that is what mixing needs: neighbours
- * on the wheel share all but one note, so 8A goes with 7A, 9A and 8B.
+ * Camelot because that is what mixing needs: neighbours on the wheel share all
+ * but one note, so 8A goes with 7A, 9A and 8B. Every track gets a reading —
+ * nothing separates a tonal mix from a drum loop reliably enough to stay quiet.
  *
- * Measured across a real library, the seven strongest pitch classes hold 0.68
- * to 0.88 of the energy while white noise holds 0.67 — too narrow to gate on,
- * so every track gets a reading and a drum loop gets a meaningless one, which
- * is the same trade the commercial tools make.
- *
- * Uses the FFT that ships inside music-tempo, so it costs no extra dependency.
+ * Uses the FFT inside music-tempo, so it costs no extra dependency.
  */
 class KeyAnalyzer {
   /**
-   * How much of a track to read. Measured against whole tracks this gives the
-   * same answer every time, for a third less memory and time — and a window
-   * this long spans enough sections that two runs cannot disagree.
+   * How much of a track to read. Long enough to span several sections, which is
+   * what stops two runs of the same track disagreeing.
    */
   static ANALYSIS_SECONDS = 180;
 
@@ -91,9 +85,8 @@ class KeyAnalyzer {
       if (loudest <= 0) continue;
 
       // Only spectral peaks. Between the partials sits broadband noise — cymbals,
-      // reverb tails, distortion — and in a real recording that bed is most of
-      // the spectrum. Summing every bin lets it flood all twelve classes evenly
-      // and flattens the chroma into saying nothing.
+      // reverb tails, distortion — and summing every bin lets that bed flood all
+      // twelve classes evenly and flatten the chroma into saying nothing.
       const floor = loudest * KeyAnalyzer.PEAK_FLOOR;
       const frame = new Float64Array(12);
       let total = 0;

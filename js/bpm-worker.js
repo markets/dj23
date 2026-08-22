@@ -11,8 +11,8 @@ importScripts('../vendor/music-tempo.min.js', 'bpm-analyzer.js', 'key-analyzer.j
 
 const analyzer = new BPMAnalyzer(null, 'queue');
 
-// Separately, because they fail for different reasons: MusicTempo throws when
-// it finds no onsets, and that must not cost the key as well.
+// Separately: MusicTempo throws when it finds no onsets, and that must not
+// cost the key as well.
 const attempt = (label, run) => {
   try {
     return run();

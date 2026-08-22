@@ -20,17 +20,14 @@ class BPMAnalyzer {
 
   /**
    * Below this nothing explains the music, so the tracker probably missed the
-   * period rather than its multiple, and overriding it only makes things worse.
-   * Real tracks score 0.37 and up, so this only catches genuine confusion.
+   * period rather than its multiple, and overriding it only makes it worse.
    */
   static CONFIDENCE_FLOOR = 0.3;
 
   /**
-   * How much better one octave has to explain the kick before the listener
-   * prior is ignored. Four on the floor scores 1.0 against 0.67 for its half —
-   * a ratio of 1.5, and unarguable. A dembow scores about 1.03 either way,
-   * because its syncopation fits both grids, and that is where the prior earns
-   * its keep.
+   * How much better one octave has to explain the kick before the prior is
+   * ignored. Four on the floor beats its half by half again; a dembow, whose
+   * syncopation fits both grids, barely separates them at all.
    */
   static EVIDENCE_DECISIVE = 1.25;
 
@@ -182,9 +179,8 @@ class BPMAnalyzer {
   }
 
   /**
-   * The stretch of a longer run of samples that the tempo detector wants. Key
-   * detection reads the whole track, so the worker gets all of it and takes
-   * this slice out rather than being sent the same audio twice.
+   * The stretch the tempo detector wants out of a longer run of samples. Key
+   * detection needs far more, so the worker is sent that and slices here.
    */
   static tempoSlice(samples, sampleRate) {
     const length = Math.floor(BPMAnalyzer.ANALYSIS_WINDOW_SECONDS * sampleRate);
@@ -194,8 +190,8 @@ class BPMAnalyzer {
     return samples.subarray(start, start + length);
   }
 
-  /** The samples a worker needs for both jobs: enough for the key, starting at
-   *  the top so tempoSlice finds its usual stretch inside. */
+  /** Enough samples for the key, starting at the top so tempoSlice can find
+   *  its own stretch inside. */
   static buildWorkerWindow(audioBuffer, seconds) {
     return BPMAnalyzer.buildAnalysisWindow(audioBuffer, Float32Array, { seconds, startSeconds: 0 });
   }
@@ -228,9 +224,7 @@ class BPMAnalyzer {
    */
   static buildAnalysisWindow(audioBuffer, Output = Array, {
     seconds = BPMAnalyzer.ANALYSIS_WINDOW_SECONDS,
-    // A little in, since intros often have no drums to lock onto. Callers that
-    // want the tempo slice to line up with history ask for zero and let
-    // tempoSlice do the skipping.
+    // A little in, since intros often have no drums to lock onto
     startSeconds = BPMAnalyzer.ANALYSIS_SKIP_SECONDS
   } = {}) {
     const { sampleRate, length, numberOfChannels } = audioBuffer;
@@ -262,10 +256,9 @@ class BPMAnalyzer {
     while (bpm < BPMAnalyzer.MIN_BPM) bpm *= 2;
     while (bpm > BPMAnalyzer.MAX_BPM) bpm /= 2;
 
-    // The kick, and the whole mix only where there is no usable kick. Judged
-    // against a real library the kick alone beat every combination of the two:
-    // in a dembow the snares syncopate off the beat and fit the half-note grid
-    // well enough to pull the answer to twice the tempo.
+    // The kick, and the whole mix only where there is no usable kick: a dembow's
+    // snares syncopate off the beat and fit the half-note grid well enough to
+    // pull the answer to twice the tempo.
     const onsets = this.lowBandOnsets(audioData, sampleRate)
       || this.strongOnsets(this.collectOnsets(mt));
     if (!onsets) return Math.round(bpm);
@@ -281,8 +274,8 @@ class BPMAnalyzer {
 
     scored.sort((a, b) => b.evidence - a.evidence);
 
-    // Where the kick plainly picks one octave, that is the answer; the prior is
-    // only there to settle the ties, which is most of what reggaeton produces.
+    // Where the kick plainly picks an octave that is the answer; the prior only
+    // settles ties, which is most of what a dembow produces.
     const [leader, runnerUp] = scored;
     if (!runnerUp || runnerUp.evidence <= 0 ||
         leader.evidence / runnerUp.evidence >= BPMAnalyzer.EVIDENCE_DECISIVE) {
