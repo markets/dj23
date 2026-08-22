@@ -1,19 +1,32 @@
 /**
- * Tempo detection off the main thread, so a dropped folder can be analysed
+ * Tempo and key detection off the main thread, so a dropped folder can be analysed
  * without the mixer stuttering. Decoding still has to happen on the main
  * thread — there is no AudioContext in a worker — so what arrives here is an
  * already-prepared window of samples, transferred rather than copied.
  *
  * Started with new Worker(), so this file must never be a <script>.
  */
-importScripts('../vendor/music-tempo.min.js', 'bpm-analyzer.js');
+// music-tempo also brings the FFT that KeyAnalyzer uses
+importScripts('../vendor/music-tempo.min.js', 'bpm-analyzer.js', 'key-analyzer.js');
 
 const analyzer = new BPMAnalyzer(null, 'queue');
 
-self.onmessage = ({ data }) => {
+// Separately, because they fail for different reasons: MusicTempo throws when
+// it finds no onsets, and that must not cost the key as well.
+const attempt = (label, run) => {
   try {
-    self.postMessage({ id: data.id, bpm: analyzer.analyseWindow(data.samples, data.sampleRate) });
+    return run();
   } catch (error) {
-    self.postMessage({ id: data.id, bpm: 0, error: String(error) });
+    console.warn(`Analysis worker: ${label} failed:`, error);
+    return null;
   }
+};
+
+self.onmessage = ({ data }) => {
+  self.postMessage({
+    id: data.id,
+    bpm: attempt('tempo', () => analyzer.analyseWindow(
+      BPMAnalyzer.tempoSlice(data.samples, data.sampleRate), data.sampleRate)) || 0,
+    key: attempt('key', () => KeyAnalyzer.detect(data.samples, data.sampleRate))
+  });
 };

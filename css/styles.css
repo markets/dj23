@@ -2056,7 +2056,7 @@ input[type="range"]::-moz-range-thumb {
 
 .playlist-row {
   display: grid;
-  grid-template-columns: 40px 1fr auto auto auto;
+  grid-template-columns: 40px 1fr auto auto auto auto;
   align-items: center;
   gap: var(--spacing-md);
   padding: var(--spacing-sm) var(--spacing-lg);
@@ -2108,6 +2108,13 @@ input[type="range"]::-moz-range-thumb {
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
   color: var(--color-primary);
+  white-space: nowrap;
+}
+
+.playlist-key {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-accent-blue);
   white-space: nowrap;
 }
 

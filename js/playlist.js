@@ -181,6 +181,7 @@ class Playlist {
         album: '',
         duration: null,
         bpm: null,
+        key: null,
         file,
         coverState: 'idle',
         coverUrl: null
@@ -223,7 +224,9 @@ class Playlist {
       // The list can be cleared or replaced from under the queue
       if (!this.tracks.includes(track) || !track.file || track.bpm !== null) continue;
 
-      track.bpm = await this.analyseTrack(track);
+      const { bpm, key } = await this.analyseTrack(track);
+      track.bpm = bpm;
+      track.key = key;
       this.updateRow(track);
       this.updateChrome();
 
@@ -242,15 +245,17 @@ class Playlist {
    */
   async analyseTrack(track) {
     const context = window.audioEngine?.audioContext;
-    if (!context) return null;
+    if (!context) return { bpm: null, key: null };
 
     try {
       const buffer = await context.decodeAudioData(await track.file.arrayBuffer());
-      const samples = BPMAnalyzer.buildAnalysisWindow(buffer, Float32Array);
+      // Long enough for the key, which reads steadier across sections; tempo
+      // takes its own shorter slice out of this inside the worker
+      const samples = BPMAnalyzer.buildWorkerWindow(buffer, KeyAnalyzer.ANALYSIS_SECONDS);
       return await this.requestAnalysis(samples, buffer.sampleRate);
     } catch (error) {
       console.warn(`Playlist: could not analyse ${track.name}:`, error);
-      return 0;
+      return { bpm: 0, key: null };
     }
   }
 
@@ -274,7 +279,7 @@ class Playlist {
         const resolve = this.pendingAnalyses.get(data.id);
         if (!resolve) return;
         this.pendingAnalyses.delete(data.id);
-        resolve(data.bpm);
+        resolve({ bpm: data.bpm, key: data.key });
       };
     } catch (error) {
       console.warn('Playlist: no worker, tempo stays blank until a deck loads:', error);
@@ -413,6 +418,7 @@ class Playlist {
         <span class="playlist-track-title"></span>
         <span class="playlist-track-artist"></span>
       </div>
+      <span class="playlist-key"></span>
       <span class="playlist-bpm"></span>
       <span class="playlist-duration"></span>
       <div class="playlist-load">
@@ -429,6 +435,12 @@ class Playlist {
     row.querySelector('.playlist-track-artist').textContent = track.artist || '';
     row.querySelector('.playlist-duration').textContent = this.formatDuration(track.duration);
     row.querySelector('.playlist-bpm').textContent = track.bpm > 0 ? `${Math.round(track.bpm)} BPM` : '';
+
+    // Camelot on the row, the musical name on hover: the wheel is what tells
+    // you what mixes with what
+    const keyCell = row.querySelector('.playlist-key');
+    keyCell.textContent = track.key ? track.key.camelot : '';
+    keyCell.title = track.key ? track.key.name : '';
   }
 
   updateRow(track) {

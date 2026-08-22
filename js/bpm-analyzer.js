@@ -178,6 +178,25 @@ class BPMAnalyzer {
   }
 
   /**
+   * The stretch of a longer run of samples that the tempo detector wants. Key
+   * detection reads the whole track, so the worker gets all of it and takes
+   * this slice out rather than being sent the same audio twice.
+   */
+  static tempoSlice(samples, sampleRate) {
+    const length = Math.floor(BPMAnalyzer.ANALYSIS_WINDOW_SECONDS * sampleRate);
+    if (samples.length <= length) return samples;
+
+    const start = Math.min(Math.floor(BPMAnalyzer.ANALYSIS_SKIP_SECONDS * sampleRate), samples.length - length);
+    return samples.subarray(start, start + length);
+  }
+
+  /** The samples a worker needs for both jobs: enough for the key, starting at
+   *  the top so tempoSlice finds its usual stretch inside. */
+  static buildWorkerWindow(audioBuffer, seconds) {
+    return BPMAnalyzer.buildAnalysisWindow(audioBuffer, Float32Array, { seconds, startSeconds: 0 });
+  }
+
+  /**
    * Tempo of one prepared window, in beats per minute, or 0 if none was found.
    * Touches no audio context and no DOM, which is what lets js/bpm-worker.js
    * run it off the main thread for a whole folder at a time.
@@ -203,12 +222,17 @@ class BPMAnalyzer {
    * thread it is cheaper to build the Array directly; the worker wants
    * Float32Array, which transfers without a copy and converts off-thread.
    */
-  static buildAnalysisWindow(audioBuffer, Output = Array) {
+  static buildAnalysisWindow(audioBuffer, Output = Array, {
+    seconds = BPMAnalyzer.ANALYSIS_WINDOW_SECONDS,
+    // A little in, since intros often have no drums to lock onto. Callers that
+    // want the tempo slice to line up with history ask for zero and let
+    // tempoSlice do the skipping.
+    startSeconds = BPMAnalyzer.ANALYSIS_SKIP_SECONDS
+  } = {}) {
     const { sampleRate, length, numberOfChannels } = audioBuffer;
 
-    const windowLength = Math.min(length, Math.floor(BPMAnalyzer.ANALYSIS_WINDOW_SECONDS * sampleRate));
-    // Start a little in, since intros often have no drums to lock onto
-    const start = Math.min(Math.floor(BPMAnalyzer.ANALYSIS_SKIP_SECONDS * sampleRate), length - windowLength);
+    const windowLength = Math.min(length, Math.floor(seconds * sampleRate));
+    const start = Math.max(0, Math.min(Math.floor(startSeconds * sampleRate), length - windowLength));
 
     const left = audioBuffer.getChannelData(0);
     const right = numberOfChannels > 1 ? audioBuffer.getChannelData(1) : null;
