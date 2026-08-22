@@ -1292,7 +1292,7 @@ class DeckController {
     });
   }
 
-  async loadTrack(file) {
+  async loadTrack(file, knownKey = null) {
     await window.audioEngine.initialize();
         
     const deck = window.audioEngine.getDeck(this.deckId);
@@ -1335,6 +1335,9 @@ class DeckController {
         await beatWaveformRenderer.generateWaveform(deck.audioBuffer);
             
         this.updateBPMDisplay();
+        this.showKey(knownKey);
+        // Not awaited: the deck is usable now, and the key arrives when it does
+        if (!knownKey) this.detectKey(deck.audioBuffer);
       } else {
         trackInfo.querySelector('.track-name').textContent = 'Failed to load';
       }
@@ -1511,6 +1514,24 @@ class DeckController {
   updateCueState(isCueActive) {
     const cueButton = document.getElementById(`cue${this.deckId}`);
     cueButton.classList.toggle('active', isCueActive);
+  }
+
+  /** Key off the worker, so loading a track never waits on it. */
+  async detectKey(audioBuffer) {
+    const { key } = await window.trackAnalyser.analyse(audioBuffer, { tempo: false });
+
+    // Another track may have landed while this was out
+    if (window.audioEngine.getDeck(this.deckId)?.audioBuffer !== audioBuffer) return;
+
+    this.showKey(key);
+  }
+
+  showKey(key) {
+    const element = document.getElementById(`trackKey${this.deckId}`);
+    if (!element) return;
+
+    element.textContent = key ? key.camelot : '';
+    element.title = key ? key.name : '';
   }
 
   updateTrackTime() {

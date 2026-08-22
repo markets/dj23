@@ -15,9 +15,6 @@ class Playlist {
 
     this.analysisQueue = [];
     this.isAnalysing = false;
-    this.worker = null;
-    this.pendingAnalyses = new Map();
-    this.nextAnalysisId = 0;
 
     this.cacheElements();
     if (!this.panel) return;
@@ -181,6 +178,7 @@ class Playlist {
         album: '',
         duration: null,
         bpm: null,
+        key: null,
         file,
         coverState: 'idle',
         coverUrl: null
@@ -209,7 +207,7 @@ class Playlist {
   }
 
   async runAnalysis() {
-    if (!this.ensureWorker()) return;
+    if (!window.trackAnalyser.ensureWorker()) return;
 
     this.isAnalysing = true;
 
@@ -223,7 +221,9 @@ class Playlist {
       // The list can be cleared or replaced from under the queue
       if (!this.tracks.includes(track) || !track.file || track.bpm !== null) continue;
 
-      track.bpm = await this.analyseTrack(track);
+      const { bpm, key } = await this.analyseTrack(track);
+      track.bpm = bpm;
+      track.key = key;
       this.updateRow(track);
       this.updateChrome();
 
@@ -242,47 +242,17 @@ class Playlist {
    */
   async analyseTrack(track) {
     const context = window.audioEngine?.audioContext;
-    if (!context) return null;
+    if (!context) return { bpm: null, key: null };
 
     try {
       const buffer = await context.decodeAudioData(await track.file.arrayBuffer());
-      const samples = BPMAnalyzer.buildAnalysisWindow(buffer, Float32Array);
-      return await this.requestAnalysis(samples, buffer.sampleRate);
+      return await window.trackAnalyser.analyse(buffer);
     } catch (error) {
       console.warn(`Playlist: could not analyse ${track.name}:`, error);
-      return 0;
+      return { bpm: 0, key: null };
     }
   }
 
-  requestAnalysis(samples, sampleRate) {
-    return new Promise((resolve) => {
-      const id = this.nextAnalysisId++;
-      this.pendingAnalyses.set(id, resolve);
-      // Transferred, not copied: the window is megabytes
-      this.worker.postMessage({ id, samples, sampleRate }, [samples.buffer]);
-    });
-  }
-
-  /** Without a worker there is no background analysis: doing this work on the
-   *  main thread would stall the mixer for the length of the folder. */
-  ensureWorker() {
-    if (this.worker) return this.worker;
-
-    try {
-      this.worker = new Worker('js/bpm-worker.js');
-      this.worker.onmessage = ({ data }) => {
-        const resolve = this.pendingAnalyses.get(data.id);
-        if (!resolve) return;
-        this.pendingAnalyses.delete(data.id);
-        resolve(data.bpm);
-      };
-    } catch (error) {
-      console.warn('Playlist: no worker, tempo stays blank until a deck loads:', error);
-      this.worker = null;
-    }
-
-    return this.worker;
-  }
 
   /** Tags and duration for every new track, a few files at a time. */
   async hydrate(tracks) {
@@ -413,6 +383,7 @@ class Playlist {
         <span class="playlist-track-title"></span>
         <span class="playlist-track-artist"></span>
       </div>
+      <span class="playlist-key"></span>
       <span class="playlist-bpm"></span>
       <span class="playlist-duration"></span>
       <div class="playlist-load">
@@ -429,6 +400,11 @@ class Playlist {
     row.querySelector('.playlist-track-artist').textContent = track.artist || '';
     row.querySelector('.playlist-duration').textContent = this.formatDuration(track.duration);
     row.querySelector('.playlist-bpm').textContent = track.bpm > 0 ? `${Math.round(track.bpm)} BPM` : '';
+
+    // Camelot on the row, the musical name on hover
+    const keyCell = row.querySelector('.playlist-key');
+    keyCell.textContent = track.key ? track.key.camelot : '';
+    keyCell.title = track.key ? track.key.name : '';
   }
 
   updateRow(track) {
@@ -469,7 +445,7 @@ class Playlist {
     const controller = window.mixerController?.deckControllers?.[deckId];
     if (!controller) return;
 
-    await controller.loadTrack(track.file);
+    await controller.loadTrack(track.file, track.key);
 
     // The deck analyses on load, so this is the one moment the row can learn the
     // tempo; it sticks, so the second reach for a track already shows it

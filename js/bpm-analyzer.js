@@ -19,19 +19,20 @@ class BPMAnalyzer {
   static LOW_BAND_HZ = 150;
 
   /**
-   * How well the whole mix has to fit a grid before it is trusted over the kick
-   * alone. A two-step break fits one tightly; a dembow fits nothing well.
+   * Below this nothing explains the music, so the tracker probably missed the
+   * period rather than its multiple, and overriding it only makes it worse.
    */
-  static FULL_BAND_TRUST = 0.7;
+  static CONFIDENCE_FLOOR = 0.3;
 
   /**
-   * Below this nothing explains the music, so the tracker probably missed the
-   * period rather than its multiple, and overriding it only makes things worse.
+   * How much better one octave has to explain the kick before the prior is
+   * ignored. Four on the floor beats its half by half again; a dembow, whose
+   * syncopation fits both grids, barely separates them at all.
    */
-  static CONFIDENCE_FLOOR = 0.45;
+  static EVIDENCE_DECISIVE = 1.25;
 
   /** Where listeners hear tempo, and how wide that is, in octaves. */
-  static TEMPO_PRIOR_CENTRE = 120;
+  static TEMPO_PRIOR_CENTRE = 110;
   static TEMPO_PRIOR_WIDTH = 0.9;
 
   /** Outside this a reading is an octave error, not a genre. */
@@ -178,6 +179,24 @@ class BPMAnalyzer {
   }
 
   /**
+   * The stretch the tempo detector wants out of a longer run of samples. Key
+   * detection needs far more, so the worker is sent that and slices here.
+   */
+  static tempoSlice(samples, sampleRate) {
+    const length = Math.floor(BPMAnalyzer.ANALYSIS_WINDOW_SECONDS * sampleRate);
+    if (samples.length <= length) return samples;
+
+    const start = Math.min(Math.floor(BPMAnalyzer.ANALYSIS_SKIP_SECONDS * sampleRate), samples.length - length);
+    return samples.subarray(start, start + length);
+  }
+
+  /** Enough samples for the key, starting at the top so tempoSlice can find
+   *  its own stretch inside. */
+  static buildWorkerWindow(audioBuffer, seconds) {
+    return BPMAnalyzer.buildAnalysisWindow(audioBuffer, Float32Array, { seconds, startSeconds: 0 });
+  }
+
+  /**
    * Tempo of one prepared window, in beats per minute, or 0 if none was found.
    * Touches no audio context and no DOM, which is what lets js/bpm-worker.js
    * run it off the main thread for a whole folder at a time.
@@ -203,12 +222,15 @@ class BPMAnalyzer {
    * thread it is cheaper to build the Array directly; the worker wants
    * Float32Array, which transfers without a copy and converts off-thread.
    */
-  static buildAnalysisWindow(audioBuffer, Output = Array) {
+  static buildAnalysisWindow(audioBuffer, Output = Array, {
+    seconds = BPMAnalyzer.ANALYSIS_WINDOW_SECONDS,
+    // A little in, since intros often have no drums to lock onto
+    startSeconds = BPMAnalyzer.ANALYSIS_SKIP_SECONDS
+  } = {}) {
     const { sampleRate, length, numberOfChannels } = audioBuffer;
 
-    const windowLength = Math.min(length, Math.floor(BPMAnalyzer.ANALYSIS_WINDOW_SECONDS * sampleRate));
-    // Start a little in, since intros often have no drums to lock onto
-    const start = Math.min(Math.floor(BPMAnalyzer.ANALYSIS_SKIP_SECONDS * sampleRate), length - windowLength);
+    const windowLength = Math.min(length, Math.floor(seconds * sampleRate));
+    const start = Math.max(0, Math.min(Math.floor(startSeconds * sampleRate), length - windowLength));
 
     const left = audioBuffer.getChannelData(0);
     const right = numberOfChannels > 1 ? audioBuffer.getChannelData(1) : null;
@@ -234,34 +256,35 @@ class BPMAnalyzer {
     while (bpm < BPMAnalyzer.MIN_BPM) bpm *= 2;
     while (bpm > BPMAnalyzer.MAX_BPM) bpm /= 2;
 
-    const fullBand = this.strongOnsets(this.collectOnsets(mt));
-    const lowBand = this.lowBandOnsets(audioData, sampleRate);
-    if (!fullBand && !lowBand) return Math.round(bpm);
+    // The kick, and the whole mix only where there is no usable kick: a dembow's
+    // snares syncopate off the beat and fit the half-note grid well enough to
+    // pull the answer to twice the tempo.
+    const onsets = this.lowBandOnsets(audioData, sampleRate)
+      || this.strongOnsets(this.collectOnsets(mt));
+    if (!onsets) return Math.round(bpm);
 
-    const candidates = [];
+    const scored = [];
     for (const multiple of BPMAnalyzer.OCTAVE_CANDIDATES) {
       const candidate = bpm * multiple;
       if (candidate < BPMAnalyzer.MIN_BPM || candidate > BPMAnalyzer.MAX_BPM) continue;
 
-      candidates.push({
-        bpm: candidate,
-        full: fullBand ? this.scoreGrid(fullBand, candidate) : 0,
-        low: lowBand ? this.scoreGrid(lowBand, candidate) : 0,
-        prior: BPMAnalyzer.tempoPrior(candidate)
-      });
+      scored.push({ bpm: candidate, evidence: this.scoreGrid(onsets, candidate) });
+    }
+    if (!scored.length) return Math.round(bpm);
+
+    scored.sort((a, b) => b.evidence - a.evidence);
+
+    // Where the kick plainly picks an octave that is the answer; the prior only
+    // settles ties, which is most of what a dembow produces.
+    const [leader, runnerUp] = scored;
+    if (!runnerUp || runnerUp.evidence <= 0 ||
+        leader.evidence / runnerUp.evidence >= BPMAnalyzer.EVIDENCE_DECISIVE) {
+      return Math.round(leader.bpm);
     }
 
-    if (!candidates.length) return Math.round(bpm);
-
-    // Whether the mix lands on a grid at all decides which layer to believe: in
-    // a two-step break the snares are as much the pulse as the kick, in a
-    // dembow only the kick is on the beat
-    const bestFit = Math.max(...candidates.map((entry) => entry.full));
-    const trustFullBand = bestFit >= BPMAnalyzer.FULL_BAND_TRUST || !lowBand;
-
     let best = null;
-    for (const entry of candidates) {
-      const score = (trustFullBand ? entry.full : entry.low) * entry.prior;
+    for (const entry of scored) {
+      const score = entry.evidence * BPMAnalyzer.tempoPrior(entry.bpm);
       if (!best || score > best.score) best = { bpm: entry.bpm, score };
     }
 
