@@ -13,6 +13,12 @@ class Playlist {
     this.filter = '';
     this.isOpen = false;
 
+    this.analysisQueue = [];
+    this.isAnalysing = false;
+    this.worker = null;
+    this.pendingAnalyses = new Map();
+    this.nextAnalysisId = 0;
+
     this.cacheElements();
     if (!this.panel) return;
 
@@ -188,6 +194,94 @@ class Playlist {
     this.render();
     this.open();
     await this.hydrate(fresh);
+    this.startAnalysis();
+  }
+
+  // --- Tempo in the background ------------------------------------------
+
+  /** Queue every track that has no tempo yet. */
+  startAnalysis() {
+    const waiting = this.tracks.filter(track => track.file && track.bpm === null);
+    this.analysisQueue = waiting;
+    this.updateChrome();
+
+    if (waiting.length && !this.isAnalysing) this.runAnalysis();
+  }
+
+  async runAnalysis() {
+    if (!this.ensureWorker()) return;
+
+    this.isAnalysing = true;
+
+    while (this.analysisQueue.length) {
+      // A deck being loaded comes first
+      while (DeckController.loadsInFlight > 0) {
+        await new Promise((resolve) => setTimeout(resolve, 120));
+      }
+
+      const track = this.analysisQueue.shift();
+      // The list can be cleared or replaced from under the queue
+      if (!this.tracks.includes(track) || !track.file || track.bpm !== null) continue;
+
+      track.bpm = await this.analyseTrack(track);
+      this.updateRow(track);
+      this.updateChrome();
+
+      // Hand a frame back to the mixer between decodes
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+
+    this.isAnalysing = false;
+    this.updateChrome();
+  }
+
+  /**
+   * One decode, one analysis, one release. Sequential on purpose: a decoded
+   * track is tens of megabytes, and holding several at once is what makes
+   * mobile give up. A failure here costs one BPM cell, nothing else.
+   */
+  async analyseTrack(track) {
+    const context = window.audioEngine?.audioContext;
+    if (!context) return null;
+
+    try {
+      const buffer = await context.decodeAudioData(await track.file.arrayBuffer());
+      const samples = BPMAnalyzer.buildAnalysisWindow(buffer, Float32Array);
+      return await this.requestAnalysis(samples, buffer.sampleRate);
+    } catch (error) {
+      console.warn(`Playlist: could not analyse ${track.name}:`, error);
+      return 0;
+    }
+  }
+
+  requestAnalysis(samples, sampleRate) {
+    return new Promise((resolve) => {
+      const id = this.nextAnalysisId++;
+      this.pendingAnalyses.set(id, resolve);
+      // Transferred, not copied: the window is megabytes
+      this.worker.postMessage({ id, samples, sampleRate }, [samples.buffer]);
+    });
+  }
+
+  /** Without a worker there is no background analysis: doing this work on the
+   *  main thread would stall the mixer for the length of the folder. */
+  ensureWorker() {
+    if (this.worker) return this.worker;
+
+    try {
+      this.worker = new Worker('js/bpm-worker.js');
+      this.worker.onmessage = ({ data }) => {
+        const resolve = this.pendingAnalyses.get(data.id);
+        if (!resolve) return;
+        this.pendingAnalyses.delete(data.id);
+        resolve(data.bpm);
+      };
+    } catch (error) {
+      console.warn('Playlist: no worker, tempo stays blank until a deck loads:', error);
+      this.worker = null;
+    }
+
+    return this.worker;
   }
 
   /** Tags and duration for every new track, a few files at a time. */
@@ -386,6 +480,7 @@ class Playlist {
   clear() {
     this.tracks.forEach(track => this.releaseCover(track));
     this.tracks = [];
+    this.analysisQueue = [];
     this.render();
   }
 
