@@ -1009,6 +1009,9 @@ class Deck {
 }
 
 class DeckController {
+  /** Decks currently decoding, so other work can wait its turn. */
+  static loadsInFlight = 0;
+
   constructor(deckId) {
     this.deckId = deckId;
     this.isScratching = false;
@@ -1305,6 +1308,10 @@ class DeckController {
     trackInfo.classList.add('loading');
     trackInfo.querySelector('.track-name').textContent = 'Loading...';
 
+    // Background analysis steps aside while this runs: the user is waiting on
+    // this decode, and two at once doubles the peak memory
+    DeckController.loadsInFlight++;
+
     try {
       const success = await deck.loadFile(file);
 
@@ -1332,6 +1339,7 @@ class DeckController {
         trackInfo.querySelector('.track-name').textContent = 'Failed to load';
       }
     } finally {
+      DeckController.loadsInFlight--;
       // Whatever happened, never leave the deck stuck in the loading shimmer
       trackInfo.classList.remove('loading');
     }

@@ -155,26 +155,22 @@ class BPMAnalyzer {
     }
 
     try {
-      const audioData = this.buildAnalysisWindow(audioBuffer);
-      const mt = new MusicTempo(audioData);
-      // MusicTempo reports tempo as a formatted string, e.g. "128.000"
-      const detectedBPM = parseFloat(mt.tempo);
+      const detected = this.analyseWindow(
+        BPMAnalyzer.buildAnalysisWindow(audioBuffer),
+        audioBuffer.sampleRate
+      );
 
-      // It leaves tempo undefined when it can't find a beat
-      if (!Number.isFinite(detectedBPM) || detectedBPM <= 0) {
+      if (!detected) {
         console.warn(`BPM Analyzer: no tempo found for deck ${this.deckId}, use TAP`);
         this.baseBPM = 0;
         return 0;
       }
 
-      const validatedBPM = this.correctTempoOctave(detectedBPM, mt, audioData, audioBuffer.sampleRate);
-      
-      console.log(`BPM Analyzer: Detected ${detectedBPM} -> Validated ${validatedBPM} BPM for deck ${this.deckId}`);
-      this.baseBPM = validatedBPM;
+      this.baseBPM = detected;
       this.bpmSource = 'auto-detected';
-      return validatedBPM;
+      return detected;
     } catch (error) {
-      // Unknown beats guessing: SYNC and the beat map skip a zero BPM, TAP fills it
+      // Unknown beats a guess: SYNC and the beat map skip a zero BPM, TAP fills it
       console.error(`BPM Analyzer: Detection failed for deck ${this.deckId}, use TAP:`, error);
       this.baseBPM = 0;
       return 0;
@@ -182,11 +178,32 @@ class BPMAnalyzer {
   }
 
   /**
-   * MusicTempo wants a plain Array, and copies a Float32Array internally. Tempo
-   * is effectively constant, so a window gives the same answer as the whole
-   * track at a cost that does not grow with the file.
+   * Tempo of one prepared window, in beats per minute, or 0 if none was found.
+   * Touches no audio context and no DOM, which is what lets js/bpm-worker.js
+   * run it off the main thread for a whole folder at a time.
    */
-  buildAnalysisWindow(audioBuffer) {
+  analyseWindow(audioData, sampleRate) {
+    const mt = new MusicTempo(audioData);
+    // MusicTempo reports tempo as a formatted string, e.g. "128.000"
+    const detectedBPM = parseFloat(mt.tempo);
+    if (!Number.isFinite(detectedBPM) || detectedBPM <= 0) return 0;
+
+    const corrected = this.correctTempoOctave(detectedBPM, mt, audioData, sampleRate);
+    console.log(`BPM Analyzer: Detected ${detectedBPM} -> Validated ${corrected} BPM for deck ${this.deckId}`);
+    return corrected;
+  }
+
+  /**
+   * The stretch of audio the detector looks at, mixed to mono. Tempo is
+   * effectively constant, so a window answers the same as the whole track at a
+   * cost that does not grow with the file.
+   *
+   * `Output` is the only thing that varies by caller. MusicTempo needs a plain
+   * Array and converts a Float32Array into one internally, so on the main
+   * thread it is cheaper to build the Array directly; the worker wants
+   * Float32Array, which transfers without a copy and converts off-thread.
+   */
+  static buildAnalysisWindow(audioBuffer, Output = Array) {
     const { sampleRate, length, numberOfChannels } = audioBuffer;
 
     const windowLength = Math.min(length, Math.floor(BPMAnalyzer.ANALYSIS_WINDOW_SECONDS * sampleRate));
@@ -196,13 +213,13 @@ class BPMAnalyzer {
     const left = audioBuffer.getChannelData(0);
     const right = numberOfChannels > 1 ? audioBuffer.getChannelData(1) : null;
 
-    const audioData = new Array(windowLength);
+    const samples = new Output(windowLength);
     for (let i = 0; i < windowLength; i++) {
       const s = start + i;
-      audioData[i] = right ? (left[s] + right[s]) / 2 : left[s];
+      samples[i] = right ? (left[s] + right[s]) / 2 : left[s];
     }
 
-    return audioData;
+    return samples;
   }
 
   /**
