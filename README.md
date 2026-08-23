@@ -41,7 +41,8 @@ through the Web Audio API.
 
 * **Crossfader**, per-channel volume faders and master volume
 * **4-band EQ** per deck (High / Mid / Low / Gain), each with a kill switch and a reset dot
-* **Five effects** per deck: filter, reverb, delay, phaser and flanger
+* An **FX pad** per deck driving six effects — filter, reverb, delay, phaser, flanger and a
+  beat-synced gate
 * **SYNC** in both directions, matching BPM *and* beat position
 * **VU meters** for both decks and the master bus, plus a beat meter for phrase counting
 * **Pre-listen** on either deck when output routing is set to cue split
