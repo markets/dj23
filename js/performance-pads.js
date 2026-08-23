@@ -80,7 +80,7 @@ class PerformancePads {
     // the way up, and the chips are the only control here that is held
     this.chipRow.addEventListener('pointerdown', (e) => {
       const chip = e.target.closest('.loop-chip');
-      if (chip) this.handleChipPress(chip, e);
+      if (chip) this.handleChipPress(chip);
     });
     window.addEventListener('pointerup', () => this.releaseHeldChip());
     window.addEventListener('pointercancel', () => this.releaseHeldChip());
@@ -144,7 +144,7 @@ class PerformancePads {
     this.syncOperations();
   }
 
-  handleChipPress(chip, event) {
+  handleChipPress(chip) {
     const deck = this.deck;
     if (!deck || !deck.audioBuffer) return;
 
@@ -159,11 +159,11 @@ class PerformancePads {
     if (this.mode === 'roll') {
       if (!deck.startRoll(beats)) return;
 
-      // A held roll has to keep the pointer even if it slides off the button
-      if (!this.isRollLatched) {
-        chip.setPointerCapture?.(event.pointerId);
-        this.heldChip = chip;
-      }
+      // Release is watched on the window rather than the chip, so a roll ends
+      // even if the pointer wandered off the button first. Nothing may run
+      // between starting the roll and arming that release: a roll that cannot
+      // be let go of is the one failure the DJ cannot mix out of.
+      if (!this.isRollLatched) this.heldChip = chip;
     } else if (!deck.setBeatLoop(beats)) {
       return;
     }

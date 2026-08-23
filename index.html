@@ -158,8 +158,6 @@
               <button type="button" class="hot-cue-btn" data-cue="4" title="Hot cue 4 — click to set or jump, shift-click to clear">4</button>
             </div>
 
-            <div class="pads-divider"></div>
-
             <div class="loop-mode">
               <button type="button" class="loop-mode-btn active" data-loop-mode="loop">LOOP</button>
               <button type="button" class="loop-mode-btn" data-loop-mode="roll">ROLL</button>
@@ -171,35 +169,34 @@
               <button type="button" class="loop-op-btn" data-op="third">EXIT</button>
             </div>
 
-            <div class="pads-divider"></div>
-
             <button type="button" class="quantize-btn active" title="Snap cues and loops to the beat">QUANT</button>
           </div>
-          <div class="vinyl-section">
-            <div class="beat-navigation">
-              <button id="previousBeatA" class="beat-nav-btn previous-beat" title="Previous Beat">‹</button>
-              <button id="nextBeatA" class="beat-nav-btn next-beat" title="Next Beat">›</button>
-            </div>
-            <div class="vinyl-wrapper">
-              <div class="vinyl-record" id="vinylA">
-                <div class="vinyl-center">
-                  <div class="vinyl-hole"></div>
+          <div class="platter-group">
+            <div class="vinyl-section">
+              <div class="beat-navigation">
+                <button id="previousBeatA" class="beat-nav-btn previous-beat" title="Previous Beat">‹</button>
+                <button id="nextBeatA" class="beat-nav-btn next-beat" title="Next Beat">›</button>
+              </div>
+              <div class="vinyl-wrapper">
+                <div class="vinyl-record" id="vinylA">
+                  <div class="vinyl-center">
+                    <div class="vinyl-hole"></div>
+                  </div>
+                  <div class="vinyl-grooves"></div>
                 </div>
-                <div class="vinyl-grooves"></div>
               </div>
             </div>
-          </div>
-          <div class="pitch-control">
-            <label>Pitch</label>
-            <div class="pitch-bend-buttons">
-              <button id="pitchBendPlusA" class="pitch-bend-btn">+</button>
-              <button id="pitchBendMinusA" class="pitch-bend-btn">-</button>
+            <div class="pitch-control">
+              <div class="pitch-bend-buttons">
+                <button id="pitchBendPlusA" class="pitch-bend-btn">+</button>
+                <button id="pitchBendMinusA" class="pitch-bend-btn">-</button>
+              </div>
+              <div class="pitch-control-wrapper">
+                <input type="range" id="pitchA" min="-30" max="30" value="0" class="pitch-slider vertical-fader" orient="vertical">
+                <button id="pitchResetA" class="pitch-reset-btn" title="Reset pitch to 0%"></button>
+              </div>
+              <span id="pitchDisplayA">0%</span>
             </div>
-            <div class="pitch-control-wrapper">
-              <input type="range" id="pitchA" min="-30" max="30" value="0" class="pitch-slider vertical-fader" orient="vertical">
-              <button id="pitchResetA" class="pitch-reset-btn" title="Reset pitch to 0%"></button>
-            </div>
-            <span id="pitchDisplayA">0%</span>
           </div>
         </div>
 
@@ -491,8 +488,6 @@
               <button type="button" class="hot-cue-btn" data-cue="4" title="Hot cue 4 — click to set or jump, shift-click to clear">4</button>
             </div>
 
-            <div class="pads-divider"></div>
-
             <div class="loop-mode">
               <button type="button" class="loop-mode-btn active" data-loop-mode="loop">LOOP</button>
               <button type="button" class="loop-mode-btn" data-loop-mode="roll">ROLL</button>
@@ -504,35 +499,34 @@
               <button type="button" class="loop-op-btn" data-op="third">EXIT</button>
             </div>
 
-            <div class="pads-divider"></div>
-
             <button type="button" class="quantize-btn active" title="Snap cues and loops to the beat">QUANT</button>
           </div>
-          <div class="vinyl-section">
-            <div class="beat-navigation">
-              <button id="previousBeatB" class="beat-nav-btn previous-beat" title="Previous Beat">‹</button>
-              <button id="nextBeatB" class="beat-nav-btn next-beat" title="Next Beat">›</button>
-            </div>
-            <div class="vinyl-wrapper">
-              <div class="vinyl-record" id="vinylB">
-                <div class="vinyl-center">
-                  <div class="vinyl-hole"></div>
+          <div class="platter-group">
+            <div class="vinyl-section">
+              <div class="beat-navigation">
+                <button id="previousBeatB" class="beat-nav-btn previous-beat" title="Previous Beat">‹</button>
+                <button id="nextBeatB" class="beat-nav-btn next-beat" title="Next Beat">›</button>
+              </div>
+              <div class="vinyl-wrapper">
+                <div class="vinyl-record" id="vinylB">
+                  <div class="vinyl-center">
+                    <div class="vinyl-hole"></div>
+                  </div>
+                  <div class="vinyl-grooves"></div>
                 </div>
-                <div class="vinyl-grooves"></div>
               </div>
             </div>
-          </div>
-          <div class="pitch-control">
-            <label>Pitch</label>
-            <div class="pitch-bend-buttons">
-              <button id="pitchBendPlusB" class="pitch-bend-btn">+</button>
-              <button id="pitchBendMinusB" class="pitch-bend-btn">-</button>
+            <div class="pitch-control">
+              <div class="pitch-bend-buttons">
+                <button id="pitchBendPlusB" class="pitch-bend-btn">+</button>
+                <button id="pitchBendMinusB" class="pitch-bend-btn">-</button>
+              </div>
+              <div class="pitch-control-wrapper">
+                <input type="range" id="pitchB" min="-30" max="30" value="0" class="pitch-slider vertical-fader" orient="vertical">
+                <button id="pitchResetB" class="pitch-reset-btn" title="Reset pitch to 0%"></button>
+              </div>
+              <span id="pitchDisplayB">0%</span>
             </div>
-            <div class="pitch-control-wrapper">
-              <input type="range" id="pitchB" min="-30" max="30" value="0" class="pitch-slider vertical-fader" orient="vertical">
-              <button id="pitchResetB" class="pitch-reset-btn" title="Reset pitch to 0%"></button>
-            </div>
-            <span id="pitchDisplayB">0%</span>
           </div>
         </div>
 
@@ -642,11 +636,11 @@
 
   <!-- Mobile Bottom Navigation -->
   <nav class="mobile-bottom-nav">
-    <button class="mobile-nav-btn" data-view="deckA">
+    <button class="mobile-nav-btn active" data-view="deckA">
       <span class="nav-icon">A</span>
       <span class="nav-label">Deck A</span>
     </button>
-    <button class="mobile-nav-btn active" data-view="mixer">
+    <button class="mobile-nav-btn" data-view="mixer">
       <span class="nav-icon">≡</span>
       <span class="nav-label">Mixer</span>
     </button>

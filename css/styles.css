@@ -75,7 +75,7 @@
   --size-fader-deck: clamp(96px, 11.5vw, 165px);
   --size-fader-eq: clamp(68px, 7vw, 100px);
   --size-fader-volume: clamp(82px, 8.5vw, 120px);
-  --size-transport-btn: clamp(40px, 4.2vw, 60px);
+  --size-transport-btn: clamp(48px, 5.2vw, 72px);
   --size-pad-btn: clamp(44px, 4.9vw, 70px);
   --size-track-cover: clamp(48px, 5vw, 70px);
   --size-center-min: clamp(176px, 19vw, 250px);
@@ -986,13 +986,21 @@ input[type="range"]::-moz-range-thumb {
 }
 
 /* --- Vinyl, loop & pitch -------------------------------------------------- */
-/* The pad column sets the height here, so the platter and the pitch fader
-   stretch to meet it rather than floating in the middle of their own space */
+/* Two blocks, not three: the platter and its pitch fader are one instrument,
+   so the row splits pads | platter+fader and gives that seam twice the gap.
+   Still centred — pushing the platter to the far edge unbalances the deck.
+   The pad column sets the height, and everything else stretches to meet it. */
 .vinyl-container {
+  display: flex;
+  gap: calc(var(--size-vinyl-gap) * 2);
+  align-items: stretch;
+  justify-content: center;
+}
+
+.platter-group {
   display: flex;
   gap: var(--size-vinyl-gap);
   align-items: stretch;
-  justify-content: center;
 }
 
 .vinyl-section {
@@ -1136,14 +1144,6 @@ input[type="range"]::-moz-range-thumb {
   flex-shrink: 0;
 }
 
-.pitch-control > label {
-  margin-bottom: var(--spacing-sm);
-  font-weight: 600;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  line-height: 20px;
-}
-
 .pitch-bend-buttons {
   display: flex;
   gap: 4px;
@@ -1173,7 +1173,6 @@ input[type="range"]::-moz-range-thumb {
   min-height: 0;
 }
 
-.pitch-control > label,
 .pitch-control > span {
   flex: 0 0 auto;
 }
@@ -1188,7 +1187,7 @@ input[type="range"]::-moz-range-thumb {
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-sm);
-  margin: var(--spacing-lg) 0;
+  margin: var(--spacing-2xl) 0 var(--spacing-lg) 0;
   justify-content: center;
 }
 
@@ -1234,13 +1233,9 @@ input[type="range"]::-moz-range-thumb {
   font-size: 0.58rem;
   font-weight: 700;
   letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--text-muted);
   text-align: center;
-}
-
-.pads-divider {
-  height: 1px;
-  background: var(--border-primary);
 }
 
 .hot-cues {
@@ -1292,10 +1287,13 @@ input[type="range"]::-moz-range-thumb {
   box-shadow: var(--shadow-primary);
 }
 
+/* Opens a seam under the cue pads: the two halves of the column are unrelated
+   controls, and at a 6px gap they read as one list */
 .loop-mode {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 4px;
+  margin-top: var(--spacing-sm);
 }
 
 .loop-mode-btn {
@@ -1328,6 +1326,11 @@ input[type="range"]::-moz-range-thumb {
   gap: 4px;
 }
 
+/* The seam before QUANT, matching the one under the cue pads */
+.loop-ops {
+  margin-bottom: var(--spacing-sm);
+}
+
 .loop-chip,
 .loop-op-btn {
   height: 26px;
@@ -1350,7 +1353,11 @@ input[type="range"]::-moz-range-thumb {
   pointer-events: none;
 }
 
+/* Anchored to the foot of the column: it is a deck-wide setting rather than a
+   loop control, and it lands on the bottom edge of the platter beside it
+   instead of leaving the slack dangling under it */
 .quantize-btn {
+  margin-top: auto;
   height: 24px;
   font-size: 0.62rem;
   font-weight: 700;
@@ -2362,10 +2369,12 @@ input[type="range"]::-moz-range-thumb {
     min-width: 0;
   }
 
-  /* Controls that stay usable at thumb size */
+  /* Controls that stay usable at thumb size. The platter is sized to finish
+     level with the pitch column it now sits beside, rather than to a round
+     number of its own. */
   .vinyl-wrapper {
-    width: 150px;
-    height: 150px;
+    width: 180px;
+    height: 180px;
   }
 
   .pitch-control {
@@ -2384,16 +2393,25 @@ input[type="range"]::-moz-range-thumb {
     order: -1;
   }
 
+  .platter-group {
+    flex: 1;
+    justify-content: center;
+    align-items: flex-start;
+    margin-top: var(--spacing-md);
+  }
+
+  /* Both columns open with a row of buttons; without this the platter hangs
+     lower than the fader it sits next to */
+  .platter-group .beat-navigation {
+    margin-bottom: 0;
+  }
+
   .hot-cues {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .loop-lengths {
     grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
-
-  .pads-divider {
-    display: none;
   }
 
   .pitch-control-wrapper {
