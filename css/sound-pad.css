@@ -1,0 +1,81 @@
+/* ============================================================================
+   Sound pad — nine slots and their editor, see js/sound-pad.js
+   ============================================================================ */
+
+/* --- Sound pad ------------------------------------------------------------ */
+.sound-pad-section {
+  text-align: center;
+}
+
+.sound-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-sm);
+  max-width: calc(var(--size-pad-btn) * 3 + var(--spacing-sm) * 2);
+  margin: 0 auto;
+}
+
+.sound-pad-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sound-pad-btn {
+  background: var(--gradient-accent);
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xs);
+  cursor: pointer;
+  transition: var(--transition-normal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--size-pad-btn);
+  width: 100%;
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+.sound-pad-btn:hover {
+  transform: translateY(-2px);
+}
+
+.sound-pad-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--color-accent-blue) 60%, transparent);
+}
+
+.sound-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.sound-edit-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  cursor: pointer;
+  transition: var(--transition-normal);
+  color: var(--text-secondary);
+  font-size: 0.65rem;
+  font-weight: 500;
+  min-height: 20px;
+}
+
+.sound-edit-btn:hover {
+  background: var(--bg-surface-light);
+  color: var(--text-primary);
+  border-color: var(--border-light);
+}
+
+.sound-pad-volume-control {
+  text-align: center;
+  margin-top: var(--spacing-lg);
+}

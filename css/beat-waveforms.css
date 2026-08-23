@@ -1,0 +1,111 @@
+/* ============================================================================
+   Beat waveforms — the pair pinned under the header, see js/waveform.js
+   ============================================================================ */
+
+/* --- Global beat waveforms ------------------------------------------------ */
+.global-beat-waveforms {
+  background: transparent;
+  margin-top: var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  transition: var(--transition-normal);
+}
+
+.global-beat-waveforms:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 15px rgba(var(--color-primary-rgb), 0.2);
+}
+
+.global-beat-waveform-container {
+  position: relative;
+}
+
+.global-beat-waveform-container > label {
+  position: absolute;
+  top: var(--spacing-xs);
+  left: var(--spacing-xs);
+  z-index: 15;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.75rem;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.zoom-controls {
+  position: absolute;
+  top: var(--spacing-xs);
+  right: var(--spacing-xs);
+  z-index: 15;
+  display: flex;
+  gap: 4px;
+}
+
+.zoom-btn {
+  background: rgba(0, 0, 0, 0.7);
+  border: none;
+  color: var(--color-primary);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition-normal);
+  min-width: 24px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.zoom-btn:hover {
+  background: rgba(0, 0, 0, 0.9);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.zoom-btn:active {
+  transform: translateY(0);
+}
+
+.beat-waveform-wrapper {
+  position: relative;
+  width: 100%;
+  height: var(--size-beat-waveform);
+  background: linear-gradient(145deg, var(--bg-secondary), var(--bg-primary));
+  overflow: hidden;
+  border-top: 1px solid var(--border-primary);
+  cursor: pointer;
+  transition: var(--transition-normal);
+}
+
+.beat-waveform-wrapper:hover {
+  background: linear-gradient(145deg, var(--bg-tertiary), var(--bg-secondary));
+}
+
+.global-beat-waveform-container:first-child .beat-waveform-wrapper {
+  border-top: none;
+}
+
+.beat-waveform-global-fullwidth {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.beat-playhead {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 3px;
+  height: 100%;
+  background: var(--color-secondary);
+  z-index: 10;
+  transform: translateX(-50%);
+  box-shadow: 0 0 8px rgba(var(--color-secondary-rgb), 0.5);
+}

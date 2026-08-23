@@ -1,0 +1,242 @@
+/* ============================================================================
+   Center mixer — VU meters, BPM and sync, the beat meter, volumes and the crossfader
+   ============================================================================ */
+
+.center-mixer {
+  min-width: var(--size-center-min);
+}
+
+/* Shared section heading inside the center column */
+.crossfader-section > label,
+.sound-pad-section > label,
+.sound-pad-volume-control > label {
+  display: block;
+  margin-bottom: var(--spacing-md);
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* --- VU meters ------------------------------------------------------------ */
+.vu-meters {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-lg);
+}
+
+.vu-meter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.vu-meter label {
+  margin-bottom: var(--spacing-sm);
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.vu-bars {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 3px;
+  width: 20px;
+  align-items: center;
+}
+
+.vu-bar {
+  width: 16px;
+  height: 4px;
+  background: var(--border-primary);
+  border-radius: 2px;
+  transition: var(--transition-fast);
+}
+
+.vu-bar.active-low { background: var(--color-primary); }
+.vu-bar.active-mid { background: var(--color-level-mid); }
+.vu-bar.active-high { background: var(--color-secondary); }
+
+/* --- BPM & sync ----------------------------------------------------------- */
+.bpm-section {
+  text-align: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.bpm-display {
+  display: flex;
+  justify-content: space-around;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.bpm-deck {
+  text-align: center;
+}
+
+.bpm-deck label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: var(--spacing-xs);
+}
+
+.bpm-deck span {
+  font-size: clamp(1.1rem, 1.5vw, 1.5rem);
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-right: var(--spacing-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.tap-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-secondary);
+  color: var(--text-secondary);
+  padding: 3px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 0.65rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.tap-btn:hover {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border-color: var(--color-primary);
+}
+
+.tap-btn:active {
+  transform: scale(0.95);
+}
+
+.tap-btn.active {
+  background: var(--color-primary);
+  color: var(--bg-primary);
+  border-color: var(--color-primary);
+}
+
+.sync-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  gap: var(--spacing-sm);
+}
+
+/* --- Beat meter ----------------------------------------------------------- */
+.beat-meter-section {
+  display: flex;
+  justify-content: center;
+  margin: var(--spacing-md) 0;
+}
+
+.beat-meters {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-primary);
+  width: fit-content;
+  max-width: 100%;
+}
+
+.beat-bars {
+  display: flex;
+  gap: clamp(4px, 0.6vw, 8px);
+}
+
+.beat-bar {
+  width: clamp(12px, 1.4vw, 20px);
+  height: 10px;
+  background: var(--border-primary);
+  border-radius: 2px;
+  border: 1px solid var(--border-secondary);
+  transition: all 0.1s ease;
+}
+
+.beat-bar.active {
+  background: var(--color-primary);
+  box-shadow: 0 0 10px rgba(var(--color-primary-rgb), 0.8);
+  transform: scale(1.15);
+  border-color: var(--color-primary);
+}
+
+/* --- Channel volumes ------------------------------------------------------ */
+.volume-controls {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  margin: var(--spacing-lg) 0;
+  padding: var(--spacing-md);
+  background: var(--bg-overlay);
+  border-radius: var(--radius-xl);
+  backdrop-filter: blur(10px);
+}
+
+.volume-control {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.volume-control label {
+  margin-bottom: var(--spacing-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.volume-display {
+  display: block;
+  margin-top: var(--spacing-xs);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Channel faders are drawn upside down so the thumb tracks the audio level */
+.volume-slider {
+  height: var(--size-fader-volume);
+  margin-bottom: var(--spacing-md);
+  transform: rotate(180deg);
+}
+
+.prelisten-btn {
+  font-size: 0.8rem;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  width: 44px;
+  height: 28px;
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.prelisten-btn:active {
+  transform: translateY(1px);
+}
+
+/* --- Crossfader ----------------------------------------------------------- */
+.crossfader-section {
+  text-align: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.crossfader {
+  margin-bottom: var(--spacing-sm);
+}
+
+.crossfader-labels {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
