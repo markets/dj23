@@ -107,9 +107,6 @@ class Deck {
     this.globalGainNode = this.audioContext.createGain();
     this.globalGainNode.gain.value = 1.0;
 
-    this.splitter = this.audioContext.createChannelSplitter(2);
-    this.merger = this.audioContext.createChannelMerger(2);
-
     this.eqNodes.high = this.audioContext.createBiquadFilter();
     this.eqNodes.high.type = 'highshelf';
     this.eqNodes.high.frequency.value = 8000;
@@ -123,13 +120,10 @@ class Deck {
     this.eqNodes.low.type = 'lowshelf';
     this.eqNodes.low.frequency.value = 200;
 
-    this.effectNodes.filter = this.audioContext.createBiquadFilter();
-    this.effectNodes.filter.type = 'lowpass';
-    this.effectNodes.filter.frequency.value = 20000;
-
-    this.effectNodes.reverb = this.audioContext.createConvolver();
-    this.effectNodes.reverbGain = this.audioContext.createGain();
-    this.effectNodes.reverbGain.gain.value = 0;
+    // One tap for every send. The channel splitter this used to hang off
+    // carries a single channel per output, so the effects only ever heard the
+    // left side of the track
+    this.effectSend = this.audioContext.createGain();
 
     this.effectsEngine = new EffectsEngine(this.audioContext);
     Object.assign(this.effectNodes, this.effectsEngine.getEffectNodes());
@@ -158,6 +152,7 @@ class Deck {
     }
 
     this.prepareScratchHead();
+    this.syncEffectTempo();
 
     return true;
   }
@@ -224,26 +219,28 @@ class Deck {
     this.sourceGain.gain.linearRampToValueAtTime(1, now + Deck.DECLICK_SECONDS);
 
     origin.connect(this.sourceGain);
-    this.sourceGain.connect(this.effectNodes.filter);
-    this.effectNodes.filter.connect(this.eqNodes.low);
+    this.sourceGain.connect(this.effectNodes.filterIn);
+    this.effectNodes.filterOut.connect(this.eqNodes.low);
     this.eqNodes.low.connect(this.eqNodes.mid);
     this.eqNodes.mid.connect(this.eqNodes.high);
 
-    this.eqNodes.high.connect(this.splitter);
+    this.eqNodes.high.connect(this.effectSend);
 
-    // Main dry signal path
-    this.eqNodes.high.connect(this.globalGainNode);
+    // Main dry signal path, through the gate — it chops the deck itself, and
+    // feeding the sends from before it leaves the delay and the reverb running
+    // underneath the chop instead of stuttering with it
+    this.eqNodes.high.connect(this.effectNodes.gateIn);
+    this.effectNodes.gateOut.connect(this.globalGainNode);
     this.globalGainNode.connect(this.gainNode);
 
-    this.splitter.connect(this.effectNodes.reverb);
-    this.effectNodes.reverb.connect(this.effectNodes.reverbGain);
+    this.effectSend.connect(this.effectNodes.reverb);
     this.effectNodes.reverbGain.connect(this.globalGainNode);
 
-    this.splitter.connect(this.effectNodes.delay);
+    this.effectSend.connect(this.effectNodes.delay);
     this.effectNodes.delayGain.connect(this.globalGainNode);
 
     if (this.effectNodes.phaser && this.effectNodes.phaser.length > 0) {
-      let phaserInput = this.splitter;
+      let phaserInput = this.effectSend;
 
       for (let i = 0; i < this.effectNodes.phaser.length; i++) {
         phaserInput.connect(this.effectNodes.phaser[i]);
@@ -255,7 +252,7 @@ class Deck {
     }
 
     if (this.effectNodes.flanger) {
-      this.splitter.connect(this.effectNodes.flanger);
+      this.effectSend.connect(this.effectNodes.flanger);
       this.effectNodes.flanger.connect(this.effectNodes.flangerGain);
       this.effectNodes.flangerGain.connect(this.globalGainNode);
     }
@@ -515,11 +512,11 @@ class Deck {
       if (this.eqNodes.filter) this.eqNodes.filter.disconnect();
     }
     
-    if (this.splitter) this.splitter.disconnect();
-    if (this.merger) this.merger.disconnect();
+    if (this.effectSend) this.effectSend.disconnect();
 
     if (this.effectNodes) {
-      if (this.effectNodes.filter) this.effectNodes.filter.disconnect();
+      if (this.effectNodes.filterOut) this.effectNodes.filterOut.disconnect();
+      if (this.effectNodes.gateOut) this.effectNodes.gateOut.disconnect();
       if (this.effectNodes.reverbGain) this.effectNodes.reverbGain.disconnect();
       if (this.effectNodes.delayGain) this.effectNodes.delayGain.disconnect();
       if (this.effectNodes.phaserGain) this.effectNodes.phaserGain.disconnect();
@@ -575,6 +572,7 @@ class Deck {
 
     this.playbackRate = 1 + (pitch / 100);
     this.applySourceRate();
+    this.syncEffectTempo();
 
     return pitch;
   }
@@ -595,44 +593,35 @@ class Deck {
     }
   }
 
-  setFilter(value) {
-    if (this.effectNodes.filter) {
-
-      const minFreq = 100; // 100Hz minimum (full filtering at 100%)
-      const maxFreq = 15000; // 15kHz maximum (no filtering at 0%)
-      
-      // Inverted, as DJ filters are: 0% is open at 15 kHz, 100% closed at 100 Hz
-      const invertedValue = (100 - value) / 100;
-      const logMin = Math.log(minFreq);
-      const logMax = Math.log(maxFreq);
-      const frequency = Math.exp(logMin + invertedValue * (logMax - logMin));
-      
-      this.effectNodes.filter.frequency.value = frequency;
-    }
+  /** The FX pad's position for one effect. See EffectsEngine.PARAMS. */
+  setEffectPad(effect, values, options = {}) {
+    this.effectsEngine?.setPad(effect, values, options);
   }
 
-  setReverb(value) {
-    if (this.effectsEngine) {
-      this.effectsEngine.setReverb(value);
-    }
+  /** How much of an effect you hear once it is open, 0–100. */
+  setEffectWet(effect, value) {
+    this.effectsEngine?.setWet(effect, value);
   }
 
-  setDelay(value) {
-    if (this.effectsEngine) {
-      this.effectsEngine.setDelay(value);
-    }
+  /** Opens or shuts one effect, leaving the others alone. */
+  setEffectEngaged(effect, on) {
+    this.effectsEngine?.setEngaged(effect, on);
   }
 
-  setPhaser(value) {
-    if (this.effectsEngine) {
-      this.effectsEngine.setPhaser(value);
-    }
+  resetEffects() {
+    this.effectsEngine?.reset();
   }
 
-  setFlanger(value) {
-    if (this.effectsEngine) {
-      this.effectsEngine.setFlanger(value);
-    }
+  /**
+   * Hands the effects the current beat length, so the delay and the sweeps
+   * stay in time — including through the pitch fader, since getBPM already
+   * accounts for the playback rate.
+   */
+  syncEffectTempo() {
+    const bpm = this.getBPM();
+    if (!bpm) return;
+
+    this.effectsEngine?.setBeatSeconds(60 / bpm);
   }
 
   getCurrentTime() {
@@ -1030,8 +1019,8 @@ class Deck {
     this.source = this.audioContext.createBufferSource();
     this.source.buffer = reversedBuffer;
 
-    this.source.connect(this.effectNodes.filter);
-    this.effectNodes.filter.connect(this.eqNodes.low);
+    this.source.connect(this.effectNodes.filterIn);
+    this.effectNodes.filterOut.connect(this.eqNodes.low);
     this.eqNodes.low.connect(this.eqNodes.mid);
     this.eqNodes.mid.connect(this.eqNodes.high);
     this.eqNodes.high.connect(this.globalGainNode);
@@ -1105,7 +1094,7 @@ class DeckController {
     
     this.setupEventListeners();
     
-    this.effectsController = new EffectsController(deckId);
+    this.fxPad = new FxPad(deckId);
     this.pads = new PerformancePads(deckId);
   }
 
@@ -1283,7 +1272,7 @@ class DeckController {
 
     this.createControllerMethodHandler('tap', 'handleTap');
 
-    this.createControllerMethodHandler('resetFilters', 'resetFilters');
+    this.createControllerMethodHandler('resetEffects', 'resetEffects');
   }
 
   setupDragAndDrop() {
@@ -1626,34 +1615,9 @@ class DeckController {
     return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }
 
-  resetFilters() {
-    const deck = window.audioEngine.getDeck(this.deckId);
-
-    const effects = [
-      { id: 'filter', defaultValue: 0 },
-      { id: 'reverb', defaultValue: 0 },
-      { id: 'delay', defaultValue: 0 },
-      { id: 'phaser', defaultValue: 0 },
-      { id: 'flanger', defaultValue: 0 }
-    ];
-
-    effects.forEach(effect => {
-      const slider = document.getElementById(`${effect.id}${this.deckId}`);
-      if (slider) {
-        slider.value = effect.defaultValue;
-        if (effect.id === 'filter') {
-          deck.setFilter(effect.defaultValue);
-        } else if (effect.id === 'reverb') {
-          deck.setReverb(effect.defaultValue);
-        } else if (effect.id === 'delay') {
-          deck.setDelay(effect.defaultValue);
-        } else if (effect.id === 'phaser') {
-          deck.setPhaser(effect.defaultValue);
-        } else if (effect.id === 'flanger') {
-          deck.setFlanger(effect.defaultValue);
-        }
-      }
-    });
+  resetEffects() {
+    window.audioEngine.getDeck(this.deckId).resetEffects();
+    this.fxPad.reset();
 
     console.log(`Deck ${this.deckId}: Effects reset to default values`);
   }
@@ -1721,6 +1685,7 @@ class DeckController {
       // Update the manual tap time with current playback time for refinement protection
       const currentTime = deck.getCurrentTime();
       deck.bpmAnalyzer.updateManualTapTime(currentTime);
+      deck.syncEffectTempo();
       this.updateBPMDisplay();
       console.log(`TAP: Manual BPM set to ${bpm} for deck ${this.deckId} at ${currentTime.toFixed(1)}s (${this.tapIntervals.length} intervals)`);
     }

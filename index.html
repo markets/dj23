@@ -255,32 +255,49 @@
           </div>
         </div>
 
-        <div class="effects-section">
-          <div class="effect">
-            <label>Filter</label>
-            <input type="range" id="filterA" min="0" max="100" value="0" class="effect-slider">
-          </div>
-          <div class="effect">
-            <label>Reverb</label>
-            <input type="range" id="reverbA" min="0" max="100" value="0" class="effect-slider">
-          </div>
-          <div class="effect">
-            <label>Delay</label>
-            <input type="range" id="delayA" min="0" max="100" value="0" class="effect-slider">
-          </div>
-          <div class="effect">
-            <label>Phaser</label>
-            <input type="range" id="phaserA" min="0" max="100" value="0" class="effect-slider">
-          </div>
-          <div class="effect">
-            <label>Flanger</label>
-            <input type="range" id="flangerA" min="0" max="100" value="0" class="effect-slider">
-          </div>
-        </div>
+        <div class="effects-section" id="effectsA">
+          <div class="fx-unit" id="fxUnitA">
+            <div class="fx-unit-head">
+              <span class="fx-unit-label">FX</span>
+              <span class="fx-unit-target" data-role="name">Filter</span>
+            </div>
 
-        <!-- Reset Button -->
-        <div class="reset-section">
-          <button id="resetFiltersA" class="reset-btn">Reset Effects</button>
+            <div class="fx-chips" role="group" aria-label="Effect">
+              <button type="button" class="fx-chip" data-fx="filter"
+                      aria-pressed="false">Filter<i class="fx-dot"></i></button>
+              <button type="button" class="fx-chip" data-fx="reverb"
+                      aria-pressed="false">Reverb<i class="fx-dot"></i></button>
+              <button type="button" class="fx-chip" data-fx="delay"
+                      aria-pressed="false">Delay<i class="fx-dot"></i></button>
+              <button type="button" class="fx-chip" data-fx="phaser"
+                      aria-pressed="false">Phaser<i class="fx-dot"></i></button>
+              <button type="button" class="fx-chip" data-fx="flanger"
+                      aria-pressed="false">Flanger<i class="fx-dot"></i></button>
+              <button type="button" class="fx-chip" data-fx="gate"
+                      aria-pressed="false">Gate<i class="fx-dot"></i></button>
+            </div>
+
+            <div class="fx-pad" data-role="pad" tabindex="0" role="application"
+                 aria-label="Effect pad — press to open the effect, drag to shape it">
+              <div class="fx-glow" data-role="glow"></div>
+              <div class="fx-handle" data-role="handle"></div>
+            </div>
+
+            <div class="fx-axes">
+              <div class="fx-axis"><em data-role="x-label">Sweep</em><b data-role="x-value">Open</b></div>
+              <div class="fx-axis"><em data-role="y-label">Resonance</em><b data-role="y-value">0.7 Q</b></div>
+            </div>
+
+            <div class="fx-foot">
+              <button type="button" class="fx-hold" data-role="hold" aria-pressed="false"
+                      title="Keep the effect on after you let go">HOLD</button>
+              <span class="fx-wet-label">Dry / Wet</span>
+              <input type="range" min="0" max="100" value="100" class="effect-slider fx-wet"
+                     data-role="wet" aria-label="Dry wet">
+              <b class="fx-wet-value" data-role="wet-value">100%</b>
+              <button id="resetEffectsA" class="fx-reset reset-btn">Reset</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -585,32 +602,49 @@
           </div>
         </div>
 
-        <div class="effects-section">
-          <div class="effect">
-            <label>Filter</label>
-            <input type="range" id="filterB" min="0" max="100" value="0" class="effect-slider">
-          </div>
-          <div class="effect">
-            <label>Reverb</label>
-            <input type="range" id="reverbB" min="0" max="100" value="0" class="effect-slider">
-          </div>
-          <div class="effect">
-            <label>Delay</label>
-            <input type="range" id="delayB" min="0" max="100" value="0" class="effect-slider">
-          </div>
-          <div class="effect">
-            <label>Phaser</label>
-            <input type="range" id="phaserB" min="0" max="100" value="0" class="effect-slider">
-          </div>
-          <div class="effect">
-            <label>Flanger</label>
-            <input type="range" id="flangerB" min="0" max="100" value="0" class="effect-slider">
-          </div>
-        </div>
+        <div class="effects-section" id="effectsB">
+          <div class="fx-unit" id="fxUnitB">
+            <div class="fx-unit-head">
+              <span class="fx-unit-label">FX</span>
+              <span class="fx-unit-target" data-role="name">Filter</span>
+            </div>
 
-        <!-- Reset Button -->
-        <div class="reset-section">
-          <button id="resetFiltersB" class="reset-btn">Reset Effects</button>
+            <div class="fx-chips" role="group" aria-label="Effect">
+              <button type="button" class="fx-chip" data-fx="filter"
+                      aria-pressed="false">Filter<i class="fx-dot"></i></button>
+              <button type="button" class="fx-chip" data-fx="reverb"
+                      aria-pressed="false">Reverb<i class="fx-dot"></i></button>
+              <button type="button" class="fx-chip" data-fx="delay"
+                      aria-pressed="false">Delay<i class="fx-dot"></i></button>
+              <button type="button" class="fx-chip" data-fx="phaser"
+                      aria-pressed="false">Phaser<i class="fx-dot"></i></button>
+              <button type="button" class="fx-chip" data-fx="flanger"
+                      aria-pressed="false">Flanger<i class="fx-dot"></i></button>
+              <button type="button" class="fx-chip" data-fx="gate"
+                      aria-pressed="false">Gate<i class="fx-dot"></i></button>
+            </div>
+
+            <div class="fx-pad" data-role="pad" tabindex="0" role="application"
+                 aria-label="Effect pad — press to open the effect, drag to shape it">
+              <div class="fx-glow" data-role="glow"></div>
+              <div class="fx-handle" data-role="handle"></div>
+            </div>
+
+            <div class="fx-axes">
+              <div class="fx-axis"><em data-role="x-label">Sweep</em><b data-role="x-value">Open</b></div>
+              <div class="fx-axis"><em data-role="y-label">Resonance</em><b data-role="y-value">0.7 Q</b></div>
+            </div>
+
+            <div class="fx-foot">
+              <button type="button" class="fx-hold" data-role="hold" aria-pressed="false"
+                      title="Keep the effect on after you let go">HOLD</button>
+              <span class="fx-wet-label">Dry / Wet</span>
+              <input type="range" min="0" max="100" value="100" class="effect-slider fx-wet"
+                     data-role="wet" aria-label="Dry wet">
+              <b class="fx-wet-value" data-role="wet-value">100%</b>
+              <button id="resetEffectsB" class="fx-reset reset-btn">Reset</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -843,6 +877,7 @@
   <script src="js/deck.js"></script>
   <script src="js/vinyl.js"></script>
   <script src="js/effects.js"></script>
+  <script src="js/fx-pad.js"></script>
   <script src="js/waveform.js"></script>
   <script src="js/button-handler.js"></script>
   <script src="js/performance-pads.js"></script>
