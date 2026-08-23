@@ -69,13 +69,13 @@
   --size-page-pad: clamp(10px, 1.4vw, 20px);
   --size-panel-pad: clamp(12px, 1.75vw, 25px);
   --size-panel-gap: clamp(10px, 1.75vw, 25px);
-  --size-vinyl: clamp(104px, 13vw, 200px);
+  --size-vinyl: clamp(104px, 14.5vw, 230px);
   --size-vinyl-gap: clamp(6px, 1.2vw, 20px);
   --size-fader-column: clamp(58px, 5.6vw, 80px);
   --size-fader-deck: clamp(96px, 11.5vw, 165px);
   --size-fader-eq: clamp(68px, 7vw, 100px);
   --size-fader-volume: clamp(82px, 8.5vw, 120px);
-  --size-transport-btn: clamp(40px, 4.2vw, 60px);
+  --size-transport-btn: clamp(48px, 5.2vw, 72px);
   --size-pad-btn: clamp(44px, 4.9vw, 70px);
   --size-track-cover: clamp(48px, 5vw, 70px);
   --size-center-min: clamp(176px, 19vw, 250px);
@@ -659,9 +659,11 @@ body {
 
 /* Every raised control button shares the same surface, hover and press feel */
 .transport-controls button,
-.cue-point-btn,
-.set-cue-btn,
-.loop-btn,
+.hot-cue-btn,
+.loop-mode-btn,
+.loop-chip,
+.loop-op-btn,
+.quantize-btn,
 .pitch-bend-btn,
 .prelisten-btn,
 .reset-btn {
@@ -675,9 +677,11 @@ body {
 }
 
 .transport-controls button:hover,
-.cue-point-btn:hover,
-.set-cue-btn:hover,
-.loop-btn:hover,
+.hot-cue-btn:hover,
+.loop-mode-btn:hover,
+.loop-chip:hover,
+.loop-op-btn:hover,
+.quantize-btn:hover,
 .pitch-bend-btn:hover,
 .prelisten-btn:hover,
 .reset-btn:hover,
@@ -687,8 +691,8 @@ body {
 }
 
 .transport-controls button:active,
-.cue-point-btn:active,
-.set-cue-btn:active,
+.hot-cue-btn:active,
+.loop-chip:active,
 .reset-btn:active,
 .beat-nav-btn:active {
   transform: translateY(0);
@@ -698,18 +702,12 @@ body {
 .transport-controls button.active,
 .pause-btn.active,
 .cue-btn.active,
-.loop-btn.active,
 .eq-kill-btn.active,
 .prelisten-btn.active {
   background: var(--gradient-primary);
   box-shadow: var(--shadow-primary);
   border-color: var(--color-primary);
   transform: none;
-}
-
-.loop-btn.disabled {
-  opacity: 0.5;
-  pointer-events: none;
 }
 
 /* Wraps just the fader, so the reset dot can be centred on its travel */
@@ -988,17 +986,28 @@ input[type="range"]::-moz-range-thumb {
 }
 
 /* --- Vinyl, loop & pitch -------------------------------------------------- */
+/* Two blocks, not three: the platter and its pitch fader are one instrument,
+   so the row splits pads | platter+fader and gives that seam twice the gap.
+   Still centred — pushing the platter to the far edge unbalances the deck.
+   The pad column sets the height, and everything else stretches to meet it. */
 .vinyl-container {
   display: flex;
-  gap: var(--size-vinyl-gap);
-  align-items: center;
+  gap: calc(var(--size-vinyl-gap) * 2);
+  align-items: stretch;
   justify-content: center;
+}
+
+.platter-group {
+  display: flex;
+  gap: var(--size-vinyl-gap);
+  align-items: stretch;
 }
 
 .vinyl-section {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: var(--spacing-md);
 }
 
@@ -1123,8 +1132,7 @@ input[type="range"]::-moz-range-thumb {
   border-left: none;
 }
 
-/* Loop and pitch are the two fader columns flanking the vinyl */
-.loop-control,
+/* The fader column to the right of the vinyl, mirroring the pads on the left */
 .pitch-control {
   position: relative;
   display: flex;
@@ -1136,17 +1144,6 @@ input[type="range"]::-moz-range-thumb {
   flex-shrink: 0;
 }
 
-.loop-control > label,
-.pitch-control > label {
-  margin-bottom: var(--spacing-sm);
-  font-weight: 600;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  line-height: 20px;
-}
-
-/* Loop and pitch mirror each other, so their button rows and faders match */
-.loop-buttons,
 .pitch-bend-buttons {
   display: flex;
   gap: 4px;
@@ -1154,7 +1151,6 @@ input[type="range"]::-moz-range-thumb {
   margin-bottom: var(--spacing-sm);
 }
 
-.loop-btn,
 .pitch-bend-btn {
   flex: 1;
   min-width: 0;
@@ -1164,11 +1160,6 @@ input[type="range"]::-moz-range-thumb {
   font-weight: 600;
 }
 
-.loop-slider {
-  height: var(--size-fader-deck);
-}
-
-.loop-length-value,
 .pitch-control span {
   font-size: 0.8rem;
   color: var(--text-secondary);
@@ -1176,8 +1167,19 @@ input[type="range"]::-moz-range-thumb {
   font-variant-numeric: tabular-nums;
 }
 
+.pitch-control-wrapper {
+  flex: 1 1 0;
+  height: 0;
+  min-height: 0;
+}
+
+.pitch-control > span {
+  flex: 0 0 auto;
+}
+
 .pitch-slider {
-  height: var(--size-fader-deck);
+  height: 100%;
+  min-height: var(--size-fader-deck);
 }
 
 /* --- Transport & cue points ----------------------------------------------- */
@@ -1185,7 +1187,7 @@ input[type="range"]::-moz-range-thumb {
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-sm);
-  margin: var(--spacing-lg) 0;
+  margin: var(--spacing-2xl) 0 var(--spacing-lg) 0;
   justify-content: center;
 }
 
@@ -1206,27 +1208,167 @@ input[type="range"]::-moz-range-thumb {
   font-size: clamp(1rem, 1.4vw, 1.5rem);
 }
 
-.cue-points {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--spacing-sm);
-  margin: var(--spacing-lg) 0;
-}
-
-.cue-point-btn,
-.set-cue-btn {
-  font-size: clamp(0.68rem, 0.85vw, 0.8rem);
-  padding: 8px 4px;
-}
-
 .reset-btn {
   padding: var(--spacing-md) var(--spacing-lg);
 }
 
-.cue-point-btn:hover,
-.set-cue-btn:hover,
 .reset-btn:hover {
   transform: translateY(-1px);
+}
+
+/* --- Performance pads ----------------------------------------------------- */
+/* The column that used to hold loop IN/OUT: four hot cues over a beat loop
+   section. Wider than the fader columns because the loop lengths sit three
+   across, and the whole thing replaced the cue row that used to run under the
+   transport. */
+.pads-column {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: calc(var(--size-fader-column) * 1.7);
+  flex-shrink: 0;
+}
+
+.pads-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.hot-cues {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.hot-cue-btn {
+  position: relative;
+  height: 38px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  border-style: dashed;
+  border-color: var(--border-light);
+  opacity: 0.7;
+  overflow: hidden;
+}
+
+.hot-cue-btn:hover {
+  transform: translateY(-1px);
+}
+
+/* A pad holding a cue is filled rather than outlined, so the four read as
+   "loaded" or "free" at a glance from across the room */
+.hot-cue-btn.set {
+  border-style: solid;
+  border-color: var(--color-primary);
+  color: var(--text-primary);
+  opacity: 1;
+}
+
+.hot-cue-btn.set::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--gradient-primary);
+  opacity: 0.18;
+  pointer-events: none;
+}
+
+.hot-cue-btn.firing::after {
+  opacity: 0.6;
+}
+
+.hot-cue-btn.firing {
+  box-shadow: var(--shadow-primary);
+}
+
+/* Opens a seam under the cue pads: the two halves of the column are unrelated
+   controls, and at a 6px gap they read as one list */
+.loop-mode {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  margin-top: var(--spacing-sm);
+}
+
+.loop-mode-btn {
+  height: 22px;
+  min-width: 0;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+/* Loops and rolls answer to the secondary colour throughout, so a running loop
+   never reads as the same thing as a fired cue */
+.loop-mode-btn.active,
+.loop-chip.active,
+.loop-op-btn.latched {
+  background: linear-gradient(45deg, var(--color-secondary), var(--color-secondary-deep));
+  border-color: var(--color-secondary);
+  color: var(--text-primary);
+}
+
+.loop-chip.active {
+  box-shadow: 0 0 12px rgba(var(--color-secondary-rgb), 0.4);
+}
+
+.loop-lengths,
+.loop-ops {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+
+/* The seam before QUANT, matching the one under the cue pads */
+.loop-ops {
+  margin-bottom: var(--spacing-sm);
+}
+
+.loop-chip,
+.loop-op-btn {
+  height: 26px;
+  min-width: 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+.loop-op-btn {
+  font-size: 0.66rem;
+  color: var(--text-muted);
+}
+
+/* Nothing running means nothing to halve or double. Dimming in place rather
+   than hiding keeps the grid from jumping under the finger mid-mix. */
+.loop-op-btn.is-idle {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* Anchored to the foot of the column: it is a deck-wide setting rather than a
+   loop control, and it lands on the bottom edge of the platter beside it
+   instead of leaving the slack dangling under it */
+.quantize-btn {
+  margin-top: auto;
+  height: 24px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.quantize-btn.active {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 8px rgba(var(--color-primary-rgb), 0.35);
 }
 
 /* --- EQ ------------------------------------------------------------------- */
@@ -1953,8 +2095,9 @@ input[type="range"]::-moz-range-thumb {
   display: flex;
   flex-direction: column;
   /* Fixed, not max-height: a panel that shrinks to its contents lurches
-     every time the search filters a row out */
-  height: 45vh;
+     every time the search filters a row out. The handle writes the variable
+     rather than an inline height, so the phone rule below can still win */
+  height: var(--playlist-height, 45vh);
   background: linear-gradient(to top, var(--bg-primary), var(--bg-secondary));
   border-top: 1px solid var(--border-secondary);
   box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.6);
@@ -1968,6 +2111,49 @@ input[type="range"]::-moz-range-thumb {
 .playlist-panel.drag-over {
   border-top-color: var(--color-primary);
   box-shadow: 0 -8px 30px rgba(var(--color-primary-rgb), 0.35);
+}
+
+/* Grab strip along the top edge: the whole border is the target, the grip is
+   only there to say so */
+.playlist-resizer {
+  position: absolute;
+  top: -3px;
+  left: 0;
+  right: 0;
+  height: 10px;
+  z-index: 1;
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.playlist-resizer::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 48px;
+  height: 3px;
+  transform: translate(-50%, -50%);
+  border-radius: 2px;
+  background: var(--border-secondary);
+  transition: var(--transition-normal);
+}
+
+.playlist-resizer:hover::after,
+.playlist-resizer:focus-visible::after,
+.playlist-panel.resizing .playlist-resizer::after {
+  background: var(--color-primary);
+  width: 72px;
+}
+
+.playlist-resizer:focus-visible {
+  outline: none;
+}
+
+/* While dragging, the pointer is over rows and search fields it shouldn't be
+   selecting or hovering */
+.playlist-panel.resizing {
+  user-select: none;
 }
 
 .playlist-header {
@@ -2227,24 +2413,57 @@ input[type="range"]::-moz-range-thumb {
     min-width: 0;
   }
 
-  /* Controls that stay usable at thumb size */
+  /* Controls that stay usable at thumb size. The platter is sized to finish
+     level with the pitch column it now sits beside, rather than to a round
+     number of its own. */
   .vinyl-wrapper {
-    width: 150px;
-    height: 150px;
+    width: 180px;
+    height: 180px;
   }
 
-  .loop-control,
   .pitch-control {
     width: 72px;
   }
 
+  /* Squeezed beside the platter the pads would be thumb-hostile, so on a phone
+     the column unfolds into a full-width strip and the platter keeps its size */
   .vinyl-container {
     gap: var(--spacing-md);
+    flex-wrap: wrap;
   }
 
-  /* Loop and pitch flank the vinyl symmetrically, so they must match exactly */
-  .loop-slider,
-  .pitch-slider { height: 150px; }
+  .pads-column {
+    width: 100%;
+    order: -1;
+  }
+
+  .platter-group {
+    flex: 1;
+    justify-content: center;
+    align-items: flex-start;
+    margin-top: var(--spacing-md);
+  }
+
+  /* Both columns open with a row of buttons; without this the platter hangs
+     lower than the fader it sits next to */
+  .platter-group .beat-navigation {
+    margin-bottom: 0;
+  }
+
+  .hot-cues {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .loop-lengths {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .pitch-control-wrapper {
+    flex: 0 0 auto;
+    height: auto;
+  }
+
+  .pitch-slider { height: 160px; }
 
   .eq-slider { height: 100px; }
   .volume-slider { height: 120px; }
@@ -2319,6 +2538,11 @@ input[type="range"]::-moz-range-thumb {
   .playlist-panel {
     top: 0;
     height: auto;
+  }
+
+  /* Nothing to resize when the sheet is full height */
+  .playlist-resizer {
+    display: none;
   }
 
   .playlist-header {

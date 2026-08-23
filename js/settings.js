@@ -126,7 +126,7 @@ class Settings {
       // A narrower range can leave the deck outside its new limits
       const pitch = deck.setPitch(deck.getPitch());
       slider.value = pitch;
-      if (display) display.textContent = `${Number(pitch.toFixed(1))}%`;
+      if (display) display.textContent = `${pitch.toFixed(1)}%`;
 
       window.mixerController?.deckControllers?.[deckId]?.updateBPMDisplay();
     });

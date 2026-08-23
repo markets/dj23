@@ -162,18 +162,17 @@ class WaveformRenderer extends BaseWaveformRenderer {
     this.updatePlayhead();
   }
 
+  /** Cue markers stack down the waveform so two cues close together in the
+   *  track still get a readable label each. */
   drawCuePoints(width, height, deck) {
     if (!deck || !deck.audioBuffer) return;
-    
+
     const duration = deck.getDuration();
-    
-    if (deck.cuePoints[1] !== null) {
-      this.drawSingleCuePoint(deck.cuePoints[1], duration, width, height, 'CUE 1', 14);
-    }
-    
-    if (deck.cuePoints[2] !== null) {
-      this.drawSingleCuePoint(deck.cuePoints[2], duration, width, height, 'CUE 2', 28);
-    }
+
+    Object.entries(deck.cuePoints).forEach(([number, time], index) => {
+      if (time === null) return;
+      this.drawSingleCuePoint(time, duration, width, height, number, 14 + index * 14);
+    });
   }
 
   drawSingleCuePoint(cueTime, duration, width, height, label, textY) {

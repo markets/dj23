@@ -7,7 +7,7 @@ class MobileNavigation {
     this.deckA = document.getElementById('deckA');
     this.centerMixer = document.querySelector('.center-mixer');
     this.deckB = document.getElementById('deckB');
-    this.currentView = 'mixer';
+    this.currentView = 'deckA';
     this.resizeTimeout = null;
     
     this.init();

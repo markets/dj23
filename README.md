@@ -27,12 +27,15 @@ through the Web Audio API.
 ### 🎧 Decks
 
 * **Two independent decks** with drag-and-drop loading, album art and metadata
-* **Automatic BPM detection** on load, plus a **TAP** button when a track defeats the analyser
+* **Automatic BPM and key detection** on load, the key in Camelot notation for harmonic
+  mixing, plus a **TAP** button when a track defeats the analyser
 * **Vinyl jog wheel** you can grab to scratch, with mouse or touch, and a **back-spin** button
 * **Pitch fader** with selectable range, **pitch bend** buttons and a one-click reset
-* **Beat-aligned looping** — set loop IN and OUT, then trim the length with the loop fader
-* **Two cue points per deck**, plus a hold-to-preview CUE button
-* **Beat navigation** to nudge the playhead exactly one beat back or forward
+* **Four hot cues per deck** — one pad sets it, fires it and clears it
+* **Beat loops** from half a beat to sixteen, halved and doubled while they run
+* **Loop roll** on the same lengths, which hands the track back where it would have been
+* **Quantize** per deck, so cues and loops land on the beat and not near it
+* **Hold-to-preview CUE** button, and **beat navigation** to nudge the playhead one beat either way
 
 ### 🎛️ Mixing
 
@@ -53,7 +56,7 @@ through the Web Audio API.
 ### ⚡ Extras
 
 * **Track list** — drag a whole folder onto the page and every track in it shows up with
-  its artwork, artist and length
+  its artwork, artist, length, BPM and key
 * **Sound pad** with 9 slots — airhorn, siren, scratch, clap, boom, laser, applause, drop and
   whoosh — and every slot can be replaced with your own audio file
 * **Record your mix** as it plays and download it as a WebM file
@@ -68,10 +71,11 @@ through the Web Audio API.
 | Pause | <kbd>W</kbd> | <kbd>I</kbd> |
 | Stop | <kbd>E</kbd> | <kbd>O</kbd> |
 | Cue (hold) | <kbd>R</kbd> | <kbd>P</kbd> |
-| Cue point 1 / 2 | <kbd>1</kbd> <kbd>2</kbd> | <kbd>8</kbd> <kbd>9</kbd> |
-| Set cue point 1 / 2 | <kbd>⇧1</kbd> <kbd>⇧2</kbd> | <kbd>⇧8</kbd> <kbd>⇧9</kbd> |
+| Hot cues 1–4 | <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd> | <kbd>7</kbd> <kbd>8</kbd> <kbd>9</kbd> <kbd>0</kbd> |
+| Clear a hot cue | <kbd>⇧</kbd> + its key | <kbd>⇧</kbd> + its key |
 | Pitch bend − / + (hold) | <kbd>A</kbd> <kbd>S</kbd> | <kbd>J</kbd> <kbd>K</kbd> |
-| Loop in / out | <kbd>Z</kbd> <kbd>X</kbd> | <kbd>N</kbd> <kbd>M</kbd> |
+| Halve / double the loop | <kbd>Z</kbd> <kbd>X</kbd> | <kbd>N</kbd> <kbd>M</kbd> |
+| Exit the loop | <kbd>⇧Z</kbd> <kbd>⇧X</kbd> | <kbd>⇧N</kbd> <kbd>⇧M</kbd> |
 | Load track | <kbd>⌃O</kbd> | <kbd>⌃P</kbd> |
 
 Global: <kbd>Space</kbd> play/pause the active deck, <kbd>←</kbd> <kbd>→</kbd> crossfader,

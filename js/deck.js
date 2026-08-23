@@ -19,6 +19,10 @@ class Deck {
    */
   static SCRATCH_WINDOW_SECONDS = 20;
 
+  /** Beat loop lengths, and the shorter scale a roll works in. */
+  static LOOP_BEATS = [0.5, 1, 2, 4, 8, 16];
+  static ROLL_BEATS = [0.0625, 0.125, 0.25, 0.5, 1, 2];
+
   constructor(audioContext, mainOutput, cueOutput, deckId) {
     this.audioContext = audioContext;
     this.mainOutput = mainOutput;
@@ -69,16 +73,22 @@ class Deck {
 
     this.isBackSpinning = false;
 
-    this.cuePoints = { 1: null, 2: null };
+    this.cuePoints = { 1: null, 2: null, 3: null, 4: null };
     this.isCueActive = false; // Track if CUE is currently being held/active
+    this.lastCueTime = null; // Hot cue most recently set or fired
     this.defaultCuePoint = null; // Auto-set cue point for when no manual cue points exist
+
+    // Cue and loop points land on the beat grid unless this is turned off
+    this.isQuantizeEnabled = true;
 
     this.loopStart = null;
     this.loopEnd = null;
-    this.originalLoopEnd = null; // Store the original loop end point
-    this.loopLengthPercentage = 100; // Current loop length as percentage
+    this.loopBeats = null;
     this.isLooping = false;
-    this.loopCheckInterval = null;
+
+    // Where the track would be if the roll had never happened, so letting go
+    // drops back in on time instead of behind
+    this.rollAnchor = null;
 
     this.setupAudioNodes();
   }
@@ -181,6 +191,7 @@ class Deck {
     this.source = this.audioContext.createBufferSource();
     this.source.buffer = this.audioBuffer;
     this.applySourceRate();
+    this.applyLoopToSource();
 
     this.connectSource();
 
@@ -635,8 +646,21 @@ class Deck {
     const wallClockElapsedSinceRateChange = currentWallClockTime - this.lastRateChangeTime;
     
     const audioTimeElapsedSinceRateChange = wallClockElapsedSinceRateChange * this.getEffectiveRate();
-    
-    return this.lastRateChangePosition + audioTimeElapsedSinceRateChange;
+    const position = this.lastRateChangePosition + audioTimeElapsedSinceRateChange;
+
+    return this.isLooping ? this.wrapIntoLoop(position) : position;
+  }
+
+  /**
+   * The source node loops on its own, so the estimate above runs straight past
+   * loopEnd and never comes back. Folding it in is what keeps the playhead, the
+   * platter and the waveforms sitting on the loop.
+   */
+  wrapIntoLoop(position) {
+    const length = this.loopEnd - this.loopStart;
+    if (length <= 0 || position < this.loopStart) return position;
+
+    return this.loopStart + ((position - this.loopStart) % length);
   }
 
   seek(time) {
@@ -666,40 +690,49 @@ class Deck {
   }
 
   resetCuePoints() {
-    this.cuePoints = { 1: null, 2: null };
+    this.cuePoints = { 1: null, 2: null, 3: null, 4: null };
+    this.lastCueTime = null;
     this.defaultCuePoint = null;
     console.log(`Deck ${this.deckId}: CUE points reset`);
   }
 
-  resetLoopPoints() {
-    if (this.isLooping) {
-      this.stopLoopMonitoring();
-      this.isLooping = false;
-    }
-    
-    this.loopStart = null;
-    this.loopEnd = null;
-    this.originalLoopEnd = null;
-    this.loopLengthPercentage = 100;
-    
-    this.controller.updateLoopInState(false, false);
-    this.controller.updateLoopOutState(false);
-    
-    console.log(`Deck ${this.deckId}: Loop points reset`);
+  /** Pull a time onto the nearest beat, unless quantize is off or no beat map
+   *  was found — findNearestBeat hands back the time untouched in that case. */
+  quantize(time) {
+    return this.isQuantizeEnabled ? this.findNearestBeat(time) : time;
+  }
+
+  setQuantize(enabled) {
+    this.isQuantizeEnabled = enabled;
+  }
+
+  hasCuePoint(cueNumber) {
+    return this.cuePoints[cueNumber] !== null && this.cuePoints[cueNumber] !== undefined;
   }
 
   setCuePoint(cueNumber) {
-    if (cueNumber === 1 || cueNumber === 2) {
-      this.cuePoints[cueNumber] = this.getCurrentTime();
-      console.log(`Deck ${this.deckId}: CUE ${cueNumber} set at ${this.cuePoints[cueNumber]}s`);
-    }
+    if (!(cueNumber in this.cuePoints)) return;
+
+    const time = this.quantize(this.getCurrentTime());
+    this.cuePoints[cueNumber] = time;
+    this.lastCueTime = time;
+    console.log(`Deck ${this.deckId}: CUE ${cueNumber} set at ${time.toFixed(3)}s`);
   }
 
   jumpToCue(cueNumber) {
-    if (this.cuePoints[cueNumber] !== null) {
-      this.seek(this.cuePoints[cueNumber]);
-      console.log(`Deck ${this.deckId}: Jumped to CUE ${cueNumber} at ${this.cuePoints[cueNumber]}s`);
-    }
+    if (!this.hasCuePoint(cueNumber)) return;
+
+    this.lastCueTime = this.cuePoints[cueNumber];
+    this.seek(this.cuePoints[cueNumber]);
+    console.log(`Deck ${this.deckId}: Jumped to CUE ${cueNumber} at ${this.cuePoints[cueNumber]}s`);
+  }
+
+  clearCuePoint(cueNumber) {
+    if (!this.hasCuePoint(cueNumber)) return;
+
+    if (this.lastCueTime === this.cuePoints[cueNumber]) this.lastCueTime = null;
+    this.cuePoints[cueNumber] = null;
+    console.log(`Deck ${this.deckId}: CUE ${cueNumber} cleared`);
   }
 
   jumpToNextBeat() {
@@ -726,10 +759,11 @@ class Deck {
     console.log(`Deck ${this.deckId}: Jumped to previous beat at ${previousBeatTime.toFixed(3)}s`);
   }
 
+  /** Where the CUE button returns to: the hot cue last touched, or the spot
+   *  the deck fell back on when no hot cue was ever set. */
   getLastCueTime() {
-    if (this.cuePoints[2] !== null) return this.cuePoints[2];
-    if (this.cuePoints[1] !== null) return this.cuePoints[1];
-    
+    if (this.lastCueTime !== null) return this.lastCueTime;
+
     if (this.defaultCuePoint !== null) {
       console.log(`Deck ${this.deckId}: Using default CUE at ${this.defaultCuePoint}s`);
       return this.defaultCuePoint;
@@ -757,7 +791,7 @@ class Deck {
 
   ensureDefaultCuePoint() {
     // Only set default cue point if no manual cue points exist and no default exists
-    const hasManualCues = this.cuePoints[1] !== null || this.cuePoints[2] !== null;
+    const hasManualCues = Object.keys(this.cuePoints).some(number => this.hasCuePoint(number));
     
     if (!hasManualCues && this.defaultCuePoint === null) {
       this.defaultCuePoint = this.getCurrentTime();
@@ -778,93 +812,140 @@ class Deck {
     console.log(`Deck ${this.deckId}: CUE mode stopped`);
   }
 
-  setLoopIn() {
-    if (this.loopStart !== null || this.loopEnd !== null) {
-      this.isLooping = false;
-      this.stopLoopMonitoring();
-      this.loopStart = null;
-      this.loopEnd = null;
-      this.originalLoopEnd = null;
-      this.loopLengthPercentage = 100;
-      console.log(`Deck ${this.deckId}: Loop points cleared for fresh start`);
-      
-      this.controller.updateLoopInState(false);
-      this.controller.updateLoopOutState(false);
-      return;
-    }
-    
-    this.loopStart = this.findNearestBeat(this.getCurrentTime());
-    console.log(`Deck ${this.deckId}: Loop IN set at ${this.loopStart}s`);
-    
-    this.controller.updateLoopInState(true);
-    this.controller.updateLoopOutState(false);
+  /**
+   * Seconds a beat lasts in the buffer. Loop points are positions in the
+   * buffer, so the pitch fader never enters into it: pitching up shortens the
+   * loop in the room, not in the file.
+   */
+  getBeatInterval() {
+    return this.bpmAnalyzer.beatInterval;
   }
 
-  setLoopOut() {
-    // If loop is already active and has both points set, clear loop points completely
-    if (this.isLooping && this.loopStart !== null && this.loopEnd !== null) {
-      this.isLooping = false;
-      this.stopLoopMonitoring();
-      this.loopStart = null;
-      this.loopEnd = null;
-      this.originalLoopEnd = null;
-      this.loopLengthPercentage = 100;
-      console.log(`Deck ${this.deckId}: Loop disabled and points cleared`);
-      
-      this.controller.updateLoopInState(false, false);
-      this.controller.updateLoopOutState(false);
-      return;
-    }
-    
-    // Only allow setting OUT if IN is already set
-    if (this.loopStart === null) {
-      console.log(`Deck ${this.deckId}: Cannot set Loop OUT - Loop IN must be set first`);
-      this.controller.updateLoopOutState(false);
-      return;
-    }
-    
-    this.loopEnd = this.findNearestBeat(this.getCurrentTime());
-    this.originalLoopEnd = this.loopEnd; // Store original loop end
-    this.loopLengthPercentage = 100; // Reset to 100% when setting new loop out
-    console.log(`Deck ${this.deckId}: Loop OUT set at ${this.loopEnd}s`);
-    
+  resetLoopPoints() {
+    this.isLooping = false;
+    this.loopStart = null;
+    this.loopEnd = null;
+    this.loopBeats = null;
+    this.rollAnchor = null;
+    this.applyLoopToSource();
+  }
+
+  /**
+   * Loop `beats` beats from here.
+   *
+   * The source node does the looping itself rather than a timer watching the
+   * playhead: it is sample-accurate, and it survives lengths no timer could
+   * catch — a 1/16 roll at 174 BPM is 21ms long.
+   */
+  setBeatLoop(beats) {
+    if (!this.audioBuffer || !beats) return false;
+
+    const interval = this.getBeatInterval();
+    if (!interval) return false;
+
+    const position = this.getCurrentTime();
+    const start = this.quantize(position);
+    const end = Math.min(start + beats * interval, this.getDuration());
+    if (end <= start) return false;
+
+    this.loopStart = start;
+    this.loopEnd = end;
+    this.loopBeats = beats;
     this.isLooping = true;
-    this.startLoopMonitoring();
-    console.log(`Deck ${this.deckId}: Loop started automatically`);
-    
-    // Show only OUT as active (indicates active loop) and disable IN button
-    this.controller.updateLoopInState(false, true);
-    this.controller.updateLoopOutState(true);
+    this.applyLoopToSource();
+
+    // Quantizing can leave the head outside the loop it just armed, and a
+    // source only wraps once it reaches loopEnd from inside
+    if (position < start || position >= end) this.seek(start);
+
+    console.log(`Deck ${this.deckId}: Loop ${beats} beat(s) from ${start.toFixed(3)}s`);
+    return true;
   }
 
-  setLoopLength(percentage) {
-    if (this.loopStart !== null && this.originalLoopEnd !== null) {
-      this.loopLengthPercentage = percentage;
-      const loopDuration = this.originalLoopEnd - this.loopStart;
-      const adjustedLoopDuration = loopDuration * (percentage / 100);
-      this.loopEnd = this.loopStart + adjustedLoopDuration;
-      console.log(`Deck ${this.deckId}: Loop length set to ${percentage}% (${this.loopEnd}s)`);
+  /**
+   * Halve or double the running loop, keeping its start where it is. Returns
+   * the new length, or null when the loop is already at the end of the scale.
+   */
+  resizeLoop(factor, { min, max }) {
+    if (!this.isLooping || !this.loopBeats) return null;
+
+    const beats = this.loopBeats * factor;
+    if (beats < min || beats > max) return null;
+
+    const end = Math.min(this.loopStart + beats * this.getBeatInterval(), this.getDuration());
+    if (end <= this.loopStart) return null;
+
+    // Read the head before shortening the window, so a head now past the new
+    // end gets pulled back in rather than left outside it
+    const position = this.getCurrentTime();
+
+    this.loopEnd = end;
+    this.loopBeats = beats;
+    this.applyLoopToSource();
+
+    if (position >= end) this.seek(this.loopStart);
+
+    return beats;
+  }
+
+  exitLoop() {
+    if (!this.isLooping) return;
+
+    const position = this.getCurrentTime();
+
+    this.isLooping = false;
+    this.loopStart = null;
+    this.loopEnd = null;
+    this.loopBeats = null;
+    this.applyLoopToSource();
+
+    // The source carries on from inside the loop, so the estimate has to be
+    // re-anchored there; otherwise the head jumps to wherever the wall clock
+    // had run off to while the loop was folding it back
+    this.lastRateChangeTime = this.audioContext.currentTime;
+    this.lastRateChangePosition = position;
+  }
+
+  /** Push the loop window onto the live source. Every play() builds a new
+   *  source node, so this runs again from there. */
+  applyLoopToSource() {
+    if (!this.source) return;
+
+    this.source.loop = this.isLooping;
+    if (this.isLooping) {
+      this.source.loopStart = this.loopStart;
+      this.source.loopEnd = this.loopEnd;
     }
   }
 
-  startLoopMonitoring() {
-    if (this.loopCheckInterval) clearInterval(this.loopCheckInterval);
+  /**
+   * A roll is a loop that does not cost you your place: the track keeps
+   * running underneath it, so letting go drops back in where the track would
+   * have been rather than where the loop left it.
+   */
+  startRoll(beats) {
+    if (!this.audioBuffer) return false;
 
-    this.loopCheckInterval = setInterval(() => {
-      if (this.isLooping && this.isPlaying) {
-        const currentTime = this.getCurrentTime();
-        if (currentTime >= this.loopEnd) {
-          this.seek(this.loopStart);
-        }
-      }
-    }, 10); // Check every 10ms for smooth looping
+    const anchor = {
+      position: this.getCurrentTime(),
+      wallClock: this.audioContext.currentTime
+    };
+
+    if (!this.setBeatLoop(beats)) return false;
+
+    this.rollAnchor = anchor;
+    return true;
   }
 
-  stopLoopMonitoring() {
-    if (this.loopCheckInterval) {
-      clearInterval(this.loopCheckInterval);
-      this.loopCheckInterval = null;
-    }
+  stopRoll() {
+    const anchor = this.rollAnchor;
+    this.rollAnchor = null;
+
+    this.exitLoop();
+    if (!anchor || !this.isPlaying) return;
+
+    const elapsed = (this.audioContext.currentTime - anchor.wallClock) * this.getEffectiveRate();
+    this.seek(anchor.position + elapsed);
   }
 
   /** The platter's rate while the record is held, the pitch fader's otherwise. */
@@ -1025,6 +1106,7 @@ class DeckController {
     this.setupEventListeners();
     
     this.effectsController = new EffectsController(deckId);
+    this.pads = new PerformancePads(deckId);
   }
 
   resetTapState() {
@@ -1051,8 +1133,12 @@ class DeckController {
     const slider = document.getElementById(sliderId);
     if (!slider) return;
 
+    // A fractional step means fractional values: rounding to an integer here
+    // would throw away the precision the fader is offering
+    const decimals = (String(slider.step).split('.')[1] || '').length;
+
     slider.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
+      const value = parseFloat(e.target.value);
       const deck = window.audioEngine.getDeck(this.deckId);
       if (deck && typeof deck[deckMethod] === 'function') {
         deck[deckMethod](value);
@@ -1062,7 +1148,7 @@ class DeckController {
         const displayElement = displayOptions.displayElement || e.target.nextElementSibling;
         if (displayElement) {
           const suffix = displayOptions.suffix || '';
-          displayElement.textContent = `${value}${suffix}`;
+          displayElement.textContent = `${value.toFixed(decimals)}${suffix}`;
         }
       }
 
@@ -1192,22 +1278,10 @@ class DeckController {
       this.resetPitch();
     });
 
-    this.createDeckMethodHandler('cue1', 'jumpToCue', 1);
-    this.createDeckMethodHandler('cue2', 'jumpToCue', 2);
-    this.createDeckMethodHandler('setCue1', 'setCuePoint', 1);
-    this.createDeckMethodHandler('setCue2', 'setCuePoint', 2);
-
     this.createDeckMethodHandler('previousBeat', 'jumpToPreviousBeat');
     this.createDeckMethodHandler('nextBeat', 'jumpToNextBeat');
 
     this.createControllerMethodHandler('tap', 'handleTap');
-
-    this.createDeckMethodHandler('loopIn', 'setLoopIn');
-    this.createDeckMethodHandler('loopOut', 'setLoopOut');
-    this.createSliderHandler(`loopLength${this.deckId}`, 'setLoopLength', {
-      displayElement: document.getElementById(`loopLengthValue${this.deckId}`),
-      suffix: '%'
-    });
 
     this.createControllerMethodHandler('resetFilters', 'resetFilters');
   }
@@ -1317,13 +1391,8 @@ class DeckController {
 
       if (success) {
         deck.resetCuePoints();
-      
         deck.resetLoopPoints();
-      
-        const loopLengthSlider = document.getElementById(`loopLength${this.deckId}`);
-        const loopLengthDisplay = document.getElementById(`loopLengthValue${this.deckId}`);
-        if (loopLengthSlider) loopLengthSlider.value = 100;
-        if (loopLengthDisplay) loopLengthDisplay.textContent = '100%';
+        this.pads.reset();
       
         await this.extractAndDisplayMetadata(file);
         this.updateTrackTime();
@@ -1595,7 +1664,7 @@ class DeckController {
     deck.setPitch(0);
     
     document.getElementById(`pitch${this.deckId}`).value = 0;
-    document.getElementById(`pitchDisplay${this.deckId}`).textContent = '0%';
+    document.getElementById(`pitchDisplay${this.deckId}`).textContent = '0.0%';
     
     this.updateBPMDisplay();
   }
@@ -1712,14 +1781,4 @@ class DeckController {
     }
   }
 
-  updateLoopInState(isActive, disabled = false) {
-    const loopInButton = document.getElementById(`loopIn${this.deckId}`);
-    loopInButton.classList.toggle('active', isActive);
-    loopInButton.classList.toggle('disabled', disabled);
-  }
-
-  updateLoopOutState(isActive) {
-    const loopOutButton = document.getElementById(`loopOut${this.deckId}`);
-    loopOutButton.classList.toggle('active', isActive);
-  }
 }
