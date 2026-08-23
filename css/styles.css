@@ -1447,10 +1447,7 @@ input[type="range"]::-moz-range-thumb {
   min-width: 0;
 }
 
-/* --- FX pad ---------------------------------------------------------------
-   The faders above say how much of an effect you hear; the pad says what it
-   sounds like. Two controls, one for amount and one for character, the way a
-   send and its unit work on a mixer. */
+/* --- FX pad --------------------------------------------------------------  */
 .fx-unit {
   margin-top: var(--spacing-lg);
   padding-top: var(--spacing-md);
