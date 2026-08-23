@@ -1453,23 +1453,15 @@ input[type="range"]::-moz-range-thumb {
   padding-top: var(--spacing-md);
 }
 
-.fx-unit-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+.fx-unit-label {
+  display: block;
   margin-bottom: var(--spacing-sm);
-}
-
-.fx-unit-label,
-.fx-unit-target {
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+  color: var(--text-muted);
 }
-
-.fx-unit-label { color: var(--text-muted); }
-.fx-unit-target { color: var(--color-primary); }
 
 .fx-chips {
   display: grid;

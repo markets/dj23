@@ -44,7 +44,6 @@ class FxPad {
     this.pad = role('pad');
     this.glow = role('glow');
     this.handle = role('handle');
-    this.target = role('name');
     this.xLabel = role('x-label');
     this.xValue = role('x-value');
     this.yLabel = role('y-label');
@@ -198,7 +197,6 @@ class FxPad {
     const effect = this.current;
     const { x, y } = this.values[effect];
 
-    this.target.textContent = effect;
     this.xLabel.textContent = EffectsEngine.axis(effect, 'x').label;
     this.yLabel.textContent = EffectsEngine.axis(effect, 'y').label;
     this.xValue.textContent = EffectsEngine.label(effect, 'x', x);
