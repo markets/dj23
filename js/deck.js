@@ -1133,8 +1133,12 @@ class DeckController {
     const slider = document.getElementById(sliderId);
     if (!slider) return;
 
+    // A fractional step means fractional values: rounding to an integer here
+    // would throw away the precision the fader is offering
+    const decimals = (String(slider.step).split('.')[1] || '').length;
+
     slider.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
+      const value = parseFloat(e.target.value);
       const deck = window.audioEngine.getDeck(this.deckId);
       if (deck && typeof deck[deckMethod] === 'function') {
         deck[deckMethod](value);
@@ -1144,7 +1148,7 @@ class DeckController {
         const displayElement = displayOptions.displayElement || e.target.nextElementSibling;
         if (displayElement) {
           const suffix = displayOptions.suffix || '';
-          displayElement.textContent = `${value}${suffix}`;
+          displayElement.textContent = `${value.toFixed(decimals)}${suffix}`;
         }
       }
 
@@ -1660,7 +1664,7 @@ class DeckController {
     deck.setPitch(0);
     
     document.getElementById(`pitch${this.deckId}`).value = 0;
-    document.getElementById(`pitchDisplay${this.deckId}`).textContent = '0%';
+    document.getElementById(`pitchDisplay${this.deckId}`).textContent = '0.0%';
     
     this.updateBPMDisplay();
   }

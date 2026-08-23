@@ -192,10 +192,10 @@
                 <button id="pitchBendMinusA" class="pitch-bend-btn">-</button>
               </div>
               <div class="pitch-control-wrapper">
-                <input type="range" id="pitchA" min="-30" max="30" value="0" class="pitch-slider vertical-fader" orient="vertical">
+                <input type="range" id="pitchA" min="-30" max="30" step="0.1" value="0" class="pitch-slider vertical-fader" orient="vertical">
                 <button id="pitchResetA" class="pitch-reset-btn" title="Reset pitch to 0%"></button>
               </div>
-              <span id="pitchDisplayA">0%</span>
+              <span id="pitchDisplayA">0.0%</span>
             </div>
           </div>
         </div>
@@ -522,10 +522,10 @@
                 <button id="pitchBendMinusB" class="pitch-bend-btn">-</button>
               </div>
               <div class="pitch-control-wrapper">
-                <input type="range" id="pitchB" min="-30" max="30" value="0" class="pitch-slider vertical-fader" orient="vertical">
+                <input type="range" id="pitchB" min="-30" max="30" step="0.1" value="0" class="pitch-slider vertical-fader" orient="vertical">
                 <button id="pitchResetB" class="pitch-reset-btn" title="Reset pitch to 0%"></button>
               </div>
-              <span id="pitchDisplayB">0%</span>
+              <span id="pitchDisplayB">0.0%</span>
             </div>
           </div>
         </div>
@@ -618,6 +618,8 @@
 
   <!-- Play list panel -->
   <section class="playlist-panel" id="playlistPanel" aria-label="Track list" hidden>
+    <div class="playlist-resizer" id="playlistResizer" role="separator" aria-orientation="horizontal"
+         aria-label="Resize track list" tabindex="0"></div>
     <header class="playlist-header">
       <h2 class="playlist-heading">Tracks <span class="playlist-count" id="playlistCount"></span></h2>
       <input type="search" id="playlistSearch" class="playlist-search" placeholder="Search…" aria-label="Search tracks">

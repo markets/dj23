@@ -2095,8 +2095,9 @@ input[type="range"]::-moz-range-thumb {
   display: flex;
   flex-direction: column;
   /* Fixed, not max-height: a panel that shrinks to its contents lurches
-     every time the search filters a row out */
-  height: 45vh;
+     every time the search filters a row out. The handle writes the variable
+     rather than an inline height, so the phone rule below can still win */
+  height: var(--playlist-height, 45vh);
   background: linear-gradient(to top, var(--bg-primary), var(--bg-secondary));
   border-top: 1px solid var(--border-secondary);
   box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.6);
@@ -2110,6 +2111,49 @@ input[type="range"]::-moz-range-thumb {
 .playlist-panel.drag-over {
   border-top-color: var(--color-primary);
   box-shadow: 0 -8px 30px rgba(var(--color-primary-rgb), 0.35);
+}
+
+/* Grab strip along the top edge: the whole border is the target, the grip is
+   only there to say so */
+.playlist-resizer {
+  position: absolute;
+  top: -3px;
+  left: 0;
+  right: 0;
+  height: 10px;
+  z-index: 1;
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.playlist-resizer::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 48px;
+  height: 3px;
+  transform: translate(-50%, -50%);
+  border-radius: 2px;
+  background: var(--border-secondary);
+  transition: var(--transition-normal);
+}
+
+.playlist-resizer:hover::after,
+.playlist-resizer:focus-visible::after,
+.playlist-panel.resizing .playlist-resizer::after {
+  background: var(--color-primary);
+  width: 72px;
+}
+
+.playlist-resizer:focus-visible {
+  outline: none;
+}
+
+/* While dragging, the pointer is over rows and search fields it shouldn't be
+   selecting or hovering */
+.playlist-panel.resizing {
+  user-select: none;
 }
 
 .playlist-header {
@@ -2419,7 +2463,7 @@ input[type="range"]::-moz-range-thumb {
     height: auto;
   }
 
-  .pitch-slider { height: 150px; }
+  .pitch-slider { height: 160px; }
 
   .eq-slider { height: 100px; }
   .volume-slider { height: 120px; }
@@ -2494,6 +2538,11 @@ input[type="range"]::-moz-range-thumb {
   .playlist-panel {
     top: 0;
     height: auto;
+  }
+
+  /* Nothing to resize when the sheet is full height */
+  .playlist-resizer {
+    display: none;
   }
 
   .playlist-header {

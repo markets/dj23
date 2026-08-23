@@ -5,6 +5,12 @@ class Playlist {
 
   static AUDIO_EXTENSIONS = /\.(mp3|m4a|aac|wav|flac|ogg|opus|aif|aiff)$/i;
 
+  /** Bottom-strip height on desktop: floor, ceiling and keyboard nudge. */
+  static MIN_HEIGHT = 140;
+  static MAX_HEIGHT_RATIO = 0.9;
+  static HEIGHT_STEP = 24;
+  static HEIGHT_STORAGE_KEY = 'dj23.playlistHeight';
+
   constructor() {
     // Session-only: a dropped File cannot be reopened after a reload, so a
     // restored list would be rows that refuse to play
@@ -34,6 +40,7 @@ class Playlist {
     this.rowsElement = document.getElementById('playlistRows');
     this.emptyElement = document.getElementById('playlistEmpty');
     this.countElement = document.getElementById('playlistCount');
+    this.resizer = document.getElementById('playlistResizer');
   }
 
   setupEventListeners() {
@@ -54,6 +61,8 @@ class Playlist {
       this.applyFilter();
       this.searchInput.blur();
     });
+
+    this.setupResize();
 
     this.folderInput.addEventListener('change', (e) => {
       const files = Array.from(e.target.files || []).map(file => ({
@@ -458,6 +467,81 @@ class Playlist {
     this.tracks = [];
     this.analysisQueue = [];
     this.render();
+  }
+
+  // --- Resizing --------------------------------------------------------
+
+  /** The handle is hidden on phones, where the panel is a full-height sheet. */
+  setupResize() {
+    if (!this.resizer) return;
+
+    this.applyHeight(this.readHeight());
+
+    this.resizer.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+
+      // Capture, so a fast drag that outruns the 10px strip keeps resizing
+      this.resizer.setPointerCapture(e.pointerId);
+      this.panel.classList.add('resizing');
+
+      const startY = e.clientY;
+      const startHeight = this.panel.getBoundingClientRect().height;
+
+      // The panel is anchored to the bottom, so dragging up makes it taller
+      const onMove = (move) => this.applyHeight(startHeight + (startY - move.clientY));
+      const onRelease = () => {
+        this.resizer.removeEventListener('pointermove', onMove);
+        this.panel.classList.remove('resizing');
+        this.writeHeight();
+      };
+
+      this.resizer.addEventListener('pointermove', onMove);
+      this.resizer.addEventListener('pointerup', onRelease, { once: true });
+      this.resizer.addEventListener('pointercancel', onRelease, { once: true });
+    });
+
+    this.resizer.addEventListener('keydown', (e) => {
+      const direction = { ArrowUp: 1, ArrowDown: -1 }[e.key];
+      if (!direction) return;
+      e.preventDefault();
+      const height = this.panel.getBoundingClientRect().height;
+      this.applyHeight(height + direction * Playlist.HEIGHT_STEP);
+      this.writeHeight();
+    });
+
+    // A saved height taller than a since-shrunk window would push the header
+    // off the top of the screen
+    window.addEventListener('resize', () => this.applyHeight(this.height));
+  }
+
+  applyHeight(height) {
+    if (!height) return;
+
+    // A viewport reported as zero — a tab restored in the background, say —
+    // would otherwise collapse the panel to nothing
+    const max = window.innerHeight * Playlist.MAX_HEIGHT_RATIO;
+    const capped = max > Playlist.MIN_HEIGHT ? Math.min(height, max) : height;
+
+    this.height = Math.round(Math.max(capped, Playlist.MIN_HEIGHT));
+    this.panel.style.setProperty('--playlist-height', `${this.height}px`);
+  }
+
+  readHeight() {
+    try {
+      return Number(localStorage.getItem(Playlist.HEIGHT_STORAGE_KEY)) || null;
+    } catch (error) {
+      console.warn('Could not read the saved track list height:', error);
+      return null;
+    }
+  }
+
+  writeHeight() {
+    try {
+      localStorage.setItem(Playlist.HEIGHT_STORAGE_KEY, String(this.height));
+    } catch (error) {
+      console.warn('Could not save the track list height:', error);
+    }
   }
 
   open() {
