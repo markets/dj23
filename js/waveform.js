@@ -257,7 +257,14 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
    */
   static TARGET_PIXELS_PER_SECOND = 48;
   static MIN_ZOOM_SECONDS = 8;
-  static MAX_ZOOM_SECONDS = 80;
+  /** Widest window. Room to see a whole intro or breakdown at once, without
+   *  going so far out that the waveform stops being a beat reference. */
+  static MAX_ZOOM_SECONDS = 120;
+  /** Zoom moves by a proportion, not by seconds: a notch has to feel the same
+   *  whether the window is two bars or six minutes wide. */
+  static ZOOM_STEP = 1.15;
+  /** Below this the beat grid stops being a reference and becomes a haze. */
+  static MIN_PIXELS_PER_BEAT = 5;
 
   constructor(canvasId, deckId) {
     super(canvasId, deckId);
@@ -273,7 +280,31 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
 
   /** Re-fit the window when the canvas changes size, e.g. on rotation. */
   onCanvasResized() {
-    if (!this.userZoomed) this.zoomLevel = this.defaultZoom();
+    if (!this.userZoomed) BeatWaveformRenderer.shareZoom(this.defaultZoom());
+  }
+
+  /**
+   * Hands a zoom window to both waveforms. Beat matching is a comparison
+   * between the two grids, so they are only readable at the same scale —
+   * zooming one deck alone would make the pair meaningless.
+   * Returns the renderers, so the caller can redraw them.
+   */
+  static shareZoom(seconds, { fromUser = false } = {}) {
+    const renderers = Object.values(window.beatWaveformRenderers || {}).filter(Boolean);
+
+    for (const renderer of renderers) {
+      renderer.zoomLevel = seconds;
+      if (fromUser) renderer.userZoomed = true;
+    }
+
+    return renderers;
+  }
+
+  static clampZoom(seconds) {
+    return Math.min(
+      BeatWaveformRenderer.MAX_ZOOM_SECONDS,
+      Math.max(BeatWaveformRenderer.MIN_ZOOM_SECONDS, seconds)
+    );
   }
 
   /** Zoom window that keeps the horizontal scale constant across screen sizes. */
@@ -390,22 +421,20 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
       );
     }
 
+    // Half a step per notch, so a wheel is finer grained than the buttons
     this.canvas.addEventListener('wheel', (e) => {
       e.preventDefault();
-      
-      if (!this.waveformData) return;
-      
-      const direction = e.deltaY > 0 ? 2 : -2;
-      this.zoom(direction);
+      this.zoom(e.deltaY > 0 ? 0.5 : -0.5);
     });
 
     // Scoped to this deck: every renderer runs this method, so a hardcoded id
-    // here would wire one button up to both waveforms
+    // here would wire one button up twice. Either pair drives both waveforms
+    // all the same — the zoom itself is shared.
     document.getElementById(`zoomIn${this.deckId}`).addEventListener('click', () => {
-      this.zoom(-10);
+      this.zoom(-2);
     });
     document.getElementById(`zoomOut${this.deckId}`).addEventListener('click', () => {
-      this.zoom(10);
+      this.zoom(2);
     });
   }
 
@@ -431,9 +460,9 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
 
     const currentTime = deck.getCurrentTime();
     const duration = deck.getDuration();
-    
+
     this.offsetSeconds = currentTime - this.zoomLevel / 2;
-    
+
     if (this.offsetSeconds + this.zoomLevel > duration) {
       this.offsetSeconds = Math.max(0, duration - this.zoomLevel);
     }
@@ -550,6 +579,11 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
 
     // Beats are evenly spaced, so the first visible one can be indexed directly
     const interval = beats[1] - beats[0];
+
+    // Zoomed out over a whole track the ticks land a pixel or two apart and
+    // read as a grey wash over the waveform. No grid says more than that.
+    if (interval * pixelsPerSecond < BeatWaveformRenderer.MIN_PIXELS_PER_BEAT) return;
+
     const from = Math.max(0, Math.floor((windowStart - beats[0]) / interval));
     const tick = height * 0.16;
 
@@ -608,24 +642,16 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     }
   }
 
-  zoom(direction) {
-    if (!this.bands) return;
+  /** Positive steps widen the window (zoom out), negative ones narrow it. */
+  zoom(steps) {
+    const target = this.zoomLevel * Math.pow(BeatWaveformRenderer.ZOOM_STEP, steps);
+    const seconds = BeatWaveformRenderer.clampZoom(target);
+    if (seconds === this.zoomLevel) return;
 
-    const zoomSensitivity = 0.4;
+    BeatWaveformRenderer.shareZoom(seconds, { fromUser: true })
+      .forEach(renderer => renderer.render());
 
-    // direction: 1 for zoom in (-), -1 for zoom out (+)
-    const zoomDelta = direction * zoomSensitivity;
-    const newZoomLevel = Math.max(
-      BeatWaveformRenderer.MIN_ZOOM_SECONDS,
-      Math.min(BeatWaveformRenderer.MAX_ZOOM_SECONDS, this.zoomLevel + zoomDelta)
-    );
-
-    if (newZoomLevel !== this.zoomLevel) {
-      this.userZoomed = true;
-      this.zoomLevel = newZoomLevel;
-      this.render();
-      console.log(`Beat waveform zoom changed to ${this.zoomLevel.toFixed(1)} seconds on deck ${this.deckId}`);
-    }
+    console.log(`Beat waveform zoom changed to ${seconds.toFixed(1)} seconds on both decks`);
   }
 }
 
