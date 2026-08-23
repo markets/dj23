@@ -1,0 +1,84 @@
+/* ============================================================================
+   Base — resets, page layout, icons and the scrollbar
+   ============================================================================ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Several controls set display explicitly, which would beat the hidden attribute */
+[hidden] {
+  display: none !important;
+}
+
+.mixer-container {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 var(--size-page-pad) var(--size-page-pad);
+}
+
+.mixer-interface {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: var(--size-panel-gap);
+  margin-bottom: var(--spacing-2xl);
+}
+
+/* --- Icons ---------------------------------------------------------------- */
+/* Icon shapes live in images/icons/. Masking a box with the shape rather than
+   embedding SVG keeps them painted with currentColor, so they follow hover and
+   active states like text does. Defined here, ahead of everything that uses
+   them, so a component can still override the size with a single class. */
+.icon {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  mask: center / contain no-repeat;
+}
+
+.icon-sm {
+  width: 16px;
+  height: 16px;
+}
+
+.icon-headphones {
+  mask-image: url('../images/icons/headphones.svg');
+}
+
+.icon-gear {
+  mask-image: url('../images/icons/gear.svg');
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-primary);
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-secondary);
+}

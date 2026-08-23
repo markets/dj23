@@ -1,7 +1,7 @@
 /**
  * Single source of truth for colors used outside CSS (canvas rendering,
  * inline styles). Values are read from the CSS custom properties in
- * css/styles.css so the palette only ever has to change in one place.
+ * css/variables.css so the palette only ever has to change in one place.
  */
 class Theme {
   static cache = new Map();

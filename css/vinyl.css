@@ -1,0 +1,200 @@
+/* ============================================================================
+   Vinyl — the platter, its loop fader and the pitch column, see js/vinyl.js
+   ============================================================================ */
+
+/* --- Vinyl, loop & pitch -------------------------------------------------- */
+/* Two blocks, not three: the platter and its pitch fader are one instrument,
+   so the row splits pads | platter+fader and gives that seam twice the gap.
+   Still centred — pushing the platter to the far edge unbalances the deck.
+   The pad column sets the height, and everything else stretches to meet it. */
+.vinyl-container {
+  display: flex;
+  gap: calc(var(--size-vinyl-gap) * 2);
+  align-items: stretch;
+  justify-content: center;
+}
+
+.platter-group {
+  display: flex;
+  gap: var(--size-vinyl-gap);
+  align-items: stretch;
+}
+
+.vinyl-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+}
+
+.vinyl-wrapper {
+  position: relative;
+  width: var(--size-vinyl);
+  height: var(--size-vinyl);
+}
+
+.vinyl-record {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-full);
+  background:
+    radial-gradient(circle at center, var(--bg-secondary) 20%, var(--border-primary) 21%, var(--bg-secondary) 22%, var(--border-primary) 23%, var(--bg-secondary) 24%, var(--border-primary) 25%),
+    conic-gradient(from 0deg, var(--bg-secondary), rgba(255, 255, 255, 0.1), var(--bg-secondary), rgba(255, 255, 255, 0.05), var(--bg-secondary), rgba(255, 255, 255, 0.1), var(--bg-secondary)),
+    linear-gradient(45deg, var(--bg-tertiary), var(--bg-secondary));
+  position: relative;
+  cursor: grab;
+  transition: var(--transition-fast);
+  border: 2px solid var(--border-secondary);
+  box-shadow:
+    inset 0 -2px 4px rgba(0, 0, 0, 0.5),
+    0 8px 16px rgba(0, 0, 0, 0.4),
+    0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.vinyl-record:active {
+  cursor: grabbing;
+}
+
+/* Both grabbable surfaces are driven by pointer events, so the browser must
+   not take the gesture for scrolling or pinch-zoom first */
+.vinyl-record,
+.beat-waveform-global-fullwidth {
+  touch-action: none;
+}
+
+.vinyl-record.spinning {
+  animation: spin 1.8s linear infinite;
+}
+
+.vinyl-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20%;
+  height: 20%;
+  background: linear-gradient(145deg, var(--color-secondary), var(--color-playhead));
+  border-radius: var(--radius-full);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.vinyl-hole {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 35%;
+  height: 35%;
+  background: var(--bg-primary);
+  border-radius: var(--radius-full);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.vinyl-grooves {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-full);
+  background:
+    radial-gradient(circle at center, transparent 30%, rgba(255, 255, 255, 0.08) 31%, transparent 32%),
+    radial-gradient(circle at center, transparent 35%, rgba(255, 255, 255, 0.06) 36%, transparent 37%),
+    radial-gradient(circle at center, transparent 40%, rgba(255, 255, 255, 0.08) 41%, transparent 42%),
+    radial-gradient(circle at center, transparent 45%, rgba(255, 255, 255, 0.06) 46%, transparent 47%);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.beat-navigation {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.beat-nav-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  padding: var(--spacing-sm);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+  min-width: 35px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.beat-nav-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(var(--color-primary-rgb), 0.2);
+}
+
+.beat-nav-btn.previous-beat {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.beat-nav-btn.next-beat {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-left: none;
+}
+
+/* The fader column to the right of the vinyl, mirroring the pads on the left */
+.pitch-control {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+  width: var(--size-fader-column);
+  flex-shrink: 0;
+}
+
+.pitch-bend-buttons {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  margin-bottom: var(--spacing-sm);
+}
+
+.pitch-bend-btn {
+  flex: 1;
+  min-width: 0;
+  height: 25px;
+  padding: 0 1px;
+  font-size: clamp(0.62rem, 0.78vw, 0.75rem);
+  font-weight: 600;
+}
+
+.pitch-control span {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: var(--spacing-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.pitch-control-wrapper {
+  flex: 1 1 0;
+  height: 0;
+  min-height: 0;
+}
+
+.pitch-control > span {
+  flex: 0 0 auto;
+}
+
+.pitch-slider {
+  height: 100%;
+  min-height: var(--size-fader-deck);
+}

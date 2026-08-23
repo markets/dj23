@@ -1,0 +1,158 @@
+/* ============================================================================
+   Performance pads — hot cues, loops and quantize, see js/performance-pads.js
+   ============================================================================ */
+
+/* --- Performance pads ----------------------------------------------------- */
+/* The column that used to hold loop IN/OUT: four hot cues over a beat loop
+   section. Wider than the fader columns because the loop lengths sit three
+   across, and the whole thing replaced the cue row that used to run under the
+   transport. */
+.pads-column {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: calc(var(--size-fader-column) * 1.7);
+  flex-shrink: 0;
+}
+
+.pads-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.hot-cues {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.hot-cue-btn {
+  position: relative;
+  height: 38px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  border-style: dashed;
+  border-color: var(--border-light);
+  opacity: 0.7;
+  overflow: hidden;
+}
+
+.hot-cue-btn:hover {
+  transform: translateY(-1px);
+}
+
+/* A pad holding a cue is filled rather than outlined, so the four read as
+   "loaded" or "free" at a glance from across the room */
+.hot-cue-btn.set {
+  border-style: solid;
+  border-color: var(--color-primary);
+  color: var(--text-primary);
+  opacity: 1;
+}
+
+.hot-cue-btn.set::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--gradient-primary);
+  opacity: 0.18;
+  pointer-events: none;
+}
+
+.hot-cue-btn.firing::after {
+  opacity: 0.6;
+}
+
+.hot-cue-btn.firing {
+  box-shadow: var(--shadow-primary);
+}
+
+/* Opens a seam under the cue pads: the two halves of the column are unrelated
+   controls, and at a 6px gap they read as one list */
+.loop-mode {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  margin-top: var(--spacing-sm);
+}
+
+.loop-mode-btn {
+  height: 22px;
+  min-width: 0;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+/* Loops and rolls answer to the secondary colour throughout, so a running loop
+   never reads as the same thing as a fired cue */
+.loop-mode-btn.active,
+.loop-chip.active,
+.loop-op-btn.latched {
+  background: linear-gradient(45deg, var(--color-secondary), var(--color-secondary-deep));
+  border-color: var(--color-secondary);
+  color: var(--text-primary);
+}
+
+.loop-chip.active {
+  box-shadow: 0 0 12px rgba(var(--color-secondary-rgb), 0.4);
+}
+
+.loop-lengths,
+.loop-ops {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+
+/* The seam before QUANT, matching the one under the cue pads */
+.loop-ops {
+  margin-bottom: var(--spacing-sm);
+}
+
+.loop-chip,
+.loop-op-btn {
+  height: 26px;
+  min-width: 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+.loop-op-btn {
+  font-size: 0.66rem;
+  color: var(--text-muted);
+}
+
+/* Nothing running means nothing to halve or double. Dimming in place rather
+   than hiding keeps the grid from jumping under the finger mid-mix. */
+.loop-op-btn.is-idle {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* Anchored to the foot of the column: it is a deck-wide setting rather than a
+   loop control, and it lands on the bottom edge of the platter beside it
+   instead of leaving the slack dangling under it */
+.quantize-btn {
+  margin-top: auto;
+  height: 24px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.quantize-btn.active {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 8px rgba(var(--color-primary-rgb), 0.35);
+}

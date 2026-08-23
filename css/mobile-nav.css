@@ -1,0 +1,62 @@
+/* ============================================================================
+   Mobile navigation — the bottom bar that swaps deck, mixer and deck
+   ============================================================================ */
+
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  justify-content: space-around;
+  gap: var(--spacing-xs);
+  background: linear-gradient(to top, var(--bg-primary), var(--bg-secondary));
+  border-top: 1px solid var(--border-secondary);
+  padding: var(--spacing-xs) calc(var(--spacing-xs) + env(safe-area-inset-bottom, 0px));
+  z-index: 100;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.mobile-nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: var(--spacing-xs) var(--spacing-md);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition-normal);
+  border-radius: var(--radius-md);
+  min-height: 48px;
+}
+
+.mobile-nav-btn:hover {
+  color: var(--text-secondary);
+  background: var(--bg-overlay);
+}
+
+.mobile-nav-btn.active {
+  color: var(--color-primary);
+  background: rgba(var(--color-primary-rgb), 0.1);
+}
+
+.mobile-nav-btn.active .nav-icon {
+  text-shadow: 0 0 10px rgba(var(--color-primary-rgb), 0.6);
+}
+
+.nav-icon {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.nav-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}

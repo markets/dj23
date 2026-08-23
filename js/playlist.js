@@ -9,7 +9,6 @@ class Playlist {
   static MIN_HEIGHT = 140;
   static MAX_HEIGHT_RATIO = 0.9;
   static HEIGHT_STEP = 24;
-  static HEIGHT_STORAGE_KEY = 'dj23.playlistHeight';
 
   constructor() {
     // Session-only: a dropped File cannot be reopened after a reload, so a
@@ -475,8 +474,6 @@ class Playlist {
   setupResize() {
     if (!this.resizer) return;
 
-    this.applyHeight(this.readHeight());
-
     this.resizer.addEventListener('pointerdown', (e) => {
       if (e.button !== 0) return;
       e.preventDefault();
@@ -493,7 +490,6 @@ class Playlist {
       const onRelease = () => {
         this.resizer.removeEventListener('pointermove', onMove);
         this.panel.classList.remove('resizing');
-        this.writeHeight();
       };
 
       this.resizer.addEventListener('pointermove', onMove);
@@ -507,10 +503,9 @@ class Playlist {
       e.preventDefault();
       const height = this.panel.getBoundingClientRect().height;
       this.applyHeight(height + direction * Playlist.HEIGHT_STEP);
-      this.writeHeight();
     });
 
-    // A saved height taller than a since-shrunk window would push the header
+    // A height dragged taller than a since-shrunk window would push the header
     // off the top of the screen
     window.addEventListener('resize', () => this.applyHeight(this.height));
   }
@@ -525,23 +520,6 @@ class Playlist {
 
     this.height = Math.round(Math.max(capped, Playlist.MIN_HEIGHT));
     this.panel.style.setProperty('--playlist-height', `${this.height}px`);
-  }
-
-  readHeight() {
-    try {
-      return Number(localStorage.getItem(Playlist.HEIGHT_STORAGE_KEY)) || null;
-    } catch (error) {
-      console.warn('Could not read the saved track list height:', error);
-      return null;
-    }
-  }
-
-  writeHeight() {
-    try {
-      localStorage.setItem(Playlist.HEIGHT_STORAGE_KEY, String(this.height));
-    } catch (error) {
-      console.warn('Could not save the track list height:', error);
-    }
   }
 
   open() {

@@ -1,0 +1,68 @@
+/* ============================================================================
+   EQ — four bands, each with a kill switch and a reset dot
+   ============================================================================ */
+
+/* --- EQ ------------------------------------------------------------------- */
+.eq-section {
+  display: flex;
+  justify-content: space-around;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+  background: var(--bg-secondary);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-primary);
+}
+
+.eq-band {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.eq-band label {
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.eq-label-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.eq-slider {
+  height: var(--size-fader-eq);
+}
+
+.eq-kill-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-secondary);
+  color: var(--text-secondary);
+  padding: 3px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 0.65rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-fast);
+}
+
+.eq-kill-btn:hover {
+  transform: translateY(-1px);
+}
+
+.eq-kill-btn:active {
+  transform: scale(0.95);
+}
+
+.eq-value {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}

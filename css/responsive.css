@@ -1,0 +1,221 @@
+/* ============================================================================
+   Responsive — the phone layout. Last, so it has the final word on everything above
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  /* Phones get one panel at a time, driven by the bottom nav */
+  .mixer-interface {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+  }
+
+  .center-mixer {
+    order: -1;
+    min-width: 0;
+  }
+
+  .deck,
+  .center-mixer {
+    padding: var(--spacing-lg);
+  }
+
+  .mixer-interface .deck.mobile-hidden,
+  .mixer-interface .center-mixer.mobile-hidden {
+    display: none;
+  }
+
+  .mixer-interface .deck.mobile-visible,
+  .mixer-interface .center-mixer.mobile-visible {
+    display: block;
+  }
+
+  /* Header: brand + actions on one row, master faders below */
+  .app-header {
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      'brand actions'
+      'master master';
+    gap: var(--spacing-sm) var(--spacing-md);
+  }
+
+  .master-controls {
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .master-volume,
+  .cue-volume {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .master-volume-slider,
+  .cue-volume-slider {
+    width: auto;
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Controls that stay usable at thumb size. The platter is sized to finish
+     level with the pitch column it now sits beside, rather than to a round
+     number of its own. */
+  .vinyl-wrapper {
+    width: 180px;
+    height: 180px;
+  }
+
+  .pitch-control {
+    width: 72px;
+  }
+
+  /* Squeezed beside the platter the pads would be thumb-hostile, so on a phone
+     the column unfolds into a full-width strip and the platter keeps its size */
+  .vinyl-container {
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+  }
+
+  .pads-column {
+    width: 100%;
+    order: -1;
+  }
+
+  .platter-group {
+    flex: 1;
+    justify-content: center;
+    align-items: flex-start;
+    margin-top: var(--spacing-md);
+  }
+
+  /* Both columns open with a row of buttons; without this the platter hangs
+     lower than the fader it sits next to */
+  .platter-group .beat-navigation {
+    margin-bottom: 0;
+  }
+
+  .hot-cues {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .loop-lengths {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .pitch-control-wrapper {
+    flex: 0 0 auto;
+    height: auto;
+  }
+
+  .pitch-slider { height: 160px; }
+
+  .eq-slider { height: 100px; }
+  .volume-slider { height: 120px; }
+
+  .transport-controls button {
+    width: 50px;
+    height: 50px;
+    font-size: 1rem;
+  }
+
+  .eq-section {
+    gap: var(--spacing-md);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: var(--spacing-md);
+    scrollbar-width: thin;
+  }
+
+  .eq-band {
+    flex-shrink: 0;
+    min-width: 56px;
+  }
+
+  /* One panel at a time means there is width to spare — use it */
+  .sound-pad {
+    max-width: none;
+  }
+
+  .sound-pad-btn {
+    height: 64px;
+  }
+
+  .beat-meters {
+    width: 100%;
+  }
+
+  .beat-bars {
+    width: 100%;
+  }
+
+  .beat-bar {
+    flex: 1;
+    width: auto;
+    height: 12px;
+  }
+
+  .modal-content {
+    width: 95%;
+  }
+
+  .shortcuts-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+  }
+
+  .modal-header,
+  .modal-body,
+  .shortcuts-section {
+    padding: var(--spacing-lg);
+  }
+
+  .mobile-bottom-nav {
+    display: flex;
+  }
+
+  body {
+    padding-bottom: 72px;
+  }
+
+  /* Full-height sheet on phones: covering the bottom nav is steadier than
+     guessing its height, and the close button is right there in the header. */
+  .playlist-panel {
+    top: 0;
+    height: auto;
+  }
+
+  /* Nothing to resize when the sheet is full height */
+  .playlist-resizer {
+    display: none;
+  }
+
+  .playlist-header {
+    flex-wrap: wrap;
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  .playlist-search {
+    order: 1;
+    flex-basis: 100%;
+  }
+
+  .playlist-row {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .vinyl-record.spinning {
+    animation: none;
+  }
+}
