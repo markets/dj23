@@ -120,7 +120,8 @@ class KeyboardShortcuts {
       'Space', 'KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyA', 'KeyS',
       'KeyU', 'KeyI', 'KeyO', 'KeyP', 'KeyJ', 'KeyK',
       'KeyZ', 'KeyX', 'KeyN', 'KeyM',
-      'Digit1', 'Digit2', 'Digit8', 'Digit9',
+      'Digit1', 'Digit2', 'Digit3', 'Digit4',
+      'Digit7', 'Digit8', 'Digit9', 'Digit0',
       'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'
     ];
     
@@ -165,26 +166,30 @@ class KeyboardShortcuts {
       
       'Digit1': () => this.handleCuePoint(e, 'A', 1),
       'Digit2': () => this.handleCuePoint(e, 'A', 2),
+      'Digit3': () => this.handleCuePoint(e, 'A', 3),
+      'Digit4': () => this.handleCuePoint(e, 'A', 4),
       
       'KeyA': () => this.handlePitchBendPress('A', 'KeyA', -1),
       'KeyS': () => this.handlePitchBendPress('A', 'KeyS', 1),
       
-      'KeyZ': () => this.clickButton('loopInA'),
-      'KeyX': () => this.clickButton('loopOutA'),
+      'KeyZ': () => this.handleLoopKey(e, 'A', 0.5),
+      'KeyX': () => this.handleLoopKey(e, 'A', 2),
       
       'KeyU': () => this.controlDeck('B', 'play'),
       'KeyI': () => this.controlDeck('B', 'pause'),
       'KeyO': () => this.controlDeck('B', 'stop'),
       'KeyP': () => this.handleCuePress('B', 'KeyP'),
       
-      'Digit8': () => this.handleCuePoint(e, 'B', 1),
-      'Digit9': () => this.handleCuePoint(e, 'B', 2),
+      'Digit7': () => this.handleCuePoint(e, 'B', 1),
+      'Digit8': () => this.handleCuePoint(e, 'B', 2),
+      'Digit9': () => this.handleCuePoint(e, 'B', 3),
+      'Digit0': () => this.handleCuePoint(e, 'B', 4),
       
       'KeyJ': () => this.handlePitchBendPress('B', 'KeyJ', -1),
       'KeyK': () => this.handlePitchBendPress('B', 'KeyK', 1),
       
-      'KeyN': () => this.clickButton('loopInB'),
-      'KeyM': () => this.clickButton('loopOutB'),
+      'KeyN': () => this.handleLoopKey(e, 'B', 0.5),
+      'KeyM': () => this.handleLoopKey(e, 'B', 2),
       
       'ArrowLeft': () => this.adjustCrossfader(-5),
       'ArrowRight': () => this.adjustCrossfader(5),
@@ -196,11 +201,26 @@ class KeyboardShortcuts {
     if (action) action();
   }
 
-  handleCuePoint(e, deck, cueNumber) {
+  getPads(deckId) {
+    return window.mixerController.deckControllers[deckId]?.pads;
+  }
+
+  /** Same behaviour as clicking the pad: set an empty cue, fire a set one,
+   *  shift to clear it. */
+  handleCuePoint(e, deckId, cueNumber) {
+    this.getPads(deckId)?.handleCue(cueNumber, e.shiftKey);
+  }
+
+  /** The keys that used to set loop IN and OUT now resize the running loop,
+   *  and shift gets you out of it. */
+  handleLoopKey(e, deckId, factor) {
+    const pads = this.getPads(deckId);
+    if (!pads) return;
+
     if (e.shiftKey) {
-      document.getElementById(`setCue${cueNumber}${deck}`)?.click();
+      pads.stopLoop();
     } else {
-      document.getElementById(`cue${cueNumber}${deck}`)?.click();
+      pads.resize(factor);
     }
   }
 

@@ -149,14 +149,31 @@
         </div>
 
         <div class="vinyl-container">
-          <div class="loop-control">
-            <label>Loop</label>
-            <div class="loop-buttons">
-              <button id="loopInA" class="loop-btn">IN</button>
-              <button id="loopOutA" class="loop-btn">OUT</button>
+          <div class="pads-column" id="padsA">
+            <span class="pads-label">Cues</span>
+            <div class="hot-cues">
+              <button type="button" class="hot-cue-btn" data-cue="1" title="Hot cue 1 — click to set or jump, shift-click to clear">1</button>
+              <button type="button" class="hot-cue-btn" data-cue="2" title="Hot cue 2 — click to set or jump, shift-click to clear">2</button>
+              <button type="button" class="hot-cue-btn" data-cue="3" title="Hot cue 3 — click to set or jump, shift-click to clear">3</button>
+              <button type="button" class="hot-cue-btn" data-cue="4" title="Hot cue 4 — click to set or jump, shift-click to clear">4</button>
             </div>
-            <input type="range" id="loopLengthA" min="0" max="100" value="100" class="loop-slider vertical-fader" orient="vertical">
-            <span class="loop-length-value" id="loopLengthValueA">100%</span>
+
+            <div class="pads-divider"></div>
+
+            <div class="loop-mode">
+              <button type="button" class="loop-mode-btn active" data-loop-mode="loop">LOOP</button>
+              <button type="button" class="loop-mode-btn" data-loop-mode="roll">ROLL</button>
+            </div>
+            <div class="loop-lengths"></div>
+            <div class="loop-ops">
+              <button type="button" class="loop-op-btn" data-op="halve" title="Halve the loop">÷2</button>
+              <button type="button" class="loop-op-btn" data-op="double" title="Double the loop">×2</button>
+              <button type="button" class="loop-op-btn" data-op="third">EXIT</button>
+            </div>
+
+            <div class="pads-divider"></div>
+
+            <button type="button" class="quantize-btn active" title="Snap cues and loops to the beat">QUANT</button>
           </div>
           <div class="vinyl-section">
             <div class="beat-navigation">
@@ -192,13 +209,6 @@
           <button id="stopA" class="stop-btn">⏹</button>
           <button id="cueA" class="cue-btn">CUE</button>
           <button id="backSpinA" class="back-spin-btn" title="Back-spin">‹‹‹</button>
-        </div>
-
-        <div class="cue-points">
-          <button id="cue1A" class="cue-point-btn">CUE 1</button>
-          <button id="cue2A" class="cue-point-btn">CUE 2</button>
-          <button id="setCue1A" class="set-cue-btn">SET 1</button>
-          <button id="setCue2A" class="set-cue-btn">SET 2</button>
         </div>
 
         <div class="eq-section">
@@ -472,14 +482,31 @@
         </div>
 
         <div class="vinyl-container">
-          <div class="loop-control">
-            <label>Loop</label>
-            <div class="loop-buttons">
-              <button id="loopInB" class="loop-btn">IN</button>
-              <button id="loopOutB" class="loop-btn">OUT</button>
+          <div class="pads-column" id="padsB">
+            <span class="pads-label">Cues</span>
+            <div class="hot-cues">
+              <button type="button" class="hot-cue-btn" data-cue="1" title="Hot cue 1 — click to set or jump, shift-click to clear">1</button>
+              <button type="button" class="hot-cue-btn" data-cue="2" title="Hot cue 2 — click to set or jump, shift-click to clear">2</button>
+              <button type="button" class="hot-cue-btn" data-cue="3" title="Hot cue 3 — click to set or jump, shift-click to clear">3</button>
+              <button type="button" class="hot-cue-btn" data-cue="4" title="Hot cue 4 — click to set or jump, shift-click to clear">4</button>
             </div>
-            <input type="range" id="loopLengthB" min="0" max="100" value="100" class="loop-slider vertical-fader" orient="vertical">
-            <span class="loop-length-value" id="loopLengthValueB">100%</span>
+
+            <div class="pads-divider"></div>
+
+            <div class="loop-mode">
+              <button type="button" class="loop-mode-btn active" data-loop-mode="loop">LOOP</button>
+              <button type="button" class="loop-mode-btn" data-loop-mode="roll">ROLL</button>
+            </div>
+            <div class="loop-lengths"></div>
+            <div class="loop-ops">
+              <button type="button" class="loop-op-btn" data-op="halve" title="Halve the loop">÷2</button>
+              <button type="button" class="loop-op-btn" data-op="double" title="Double the loop">×2</button>
+              <button type="button" class="loop-op-btn" data-op="third">EXIT</button>
+            </div>
+
+            <div class="pads-divider"></div>
+
+            <button type="button" class="quantize-btn active" title="Snap cues and loops to the beat">QUANT</button>
           </div>
           <div class="vinyl-section">
             <div class="beat-navigation">
@@ -515,13 +542,6 @@
           <button id="stopB" class="stop-btn">⏹</button>
           <button id="cueB" class="cue-btn">CUE</button>
           <button id="backSpinB" class="back-spin-btn" title="Back-spin">‹‹‹</button>
-        </div>
-
-        <div class="cue-points">
-          <button id="cue1B" class="cue-point-btn">CUE 1</button>
-          <button id="cue2B" class="cue-point-btn">CUE 2</button>
-          <button id="setCue1B" class="set-cue-btn">SET 1</button>
-          <button id="setCue2B" class="set-cue-btn">SET 2</button>
         </div>
 
         <div class="eq-section">
@@ -665,19 +685,23 @@
             </div>
             <div class="shortcut-item">
               <kbd>1</kbd>
-              <span>Cue Point 1</span>
+              <span>Hot Cue 1</span>
             </div>
             <div class="shortcut-item">
               <kbd>2</kbd>
-              <span>Cue Point 2</span>
+              <span>Hot Cue 2</span>
             </div>
             <div class="shortcut-item">
-              <kbd>Shift + 1</kbd>
-              <span>Set Cue 1</span>
+              <kbd>3</kbd>
+              <span>Hot Cue 3</span>
             </div>
             <div class="shortcut-item">
-              <kbd>Shift + 2</kbd>
-              <span>Set Cue 2</span>
+              <kbd>4</kbd>
+              <span>Hot Cue 4</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>Shift + 1…4</kbd>
+              <span>Clear Hot Cue</span>
             </div>
           </div>
 
@@ -700,20 +724,24 @@
               <span>Cue</span>
             </div>
             <div class="shortcut-item">
+              <kbd>7</kbd>
+              <span>Hot Cue 1</span>
+            </div>
+            <div class="shortcut-item">
               <kbd>8</kbd>
-              <span>Cue Point 1</span>
+              <span>Hot Cue 2</span>
             </div>
             <div class="shortcut-item">
               <kbd>9</kbd>
-              <span>Cue Point 2</span>
+              <span>Hot Cue 3</span>
             </div>
             <div class="shortcut-item">
-              <kbd>Shift + 8</kbd>
-              <span>Set Cue 1</span>
+              <kbd>0</kbd>
+              <span>Hot Cue 4</span>
             </div>
             <div class="shortcut-item">
-              <kbd>Shift + 9</kbd>
-              <span>Set Cue 2</span>
+              <kbd>Shift + 7…0</kbd>
+              <span>Clear Hot Cue</span>
             </div>
           </div>
 
@@ -721,19 +749,23 @@
             <h3>Loop Controls</h3>
             <div class="shortcut-item">
               <kbd>Z</kbd>
-              <span>Loop In (Deck A)</span>
+              <span>Halve Loop (Deck A)</span>
             </div>
             <div class="shortcut-item">
               <kbd>X</kbd>
-              <span>Loop Out (Deck A)</span>
+              <span>Double Loop (Deck A)</span>
             </div>
             <div class="shortcut-item">
               <kbd>N</kbd>
-              <span>Loop In (Deck B)</span>
+              <span>Halve Loop (Deck B)</span>
             </div>
             <div class="shortcut-item">
               <kbd>M</kbd>
-              <span>Loop Out (Deck B)</span>
+              <span>Double Loop (Deck B)</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>Shift + Z/X/N/M</kbd>
+              <span>Exit Loop</span>
             </div>
           </div>
 
@@ -817,6 +849,7 @@
   <script src="js/effects.js"></script>
   <script src="js/waveform.js"></script>
   <script src="js/button-handler.js"></script>
+  <script src="js/performance-pads.js"></script>
   <script src="js/keyboard-shortcuts.js"></script>
   <script src="js/mixer.js"></script>
   <script src="js/sound-pad.js"></script>
