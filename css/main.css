@@ -2,6 +2,7 @@
 @import "base.css";
 
 @import "topbar.css";
+@import "recording.css";
 @import "beat-waveforms.css";
 
 @import "controls.css";
