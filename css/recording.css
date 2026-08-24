@@ -1,0 +1,110 @@
+/* ============================================================================
+   RECORDING
+   ============================================================================ */
+
+.rec-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 110px;
+  height: 38px;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: var(--gradient-surface);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-lg);
+  transition: var(--transition-normal);
+}
+
+.rec-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: var(--transition-normal);
+}
+
+.rec-slot:hover {
+  background: var(--bg-overlay);
+  color: var(--text-primary);
+}
+
+.rec-dot {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-secondary);
+}
+
+.rec-time {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Rolling: the dot breathes once a second, which reads as "live" from further
+   away than a colour change does */
+.rec-control.is-recording {
+  border-color: var(--color-secondary);
+  box-shadow: 0 0 12px rgba(var(--color-secondary-rgb), 0.35);
+}
+
+.rec-control.is-recording .rec-dot {
+  animation: rec-pulse 1s infinite;
+}
+
+@keyframes rec-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.8); }
+}
+
+/* Take waiting to be saved */
+.rec-control.is-done,
+.rec-control.is-saved {
+  border-color: var(--color-primary);
+}
+
+.rec-control.is-done .rec-save,
+.rec-control.is-saved .rec-slot {
+  color: var(--color-primary);
+}
+
+.rec-control.is-saved .rec-slot {
+  cursor: default;
+}
+
+/* Discarding is the exception, so it gets the narrow, unlit half. It widens
+   only to ask, and the box itself never changes size. */
+.rec-drop {
+  flex: 0 0 32px;
+  border-left: 1px solid var(--border-secondary);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.rec-control.is-asking .rec-save {
+  display: none;
+}
+
+.rec-drop.is-asking {
+  flex: 0 0 68px;
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+}
+
+/* No audio context yet, so there is nothing to record. The title says why. */
+.rec-control.is-unavailable {
+  opacity: 0.45;
+  pointer-events: none;
+}

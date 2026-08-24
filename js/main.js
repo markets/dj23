@@ -2,6 +2,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   console.log('🎧 Initializing...');
     
   await window.audioEngine.initialize();
+
+  // The record button renders before this and starts out disabled: it has
+  // nothing to capture until the engine exists
+  window.recordingController?.render();
     
   // Before the renderers: the beat waveforms attach themselves to these
   window.platters.A = new Platter('A');
@@ -61,7 +65,14 @@ window.addEventListener('unhandledrejection', (e) => {
 
 // Prevent accidental tab closure or navigation away from the page
 window.addEventListener('beforeunload', (e) => {
+  // A recording that was never saved is gone for good once the tab closes
+  if (window.recordingController?.hasUnsavedTake()) {
+    e.preventDefault();
+    return;
+  }
+
   if (window.audioEngine && window.audioEngine.hasActiveSession()) {
     e.preventDefault();
+    return;
   }
 });
