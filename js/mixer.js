@@ -18,6 +18,7 @@ class MixerController {
   }
 
   getAnalyserAverage(analyserData) {
+    if (!analyserData.length) return 0;
     return analyserData.reduce((sum, value) => sum + value, 0) / analyserData.length;
   }
 
@@ -276,32 +277,10 @@ class MixerController {
         this.updateBeatMeter(deckId);
       });
             
-      const deckA = window.audioEngine.getDeck('A');
-      const deckB = window.audioEngine.getDeck('B');
-      let masterLevel = 0;
-      let totalGain = 0;
-      let activeDeckCount = 0;
-            
-      if (deckA && deckA.isPlaying) {
-        const dataA = deckA.getAnalyserData();
-        const globalGainA = deckA.getGlobalGain();
-        masterLevel += this.getAnalyserAverage(dataA) * globalGainA;
-        totalGain += globalGainA;
-        activeDeckCount++;
-      }
-            
-      if (deckB && deckB.isPlaying) {
-        const dataB = deckB.getAnalyserData();
-        const globalGainB = deckB.getGlobalGain();
-        masterLevel += this.getAnalyserAverage(dataB) * globalGainB;
-        totalGain += globalGainB;
-        activeDeckCount++;
-      }
-      
-      // Average the master level accounting for active decks
-      const avgMasterLevel = activeDeckCount > 0 ? masterLevel / activeDeckCount : 0;
-      const scaledMasterLevel = avgMasterLevel * masterVolume;
-      this.updateVUMeter('master', scaledMasterLevel);
+      // This is the actual summed master bus, so pads and the Remix Station
+      // appear on the meter and the master fader is already accounted for.
+      const masterData = window.audioEngine.getMasterAnalyserData();
+      this.updateVUMeter('master', this.getAnalyserAverage(masterData));
             
       if (this.deckControllers.A) this.deckControllers.A.updateTrackTime();
       if (this.deckControllers.B) this.deckControllers.B.updateTrackTime();

@@ -1,0 +1,402 @@
+/* ============================================================================
+   Remix Station — master-mixed sample sequencer and momentary performance FX
+   ============================================================================ */
+
+.remix-station {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(16px, 2vw, 28px);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-2xl);
+  background:
+    radial-gradient(circle at 92% 0%, rgba(var(--color-primary-rgb), 0.12), transparent 30%),
+    linear-gradient(145deg, #181a1a, #111);
+  box-shadow: var(--shadow-lg);
+}
+
+.remix-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.remix-header h2 {
+  margin: 2px 0 4px;
+  font-size: clamp(1.35rem, 2vw, 2rem);
+  letter-spacing: -0.03em;
+}
+
+.remix-eyebrow,
+.remix-fx-kicker {
+  color: var(--color-primary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.remix-subtitle {
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+
+.remix-status {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border: 1px solid rgba(var(--color-primary-rgb), 0.35);
+  border-radius: 999px;
+  background: rgba(var(--color-primary-rgb), 0.08);
+  color: var(--color-primary);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.remix-status.error {
+  border-color: rgba(var(--color-secondary-rgb), 0.4);
+  color: var(--color-secondary);
+}
+
+.remix-toolbar,
+.remix-control-group,
+.remix-fx-controls,
+.remix-roll-buttons {
+  display: flex;
+  align-items: center;
+}
+
+.remix-toolbar {
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.remix-control-group {
+  min-height: 42px;
+  gap: 7px;
+  padding: 6px;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.remix-control-group label,
+.remix-fx-controls label {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.remix-toolbar button,
+.remix-toolbar select,
+.remix-toolbar input[type="number"],
+.remix-fx-block button,
+.remix-fx-block select,
+.remix-load-sample,
+.remix-preview,
+.remix-mute {
+  min-height: 30px;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.remix-toolbar button,
+.remix-fx-block button {
+  padding: 5px 10px;
+}
+
+.remix-toolbar button:hover,
+.remix-fx-block button:hover,
+.remix-preview:hover,
+.remix-load-sample:hover {
+  border-color: var(--color-primary);
+}
+
+.remix-toolbar .remix-primary {
+  min-width: 64px;
+  border-color: var(--color-primary-deep);
+  background: var(--gradient-primary);
+  color: #071312;
+}
+
+.remix-toolbar .remix-primary.active {
+  border-color: var(--color-secondary);
+  background: rgba(var(--color-secondary-rgb), 0.16);
+  color: var(--color-secondary);
+}
+
+.remix-toolbar input[type="number"] {
+  width: 68px;
+  min-height: 30px;
+  padding: 4px 6px;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.remix-toolbar select,
+.remix-fx-block select {
+  padding: 4px 24px 4px 7px;
+}
+
+.remix-master-level {
+  flex: 1 1 180px;
+}
+
+.remix-master-level input {
+  flex: 1;
+  min-width: 90px;
+}
+
+.remix-grid-scroll {
+  overflow-x: auto;
+  padding: 3px 2px var(--spacing-md);
+  scrollbar-width: thin;
+}
+
+.remix-grid {
+  min-width: 930px;
+}
+
+.remix-grid-row {
+  display: grid;
+  grid-template-columns: 190px repeat(16, minmax(34px, 1fr));
+  gap: 5px;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.remix-grid-header {
+  color: var(--text-muted);
+  font-size: 0.64rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.remix-grid-header .remix-lane-heading {
+  padding-left: 7px;
+  text-align: left;
+}
+
+.remix-grid-header .beat-start {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.remix-lane-row {
+  padding: 4px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  transition: var(--transition-fast);
+}
+
+.remix-lane-row.selected {
+  border-color: rgba(var(--color-primary-rgb), 0.35);
+  background: rgba(var(--color-primary-rgb), 0.035);
+}
+
+.remix-lane-controls {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.remix-preview {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  padding: 4px 7px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selected .remix-preview {
+  border-color: var(--color-primary-deep);
+  color: var(--color-primary);
+}
+
+.remix-mute {
+  flex: 0 0 28px;
+  width: 28px;
+  padding: 0;
+  color: var(--text-muted);
+}
+
+.remix-mute.active {
+  border-color: var(--color-secondary);
+  background: rgba(var(--color-secondary-rgb), 0.14);
+  color: var(--color-secondary);
+}
+
+.remix-lane-volume {
+  flex: 0 1 52px;
+  min-width: 38px;
+}
+
+.remix-load-sample {
+  flex: 0 0 auto;
+  min-height: 28px;
+  padding: 3px 6px;
+  font-size: 0.62rem;
+}
+
+.remix-step {
+  position: relative;
+  min-width: 0;
+  height: 38px;
+  border: 1px solid var(--border-secondary);
+  border-radius: 5px;
+  background: linear-gradient(180deg, #2b2d2d, #202222);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: transform 80ms ease, border-color 80ms ease, background 80ms ease;
+}
+
+.remix-step.beat-start {
+  border-left-color: rgba(var(--color-primary-rgb), 0.65);
+}
+
+.remix-step:hover {
+  border-color: var(--border-light);
+  transform: translateY(-1px);
+}
+
+.remix-step.active {
+  border-color: var(--color-primary);
+  background: linear-gradient(180deg, var(--color-primary), var(--color-primary-deep));
+  box-shadow: 0 0 12px rgba(var(--color-primary-rgb), 0.18);
+}
+
+.remix-step.playing::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border: 2px solid var(--color-level-mid);
+  border-radius: 7px;
+  box-shadow: 0 0 10px rgba(255, 230, 109, 0.45);
+  pointer-events: none;
+}
+
+.remix-performance {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr 1fr;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+
+.remix-fx-block {
+  min-width: 0;
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.remix-fx-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.remix-fx-heading h3 {
+  margin-top: 2px;
+  font-size: 0.9rem;
+}
+
+.remix-fx-heading h3 b {
+  color: var(--color-primary);
+}
+
+.remix-fx-heading > span {
+  color: var(--text-muted);
+  font-size: 0.62rem;
+  text-align: right;
+}
+
+.remix-roll-buttons,
+.remix-fx-controls {
+  gap: var(--spacing-sm);
+}
+
+.remix-roll-buttons button {
+  flex: 1;
+}
+
+.remix-fx-controls label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.remix-fx-controls .remix-amount {
+  flex: 1;
+}
+
+.remix-amount input {
+  flex: 1;
+  min-width: 58px;
+}
+
+.remix-fx-block button.active,
+.remix-fx-trigger.active {
+  border-color: var(--color-level-mid);
+  background: rgba(255, 230, 109, 0.16);
+  color: var(--color-level-mid);
+  box-shadow: 0 0 12px rgba(255, 230, 109, 0.18);
+}
+
+@media (max-width: 980px) {
+  .remix-performance {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .remix-station {
+    padding: 14px;
+  }
+
+  .remix-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .remix-status {
+    align-self: flex-start;
+  }
+
+  .remix-toolbar {
+    align-items: stretch;
+  }
+
+  .remix-control-group {
+    flex: 1 1 auto;
+  }
+
+  .remix-transport {
+    flex-basis: 100%;
+  }
+
+  .remix-grid {
+    min-width: 900px;
+  }
+
+  .remix-performance {
+    gap: var(--spacing-sm);
+  }
+}

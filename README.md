@@ -60,6 +60,8 @@ through the Web Audio API.
   its artwork, artist, length, BPM and key
 * **Sound pad** with 9 slots — airhorn, siren, scratch, clap, boom, laser, applause, drop and
   whoosh — and every slot can be replaced with your own audio file
+* **Remix Station** — a 16-step kick, snare, hi-hat and custom-sample sequencer mixed into
+  the master output, with deck tempo sync plus momentary roll, echo and reverb for buildups
 * **Record your mix** as it plays and download it as a WebM file
 * **Keyboard shortcuts** for everything you need mid-mix, with a `?` cheat sheet
 * **Responsive layout** — so you can even mix from your phone

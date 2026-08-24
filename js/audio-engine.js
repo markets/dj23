@@ -8,6 +8,8 @@ class AudioEngine {
   constructor() {
     this.audioContext = null;
     this.masterGain = null;
+    this.masterAnalyser = null;
+    this.remixStation = null;
     this.decks = {
       A: null,
       B: null
@@ -30,6 +32,8 @@ class AudioEngine {
 
       this.cueGain = this.audioContext.createGain();
       this.masterGain = this.audioContext.createGain();
+      this.masterAnalyser = this.audioContext.createAnalyser();
+      this.masterAnalyser.fftSize = 256;
 
       this.cueGain.gain.value = 0.5;
       this.masterGain.gain.value = 0.75;
@@ -69,17 +73,22 @@ class AudioEngine {
 
     this.cueGain.disconnect();
     this.masterGain.disconnect();
+    this.masterAnalyser.disconnect();
     this.channelMerger.disconnect();
+
+    // Meter the real summed bus, including sound pads and the Remix Station.
+    // The analyser passes audio through unchanged.
+    this.masterGain.connect(this.masterAnalyser);
 
     if (this.outputRouting === 'cue-split') {
       this.cueGain.connect(this.channelMerger, 0, 0);    // CUE -> Left channel
-      this.masterGain.connect(this.channelMerger, 0, 1); // MAIN -> Right channel
+      this.masterAnalyser.connect(this.channelMerger, 0, 1); // MAIN -> Right channel
       this.channelMerger.connect(this.audioContext.destination);
       this.channelMerger.connect(this.mediaStreamDestination);
     } else {
       // Straight through, so the main mix keeps its stereo image
-      this.masterGain.connect(this.audioContext.destination);
-      this.masterGain.connect(this.mediaStreamDestination);
+      this.masterAnalyser.connect(this.audioContext.destination);
+      this.masterAnalyser.connect(this.mediaStreamDestination);
     }
 
     return this.outputRouting;
@@ -111,6 +120,14 @@ class AudioEngine {
 
   getDeck(deckId) {
     return this.decks[deckId];
+  }
+
+  getMasterAnalyserData() {
+    if (!this.masterAnalyser) return new Uint8Array(0);
+
+    const data = new Uint8Array(this.masterAnalyser.frequencyBinCount);
+    this.masterAnalyser.getByteFrequencyData(data);
+    return data;
   }
 
   startRecording() {
@@ -186,8 +203,9 @@ class AudioEngine {
     const deckA = this.getDeck('A');
     const deckB = this.getDeck('B');
     
-    return (deckA && (deckA.audioBuffer || deckA.isPlaying)) || 
-           (deckB && (deckB.audioBuffer || deckB.isPlaying));
+    return (deckA && (deckA.audioBuffer || deckA.isPlaying)) ||
+           (deckB && (deckB.audioBuffer || deckB.isPlaying)) ||
+           Boolean(this.remixStation?.isPlaying);
   }
 }
 
