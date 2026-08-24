@@ -74,9 +74,8 @@ class Recording {
     this.seconds = 0;
     this.render();
 
-    // Polled faster than it is drawn: the clock only repaints when the second
-    // it shows actually changes, but checking four times a second keeps it
-    // from sitting up to a second behind the real duration
+    // Polled four times a second but only drawn when the digit changes, so the
+    // clock never sits a whole second behind what has actually been captured
     this.tickTimer = setInterval(() => this.tick(), 250);
   }
 
@@ -87,7 +86,6 @@ class Recording {
     this.takeSeconds = window.audioEngine.getRecordingDuration();
     const blob = await window.audioEngine.stopRecording();
 
-    // Too short to be a take anyone meant to keep, so it never becomes one
     if (this.takeSeconds < Recording.MIN_TAKE_SECONDS) {
       console.log(`Recording: ${this.takeSeconds}s discarded as a mis-click`);
       this.reset();
@@ -211,7 +209,7 @@ class Recording {
 
     if (this.phase === 'saved') {
       this.control.classList.add('is-saved');
-      this.control.innerHTML = `<button type="button" class="rec-slot">✓ SAVED</button>`;
+      this.control.innerHTML = `<button type="button" class="rec-slot">SAVED</button>`;
       return;
     }
 
@@ -221,8 +219,8 @@ class Recording {
       </button>`;
   }
 
-  /** A take that has been recorded but not saved yet is worth a warning on the
-   *  way out; main.js asks. */
+  /** The blob lives only in memory, so a take still waiting to be saved dies
+   *  with the tab — main.js turns this into a warning on the way out. */
   hasUnsavedTake() {
     return this.phase === 'done' && !!this.blob;
   }

@@ -3,8 +3,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     
   await window.audioEngine.initialize();
 
-  // The record button renders before this and starts out disabled: it has
-  // nothing to capture until the engine exists
+  // The record button starts out disabled — there is nothing to capture until
+  // the engine exists, and this is where it finds out
   window.recordingController?.render();
     
   // Before the renderers: the beat waveforms attach themselves to these

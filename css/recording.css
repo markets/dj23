@@ -84,8 +84,6 @@
   cursor: default;
 }
 
-/* Discarding is the exception, so it gets the narrow, unlit half. It widens
-   only to ask, and the box itself never changes size. */
 .rec-drop {
   flex: 0 0 32px;
   border-left: 1px solid var(--border-secondary);
@@ -98,9 +96,10 @@
 }
 
 .rec-drop.is-asking {
-  flex: 0 0 68px;
-  font-size: 0.6rem;
-  letter-spacing: 0.06em;
+  flex: 1;
+  border-left: none;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
 }
 
 /* No audio context yet, so there is nothing to record. The title says why. */
