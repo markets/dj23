@@ -42,36 +42,6 @@ class BaseWaveformRenderer {
     this.resizeObserver.observe(this.canvas);
   }
 
-  loadWaveformData(audioBuffer) {
-    if (!audioBuffer) return;
-    
-    const channelData = audioBuffer.getChannelData(0);
-    const samples = 1000; // Number of waveform points
-    const blockSize = Math.floor(channelData.length / samples);
-    const waveformData = [];
-
-    for (let i = 0; i < samples; i++) {
-      const start = i * blockSize;
-      const end = start + blockSize;
-      let sum = 0;
-      let peak = 0; // Track peak amplitude for energy calculation
-
-      for (let j = start; j < end && j < channelData.length; j++) {
-        const amplitude = Math.abs(channelData[j]);
-        sum += amplitude;
-        peak = Math.max(peak, amplitude);
-      }
-
-      const average = sum / blockSize;
-      
-      const energyFactor = Math.pow(average + (peak * 0.2), 1.2);
-      
-      waveformData.push(energyFactor);
-    }
-
-    this.waveformData = waveformData;
-  }
-
   async generateWaveform(audioBuffer) {
     this.loadWaveformData(audioBuffer);
     this.render();
@@ -88,13 +58,9 @@ class BaseWaveformRenderer {
   }
 
   /**
-   * Cue markers: a white line across the waveform with its number against it.
-   * Both renderers draw the same marker and differ only in where a cue lands
-   * (cueX) and where its label sits (cueLabelY) -- the overview stacks the
-   * labels down the waveform so two cues close together in the track still get
-   * a readable one each, while the zoomed view has room to keep them in a row.
-   * The metrics live in CUE_STYLE so a subclass can restyle without
-   * reimplementing the drawing.
+   * Cue markers: a white line with its number against it. Both views draw the
+   * same marker and differ only in where a cue lands (cueX), where its label
+   * sits (cueLabelY) and these metrics.
    */
   static CUE_STYLE = {
     lineWidth: 2,
@@ -153,37 +119,100 @@ class BaseWaveformRenderer {
     this.ctx.fillStyle = color;
     this.ctx.fillText(label, boxX + style.textInset, textY);
   }
+
+  /** Placeholder for a deck with nothing loaded: a baseline and a prompt, plus
+   *  whatever else the view keeps on screen when it is empty. */
+  renderEmpty() {
+    const width = this.canvas.clientWidth;
+    const height = this.canvas.clientHeight;
+    const { message, textOffset } = this.constructor.EMPTY;
+
+    this.ctx.clearRect(0, 0, width, height);
+
+    this.ctx.strokeStyle = Theme.color('border-primary');
+    this.ctx.lineWidth = 1;
+    this.ctx.beginPath();
+    this.ctx.moveTo(0, height / 2);
+    this.ctx.lineTo(width, height / 2);
+    this.ctx.stroke();
+
+    this.drawEmptyMarks?.(width, height);
+
+    this.ctx.fillStyle = Theme.color('border-light');
+    this.ctx.font = '12px Inter';
+    this.ctx.textAlign = 'center';
+    this.ctx.fillText(message, width / 2, height / 2 - textOffset);
+  }
+
+  /** The DOM playhead over the canvas: the overview's runs with the track, the
+   *  beat view's is nailed to the centre with the waveform moving under it. */
+  updatePlayhead() {
+    const deck = window.audioEngine.getDeck(this.deckId);
+    const playhead = document.getElementById(this.playheadId);
+    const loaded = deck && deck.getDuration() > 0;
+
+    playhead.style.left = `${this.playheadPercent(loaded ? deck : null)}%`;
+    playhead.style.opacity = loaded ? (deck.isPlaying ? '1' : '0.7') : '0.3';
+  }
 }
 
 class WaveformRenderer extends BaseWaveformRenderer {
+  /** Points across the whole track, whatever its length. */
+  static SAMPLE_COUNT = 1000;
+
+  static EMPTY = { message: 'Load a track to see waveform', textOffset: 10 };
+
   constructor(canvasId, deckId) {
-    super(canvasId, deckId);        
+    super(canvasId, deckId);
     this.setupCanvas();
     this.observeResize();
     this.setupEventListeners();
   }
 
+  get playheadId() {
+    return `playhead${this.deckId}`;
+  }
+
+  playheadPercent(deck) {
+    return deck ? Math.min(100, (deck.getCurrentTime() / deck.getDuration()) * 100) : 0;
+  }
+
   setupEventListeners() {
     this.canvas.addEventListener('click', (e) => {
-      if (!this.waveformData) {
-        console.log(`Deck ${this.deckId}: No waveform data available for seeking`);
-        return;
-      }
-            
-      const rect = this.canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const percentage = x / rect.width;
-            
       const deck = window.audioEngine.getDeck(this.deckId);
-      if (deck && deck.audioBuffer) {
-        const seekTime = percentage * deck.getDuration();
-        console.log(`Deck ${this.deckId}: Waveform clicked - seeking to ${seekTime.toFixed(2)}s (${(percentage * 100).toFixed(1)}%)`);
-        deck.seek(seekTime);
-        this.updatePlayhead();
-      } else {
-        console.log(`Deck ${this.deckId}: No audio buffer available for seeking`);
-      }
+      if (!this.waveformData || !deck || !deck.audioBuffer) return;
+
+      const rect = this.canvas.getBoundingClientRect();
+      deck.seek(((e.clientX - rect.left) / rect.width) * deck.getDuration());
+      this.updatePlayhead();
     });
+  }
+
+  /** One amplitude per point: the average, lifted by the peak so a transient
+   *  still shows, then curved so quiet passages do not flatten out. */
+  loadWaveformData(audioBuffer) {
+    if (!audioBuffer) return;
+
+    const channelData = audioBuffer.getChannelData(0);
+    const blockSize = Math.floor(channelData.length / WaveformRenderer.SAMPLE_COUNT);
+    const waveformData = [];
+
+    for (let i = 0; i < WaveformRenderer.SAMPLE_COUNT; i++) {
+      const start = i * blockSize;
+      const end = Math.min(start + blockSize, channelData.length);
+      let sum = 0;
+      let peak = 0;
+
+      for (let j = start; j < end; j++) {
+        const amplitude = Math.abs(channelData[j]);
+        sum += amplitude;
+        if (amplitude > peak) peak = amplitude;
+      }
+
+      waveformData.push(Math.pow(sum / blockSize + peak * 0.2, 1.2));
+    }
+
+    this.waveformData = waveformData;
   }
 
   render() {
@@ -195,73 +224,39 @@ class WaveformRenderer extends BaseWaveformRenderer {
     const width = this.canvas.clientWidth;
     const height = this.canvas.clientHeight;
     const deck = window.audioEngine.getDeck(this.deckId);
-        
+
     this.ctx.clearRect(0, 0, width, height);
-        
-    const barWidth = width / this.waveformData.length;
+
+    const bars = this.waveformData;
+    const barWidth = width / bars.length;
     const centerY = height / 2;
 
-    this.ctx.fillStyle = Theme.color('border-primary');
-    for (let i = 0; i < this.waveformData.length; i++) {
-      const barHeight = this.waveformData[i] * centerY;
-      const x = i * barWidth;
-            
-      this.ctx.fillRect(x, centerY - barHeight, barWidth - 1, barHeight);
-      this.ctx.fillRect(x, centerY, barWidth - 1, barHeight);
-    }
+    // The played stretch is painted over the finished waveform rather than
+    // instead of it: at this density the bars overlap, and it is that blend of
+    // the two colours along their edges that the waveform actually looks like
+    const drawBars = (colour, until) => {
+      this.ctx.fillStyle = colour;
 
-    if (deck && deck.isPlaying) {
-      const progress = deck.getCurrentTime() / deck.getDuration();
-      const playedWidth = width * progress;
-            
-      this.ctx.fillStyle = Theme.color('color-primary');
-      for (let i = 0; i < this.waveformData.length; i++) {
+      for (let i = 0; i < bars.length; i++) {
         const x = i * barWidth;
-        if (x > playedWidth) break;
-                
-        const barHeight = this.waveformData[i] * centerY;
+        if (x > until) break;
+
+        const barHeight = bars[i] * centerY;
         this.ctx.fillRect(x, centerY - barHeight, barWidth - 1, barHeight);
         this.ctx.fillRect(x, centerY, barWidth - 1, barHeight);
       }
+    };
+
+    drawBars(Theme.color('border-primary'), width);
+
+    if (deck && deck.isPlaying) {
+      drawBars(Theme.color('color-primary'), width * (deck.getCurrentTime() / deck.getDuration()));
     }
 
     this.drawCues(width, height, deck);
     this.updatePlayhead();
   }
 
-  renderEmpty() {
-    const width = this.canvas.clientWidth;
-    const height = this.canvas.clientHeight;
-        
-    this.ctx.clearRect(0, 0, width, height);
-        
-    this.ctx.strokeStyle = Theme.color('border-primary');
-    this.ctx.lineWidth = 1;
-    this.ctx.beginPath();
-    this.ctx.moveTo(0, height / 2);
-    this.ctx.lineTo(width, height / 2);
-    this.ctx.stroke();
-        
-    this.ctx.fillStyle = Theme.color('border-light');
-    this.ctx.font = '12px Inter';
-    this.ctx.textAlign = 'center';
-    this.ctx.fillText('Load a track to see waveform', width / 2, height / 2 - 10);
-  }
-
-  updatePlayhead() {
-    const deck = window.audioEngine.getDeck(this.deckId);
-    const playhead = document.getElementById(`playhead${this.deckId}`);
-        
-    if (deck && deck.getDuration() > 0) {
-      const progress = deck.getCurrentTime() / deck.getDuration();
-      const position = Math.min(progress * 100, 100);
-      playhead.style.left = `${position}%`;
-      playhead.style.opacity = deck.isPlaying ? '1' : '0.7';
-    } else {
-      playhead.style.left = '0%';
-      playhead.style.opacity = '0.3';
-    }
-  }
 }
 
 class BeatWaveformRenderer extends BaseWaveformRenderer {
@@ -278,12 +273,9 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
   static HIGH_HZ = 4000;
 
   /**
-   * Target horizontal scale. The zoom window follows the canvas width so a beat
-   * occupies the same number of pixels on any screen — roughly 22px at 128bpm,
-   * whether that is a phone or a full-width desktop canvas.
-   *
-   * Every zoom figure below is a span of real time, not of track time. See
-   * visibleSeconds().
+   * Target horizontal scale: the window follows the canvas width so a beat is
+   * the same number of pixels on any screen, roughly 22px at 128bpm. Every zoom
+   * figure here is a span of real time, not of track time — see visibleSeconds.
    */
   static TARGET_PIXELS_PER_SECOND = 48;
   static MIN_ZOOM_SECONDS = 4;
@@ -296,6 +288,8 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
   /** Below this the beat grid stops being a reference and becomes a haze. */
   static MIN_PIXELS_PER_BEAT = 5;
 
+  static EMPTY = { message: 'Load track for beat view', textOffset: 6 };
+
   constructor(canvasId, deckId) {
     super(canvasId, deckId);
     this.offsetSeconds = 0; // Current offset from track start
@@ -306,6 +300,15 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     this.zoomLevel = this.defaultZoom();
     this.observeResize();
     this.setupEventListeners();
+  }
+
+  get playheadId() {
+    return `beatPlayhead${this.deckId}`;
+  }
+
+  /** Always the centre: here it is the waveform that moves. */
+  playheadPercent() {
+    return 50;
   }
 
   /** Re-fit the window when the canvas changes size, e.g. on rotation. */
@@ -340,23 +343,14 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
   /** Zoom window that keeps the horizontal scale constant across screen sizes. */
   defaultZoom() {
     const width = this.canvas.clientWidth || 1440;
-    return Math.max(
-      BeatWaveformRenderer.MIN_ZOOM_SECONDS,
-      Math.min(
-        BeatWaveformRenderer.MAX_ZOOM_SECONDS,
-        width / BeatWaveformRenderer.TARGET_PIXELS_PER_SECOND
-      )
-    );
+    return BeatWaveformRenderer.clampZoom(width / BeatWaveformRenderer.TARGET_PIXELS_PER_SECOND);
   }
 
   /**
-   * Splits the track into low / mid / high peak envelopes at a fixed time
-   * resolution.
-   *
-   * Colouring the waveform by frequency content is what makes beat matching
-   * work visually: the kick lands in the low band, so it shows up as a tall
-   * saturated column that is easy to line up against the other deck. One pass
-   * over the PCM with two one-pole filters, no large temporaries.
+   * Low / mid / high peak envelopes at a fixed time resolution. Colouring by
+   * frequency is what makes beat matching work by eye: the kick lands in the
+   * low band and reads as a tall saturated column to line up against the other
+   * deck. One pass over the PCM with two one-pole filters.
    */
   loadWaveformData(audioBuffer) {
     if (!audioBuffer) return;
@@ -435,8 +429,6 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     }
 
     this.bands = { low, mid, high, bucketsPerSecond: sampleRate / samplesPerBucket };
-    // Satisfies the inherited "is a track loaded" checks in the drag handlers
-    this.waveformData = low;
   }
 
   setupEventListeners() {
@@ -469,16 +461,28 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
   }
 
   /**
-   * How much track fits in the window right now, in seconds of the track.
-   *
-   * The zoom is a span of *real* time, so a deck running fast shows more of its
-   * track in the same width. That is the whole point: two decks at the same BPM
-   * then draw a beat the same number of pixels wide and scroll at the same
-   * speed, whatever their pitch faders say, and you can line up a drop by eye.
-   * Scale by track seconds instead and the faster deck runs away from the other.
+   * How much track fits in the window, in seconds of the track. The zoom is a
+   * span of *real* time, so a deck running fast shows more of its track in the
+   * same width — which is the point: two decks at the same BPM then draw a beat
+   * the same width and scroll together, whatever their pitch faders say.
    */
   visibleSeconds(deck) {
     return this.zoomLevel * (deck?.playbackRate || 1);
+  }
+
+  /**
+   * The stretch of track on screen right now, and its horizontal scale. Every
+   * layer draws against this, so none of them can disagree about where a
+   * second lands.
+   */
+  view(width, deck) {
+    const seconds = this.visibleSeconds(deck);
+
+    return {
+      start: this.offsetSeconds,
+      end: this.offsetSeconds + seconds,
+      pixelsPerSecond: width / seconds
+    };
   }
 
   /** How much of the track one horizontal pixel covers at the current zoom. */
@@ -520,41 +524,40 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
 
     const width = this.canvas.clientWidth;
     const height = this.canvas.clientHeight;
-    const centerY = height / 2;
 
     this.ctx.clearRect(0, 0, width, height);
 
-    const pixelsPerSecond = width / this.visibleSeconds(deck);
-    const windowStart = this.offsetSeconds;
-    const playedUntil = deck.isPlaying || deck.isPaused ? deck.getCurrentTime() : -Infinity;
-
-    // One bar per whole pixel column: fractional ones get re-antialiased as the
-    // window scrolls, which reads as a shimmer
-    this.drawBands(width, centerY, pixelsPerSecond, windowStart, playedUntil);
+    this.drawBands(width, height, deck);
     this.drawBeatGrid(width, height, deck);
     this.drawLoop(width, height, deck);
     this.drawCues(width, height, deck);
+    this.drawPlayheadLine(width, height);
 
+    this.updatePlayhead();
+  }
+
+  drawPlayheadLine(width, height) {
     this.ctx.strokeStyle = Theme.color('color-playhead');
     this.ctx.lineWidth = 2;
     this.ctx.beginPath();
     this.ctx.moveTo(width / 2, 0);
     this.ctx.lineTo(width / 2, height);
     this.ctx.stroke();
-
-    this.updatePlayhead();
   }
 
   /**
-   * Draws the three bands back to front, each with its own height, so the low
-   * band paints over the others where it dominates. A kick therefore reads as a
-   * tall saturated column, while a hi-hat stays a short pale tick.
-   *
-   * Each band is a single batched path, so the cost per frame stays flat no
-   * matter how many columns are on screen.
+   * The three bands back to front, so the low band paints over the others where
+   * it dominates: a kick reads as a tall saturated column, a hi-hat as a short
+   * pale tick. One batched path per band keeps the per-frame cost flat.
    */
-  drawBands(width, centerY, pixelsPerSecond, windowStart, playedUntil) {
+  drawBands(width, height, deck) {
     const { low, mid, high, bucketsPerSecond } = this.bands;
+    const { start: windowStart, pixelsPerSecond } = this.view(width, deck);
+    const centerY = height / 2;
+    const playedUntil = deck.isPlaying || deck.isPaused ? deck.getCurrentTime() : -Infinity;
+
+    // One column per whole pixel: fractional ones get re-antialiased as the
+    // window scrolls, which reads as a shimmer
     const secondsPerPixel = 1 / pixelsPerSecond;
 
     const layers = [
@@ -596,12 +599,10 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
       if (until > 0) {
         this.ctx.globalAlpha = 0.55;
         this.ctx.fillStyle = Theme.color('bg-primary');
-        this.ctx.fillRect(0, 0, until, centerY * 2);
+        this.ctx.fillRect(0, 0, until, height);
         this.ctx.globalAlpha = 1;
       }
     }
-
-    this.ctx.globalAlpha = 1;
   }
 
   /**
@@ -614,9 +615,7 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     const beats = deck.getBeatPositions();
     if (beats.length < 2) return; // BPM unknown, nothing trustworthy to draw
 
-    const pixelsPerSecond = width / this.visibleSeconds(deck);
-    const windowStart = this.offsetSeconds;
-    const windowEnd = windowStart + this.visibleSeconds(deck);
+    const { start: windowStart, end: windowEnd, pixelsPerSecond } = this.view(width, deck);
 
     // Beats are evenly spaced, so the first visible one can be indexed directly
     const interval = beats[1] - beats[0];
@@ -653,9 +652,7 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
   drawLoop(width, height, deck) {
     if (!deck.isLooping || deck.loopStart === null || deck.loopEnd === null) return;
 
-    const pixelsPerSecond = width / this.visibleSeconds(deck);
-    const windowStart = this.offsetSeconds;
-    const windowEnd = windowStart + this.visibleSeconds(deck);
+    const { start: windowStart, end: windowEnd, pixelsPerSecond } = this.view(width, deck);
     if (deck.loopEnd < windowStart || deck.loopStart > windowEnd) return;
 
     const from = (deck.loopStart - windowStart) * pixelsPerSecond;
@@ -685,10 +682,9 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
   }
 
   /**
-   * The zoomed view keeps the same marker as the overview, only smaller and
-   * pinned to the bottom: with no stacking needed here, the labels sit in a row
-   * out of the waveform's way. Cues outside the window are skipped, which is
-   * what makes them useful -- you can see the cue you are heading for.
+   * The same marker as the overview, smaller and pinned to the bottom out of
+   * the waveform's way. Only cues inside the window are drawn, which is what
+   * makes them useful: you can see the cue you are heading for.
    */
   static CUE_STYLE = {
     lineWidth: 1.5,
@@ -702,54 +698,19 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
   };
 
   cueX(time, width, deck) {
-    const windowStart = this.offsetSeconds;
-    const windowEnd = windowStart + this.visibleSeconds(deck);
-    if (time < windowStart || time > windowEnd) return null;
+    const { start, end, pixelsPerSecond } = this.view(width, deck);
+    if (time < start || time > end) return null;
 
-    return Math.round((time - windowStart) * (width / this.visibleSeconds(deck))) + 0.5;
+    return Math.round((time - start) * pixelsPerSecond) + 0.5;
   }
 
   cueLabelY(index, height) {
     return height - 4;
   }
 
-  renderEmpty() {
-    const width = this.canvas.clientWidth;
-    const height = this.canvas.clientHeight;
-        
-    this.ctx.clearRect(0, 0, width, height);
-        
-    this.ctx.strokeStyle = Theme.color('border-primary');
-    this.ctx.lineWidth = 1;
-    this.ctx.beginPath();
-    this.ctx.moveTo(0, height / 2);
-    this.ctx.lineTo(width, height / 2);
-    this.ctx.stroke();
-        
-    this.ctx.strokeStyle = Theme.color('color-playhead');
-    this.ctx.lineWidth = 2;
-    this.ctx.beginPath();
-    this.ctx.moveTo(width / 2, 0);
-    this.ctx.lineTo(width / 2, height);
-    this.ctx.stroke();
-    
-    this.ctx.fillStyle = Theme.color('border-light');
-    this.ctx.font = '12px Inter';
-    this.ctx.textAlign = 'center';
-    this.ctx.fillText('Load track for beat view', width / 2, height / 2 - 6);
-  }
-
-  updatePlayhead() {
-    const deck = window.audioEngine.getDeck(this.deckId);
-    const playhead = document.getElementById(`beatPlayhead${this.deckId}`);
-        
-    if (deck && deck.getDuration() > 0) {
-      playhead.style.left = '50%';
-      playhead.style.opacity = deck.isPlaying ? '1' : '0.7';
-    } else {
-      playhead.style.left = '50%';
-      playhead.style.opacity = '0.3';
-    }
+  /** The centre line stays even with no track: it is where the music will be. */
+  drawEmptyMarks(width, height) {
+    this.drawPlayheadLine(width, height);
   }
 
   /** Positive steps widen the window (zoom out), negative ones narrow it. */
@@ -760,8 +721,6 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
 
     BeatWaveformRenderer.shareZoom(seconds, { fromUser: true })
       .forEach(renderer => renderer.render());
-
-    console.log(`Beat waveform zoom changed to ${seconds.toFixed(1)} seconds on both decks`);
   }
 }
 
