@@ -215,6 +215,21 @@ class WaveformRenderer extends BaseWaveformRenderer {
     this.waveformData = waveformData;
   }
 
+  /** Tallest point falling in a pixel column, so nothing is lost when the
+   *  track has more points than the canvas has pixels. */
+  columnPeak(px, width) {
+    const bars = this.waveformData;
+    const from = Math.floor((px * bars.length) / width);
+    const to = Math.max(from + 1, Math.floor(((px + 1) * bars.length) / width));
+
+    let peak = 0;
+    for (let i = from; i < to && i < bars.length; i++) {
+      if (bars[i] > peak) peak = bars[i];
+    }
+
+    return peak;
+  }
+
   render() {
     if (!this.waveformData) {
       this.renderEmpty();
@@ -227,30 +242,30 @@ class WaveformRenderer extends BaseWaveformRenderer {
 
     this.ctx.clearRect(0, 0, width, height);
 
-    const bars = this.waveformData;
-    const barWidth = width / bars.length;
     const centerY = height / 2;
+    const played = deck && deck.isPlaying
+      ? Math.round(width * (deck.getCurrentTime() / deck.getDuration()))
+      : 0;
 
-    // The played stretch is painted over the finished waveform rather than
-    // instead of it: at this density the bars overlap, and it is that blend of
-    // the two colours along their edges that the waveform actually looks like
-    const drawBars = (colour, until) => {
+    // One column per whole pixel, as the beat view does: a thousand points over
+    // a few hundred pixels means sub-pixel bars, and drawing those individually
+    // is both blurry and a few thousand canvas calls a frame. Each colour is
+    // one batched path, so a redraw costs a pass over the columns on screen.
+    for (const [colour, from, to] of [
+      [Theme.color('color-primary'), 0, played],
+      [Theme.color('border-primary'), played, width]
+    ]) {
+      if (from >= to) continue;
+
       this.ctx.fillStyle = colour;
+      this.ctx.beginPath();
 
-      for (let i = 0; i < bars.length; i++) {
-        const x = i * barWidth;
-        if (x > until) break;
-
-        const barHeight = bars[i] * centerY;
-        this.ctx.fillRect(x, centerY - barHeight, barWidth - 1, barHeight);
-        this.ctx.fillRect(x, centerY, barWidth - 1, barHeight);
+      for (let px = from; px < to; px++) {
+        const barHeight = this.columnPeak(px, width) * centerY;
+        this.ctx.rect(px, centerY - barHeight, 1, Math.max(1, barHeight * 2));
       }
-    };
 
-    drawBars(Theme.color('border-primary'), width);
-
-    if (deck && deck.isPlaying) {
-      drawBars(Theme.color('color-primary'), width * (deck.getCurrentTime() / deck.getDuration()));
+      this.ctx.fill();
     }
 
     this.drawCues(width, height, deck);
