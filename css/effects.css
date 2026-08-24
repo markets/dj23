@@ -135,6 +135,9 @@
 
 .fx-glow {
   position: absolute;
+  /* Above the pad's own markings: the axes are a backdrop, not something the
+     handle slides under. Pseudo-elements paint over children by default. */
+  z-index: 1;
   width: 190px;
   height: 190px;
   border-radius: var(--radius-full);
@@ -149,6 +152,7 @@
 
 .fx-handle {
   position: absolute;
+  z-index: 2;
   width: 20px;
   height: 20px;
   border-radius: var(--radius-full);
@@ -161,43 +165,6 @@
 
 .fx-pad.engaged .fx-handle {
   box-shadow: 0 0 0 8px rgba(var(--color-primary-rgb), 0.22), var(--shadow-md);
-}
-
-.fx-axes {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
-  margin-top: 6px;
-}
-
-.fx-axis {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  min-width: 0;
-  gap: var(--spacing-sm);
-  padding: 4px var(--spacing-sm);
-  font-size: 0.72rem;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-primary);
-  border-radius: var(--radius-sm);
-}
-
-.fx-axis em {
-  font-style: normal;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.fx-axis b {
-  color: var(--text-primary);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
 }
 
 .fx-foot {

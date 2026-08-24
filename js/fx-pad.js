@@ -7,8 +7,8 @@
  * its own on-or-off, so you can hold a delay, move to the filter, and come
  * back to find the delay exactly where you left it.
  *
- * It knows nothing about audio: positions go out normalised, and the labels
- * come back from the parameter map in js/effects.js.
+ * It knows nothing about audio: positions go out normalised, and what they mean
+ * is the parameter map's business, over in js/effects.js.
  */
 class FxPad {
   /** How far an arrow key moves an axis. */
@@ -44,10 +44,6 @@ class FxPad {
     this.pad = role('pad');
     this.glow = role('glow');
     this.handle = role('handle');
-    this.xLabel = role('x-label');
-    this.xValue = role('x-value');
-    this.yLabel = role('y-label');
-    this.yValue = role('y-value');
     this.hold = role('hold');
     this.wet = role('wet');
     this.wetValue = role('wet-value');
@@ -196,11 +192,6 @@ class FxPad {
   render() {
     const effect = this.current;
     const { x, y } = this.values[effect];
-
-    this.xLabel.textContent = EffectsEngine.axis(effect, 'x').label;
-    this.yLabel.textContent = EffectsEngine.axis(effect, 'y').label;
-    this.xValue.textContent = EffectsEngine.label(effect, 'x', x);
-    this.yValue.textContent = EffectsEngine.label(effect, 'y', y);
 
     // Inset by the handle's radius, so it never gets sliced in half against
     // the pad's edge at the ends of a range

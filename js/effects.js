@@ -36,34 +36,39 @@ class EffectsEngine {
    *
    * Every axis is continuous. Musical values are held in beats and bars rather
    * than seconds, so the tempo — pitch fader included — turns them into time.
+   * `log` where the ear hears ratios rather than differences, which is most of
+   * the time; a range that runs downwards just sweeps the other way.
    */
   static PARAMS = {
+    // Sweep left into a low pass, right into a high pass, with the middle out
+    // of the way; resonance on whichever one you are hearing
     filter: {
-      // One bipolar sweep: left closes a low pass, right opens a high pass,
-      // and the middle is out of the way
-      x: { label: 'Sweep', min: 0, max: 1, unit: 'sweep' },
-      y: { label: 'Resonance', min: 0.7, max: 12, unit: 'Q' }
+      x: { min: 0, max: 1 },
+      y: { min: 0.7, max: 12 }
     },
+    // Tail length in seconds, and how bright it comes back
     reverb: {
-      x: { label: 'Size', min: 0.6, max: 6, unit: 's' },
-      y: { label: 'Tone', min: 900, max: 12000, unit: 'Hz', log: true }
+      x: { min: 0.6, max: 6 },
+      y: { min: 900, max: 12000, log: true }
     },
+    // Time in beats, and how much of each repeat feeds the next one
     delay: {
-      x: { label: 'Time', min: 1 / 32, max: 2, unit: 'beats', log: true },
-      y: { label: 'Feedback', min: 0, max: 0.85, unit: '%' }
+      x: { min: 1 / 32, max: 2, log: true },
+      y: { min: 0, max: 0.85 }
     },
+    // Bars per sweep — left is a slow eight-bar one, right half a bar — and depth
     phaser: {
-      // Left is a slow eight-bar sweep, right half a bar
-      x: { label: 'Rate', min: 8, max: 0.5, unit: 'bars', log: true },
-      y: { label: 'Depth', min: 0, max: 1, unit: '%' }
+      x: { min: 8, max: 0.5, log: true },
+      y: { min: 0, max: 1 }
     },
     flanger: {
-      x: { label: 'Rate', min: 8, max: 0.5, unit: 'bars', log: true },
-      y: { label: 'Depth', min: 0, max: 1, unit: '%' }
+      x: { min: 8, max: 0.5, log: true },
+      y: { min: 0, max: 1 }
     },
+    // Beats per chop, and how hard the edges are
     gate: {
-      x: { label: 'Rate', min: 2, max: 1 / 16, unit: 'beats', log: true },
-      y: { label: 'Shape', min: 0, max: 1, unit: '%' }
+      x: { min: 2, max: 1 / 16, log: true },
+      y: { min: 0, max: 1 }
     }
   };
 
@@ -74,10 +79,10 @@ class EffectsEngine {
    */
   static DEFAULTS = {
     filter: { x: 0.5, y: 0, wet: 100 },     // centred: out of the way until you sweep
-    reverb: { x: 0.45, y: 0.55, wet: 45 },  // a room, not a cathedral
-    delay: { x: 2 / 3, y: 0.35, wet: 45 },  // half a beat, a couple of repeats
-    phaser: { x: 0.35, y: 0.5, wet: 60 },
-    flanger: { x: 0.5, y: 0.45, wet: 55 },
+    reverb: { x: 0.45, y: 0.55, wet: 70 },  // a room, not a cathedral
+    delay: { x: 2 / 3, y: 0.35, wet: 65 },  // half a beat, a couple of repeats
+    phaser: { x: 0.35, y: 0.5, wet: 80 },
+    flanger: { x: 0.5, y: 0.45, wet: 75 },
     gate: { x: 0.4, y: 0.6, wet: 100 }      // eighth notes, fairly hard edges
   };
 
@@ -85,10 +90,6 @@ class EffectsEngine {
   static ORDER = ['filter', 'reverb', 'delay', 'phaser', 'flanger', 'gate'];
 
   // --- Reading the map ------------------------------------------------------
-
-  static axis(effect, axis) {
-    return EffectsEngine.PARAMS[effect]?.[axis] || null;
-  }
 
   static clamp(normalised) {
     return Math.min(1, Math.max(0, normalised));
@@ -99,7 +100,7 @@ class EffectsEngine {
    * the ear hears ratios rather than differences, which is most of the time.
    */
   static value(effect, axis, normalised) {
-    const spec = EffectsEngine.axis(effect, axis);
+    const spec = EffectsEngine.PARAMS[effect]?.[axis];
     if (!spec) return 0;
 
     if (spec.log) {
@@ -109,33 +110,6 @@ class EffectsEngine {
     }
 
     return spec.min + normalised * (spec.max - spec.min);
-  }
-
-  /** What the readout under the pad shows. */
-  static label(effect, axis, normalised) {
-    const spec = EffectsEngine.axis(effect, axis);
-    if (!spec) return '';
-
-    const value = EffectsEngine.value(effect, axis, normalised);
-
-    switch (spec.unit) {
-      case '%': return `${Math.round(normalised * 100)}%`;
-      case 's': return `${value.toFixed(1)} s`;
-      case 'Q': return `${value.toFixed(1)} Q`;
-      case 'beats': return `${value.toFixed(2)} beat${value === 1 ? '' : 's'}`;
-      case 'bars': return `${value.toFixed(1)} bars`;
-      case 'Hz': return value >= 1000
-        ? `${(value / 1000).toFixed(1)} kHz`
-        : `${Math.round(value)} Hz`;
-      // A bipolar sweep: name the direction it is heading, or say it is idle
-      case 'sweep': {
-        const travel = Math.round((normalised - 0.5) * 200);
-        if (Math.abs(travel) < 3) return 'Open';
-        if (Math.abs(travel) > 97) return travel > 0 ? 'High pass' : 'Low pass';
-        return travel > 0 ? `High ${travel}%` : `Low ${-travel}%`;
-      }
-      default: return value.toFixed(2);
-    }
   }
 
   constructor(audioContext) {
@@ -561,18 +535,26 @@ class EffectsEngine {
         this.glide(this.effectNodes.gateWet.gain, amount, engage);
         this.glide(this.effectNodes.gateDry.gain, 1 - amount, engage);
         return;
+      // The three below carry make-up gain, because a send loses level on the
+      // way through and full wet has to mean what it says: as loud as the dry
+      // signal it is sitting next to. A phaser or a flanger at half the level
+      // of the dry path barely combs at all — the notches come from the two
+      // cancelling each other, so they need parity to bite.
       case 'reverb':
-        // Exponential curve, and a little past unity: a reverb needs room
-        this.glide(this.effectNodes.reverbGain.gain, Math.pow(amount, 0.7) * 1.2, engage);
+        // The convolver normalises its impulse, which keeps a six second tail
+        // as loud as a short one and costs a good deal of level on the way
+        // through. The make-up is measured against the dry path, not guessed.
+        this.glide(this.effectNodes.reverbGain.gain, Math.pow(amount, 0.7) * 1.9, engage);
         return;
       case 'delay':
         this.glide(this.effectNodes.delayGain.gain, amount, engage);
         return;
       case 'phaser':
-        this.glide(this.effectNodes.phaserGain.gain, amount * 0.8, engage);
+        this.glide(this.effectNodes.phaserGain.gain, amount, engage);
         return;
       case 'flanger':
-        this.glide(this.effectNodes.flangerGain.gain, amount, engage);
+        // Its own feedback path cancels part of the output
+        this.glide(this.effectNodes.flangerGain.gain, amount * 1.4, engage);
         return;
     }
   }
