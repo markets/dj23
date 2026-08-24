@@ -490,8 +490,7 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     const width = this.canvas.getBoundingClientRect().width;
     if (!width) return 0;
 
-    const visible = Math.min(this.visibleSeconds(deck), deck.getDuration() - this.offsetSeconds);
-    return Math.max(0, visible) / width;
+    return this.visibleSeconds(deck) / width;
   }
 
   updateZoomWindow() {
@@ -501,15 +500,11 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
       return;
     }
 
-    const currentTime = deck.getCurrentTime();
-    const duration = deck.getDuration();
-    const visible = this.visibleSeconds(deck);
-
-    this.offsetSeconds = currentTime - visible / 2;
-
-    if (this.offsetSeconds + visible > duration) {
-      this.offsetSeconds = Math.max(0, duration - visible);
-    }
+    // The playhead owns the centre for the whole track, including the head and
+    // the tail: pinning the window to the last screenful instead would freeze
+    // the waveform while the played wash kept crawling across it. Past the ends
+    // the canvas is simply empty, which reads as "no track left".
+    this.offsetSeconds = deck.getCurrentTime() - this.visibleSeconds(deck) / 2;
   }
 
   render() {
