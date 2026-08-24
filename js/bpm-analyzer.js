@@ -39,6 +39,21 @@ class BPMAnalyzer {
   static MIN_BPM = 60;
   static MAX_BPM = 220;
 
+  /**
+   * How far the fitted grid may pull the tempo, and in how many steps. Enough
+   * to undo the rounding of a detected BPM — a whole number at 128 is out by up
+   * to 0.4% — without ever reaching the tempo next door.
+   */
+  static GRID_TEMPO_TOLERANCE = 0.008;
+  static GRID_TEMPO_STEPS = 40;
+
+  /** Under this share of the onsets explained, the fit is not saying anything
+   *  and the plain grid is the safer answer. */
+  static GRID_FIT_FLOOR = 0.15;
+
+  /** Closer than this to a grid line and it is that line, not the next one. */
+  static GRID_EPSILON_SECONDS = 0.005;
+
   constructor(audioContext, deckId) {
     this.audioContext = audioContext;
     this.deckId = deckId;
@@ -91,21 +106,105 @@ class BPMAnalyzer {
     return 0;
   }
 
+  /**
+   * Where the grid actually sits, fitted to the kick rather than assumed.
+   *
+   * A tempo does not place a grid on its own — it needs a phase, and the period
+   * has to be right to the last decimal or the grid walks away from the music.
+   * Both come from the onsets here: every plausible period is tried against
+   * every phase, and the pair that lands on the most kick wins.
+   */
+  fitGrid(audioBuffer) {
+    const seconds = BPMAnalyzer.ANALYSIS_WINDOW_SECONDS;
+    const startSeconds = BPMAnalyzer.ANALYSIS_SKIP_SECONDS;
+    const window = BPMAnalyzer.buildAnalysisWindow(audioBuffer, Float32Array, { seconds, startSeconds });
+    const onsets = this.lowBandOnsets(window, audioBuffer.sampleRate);
+    if (!onsets) return null;
+
+    const nominal = 60 / this.baseBPM;
+    const steps = BPMAnalyzer.GRID_TEMPO_STEPS;
+    let best = null;
+
+    for (let step = -steps; step <= steps; step++) {
+      const interval = nominal * (1 + (step / steps) * BPMAnalyzer.GRID_TEMPO_TOLERANCE);
+      const tolerance = Math.min(BPMAnalyzer.ONSET_TOLERANCE_SECONDS, interval / 8);
+
+      for (let phase = 0; phase < interval; phase += BPMAnalyzer.FLUX_TIME_STEP) {
+        let score = 0;
+
+        for (let i = 0; i < onsets.times.length; i++) {
+          const from = onsets.times[i] - phase;
+          const drift = from - Math.round(from / interval) * interval;
+          if (Math.abs(drift) > tolerance) continue;
+
+          // Weighted by how close it lands, so the peak is sharp enough to
+          // place a line rather than just find the right neighbourhood
+          score += onsets.strengths[i] * (1 - Math.abs(drift) / tolerance);
+        }
+
+        if (!best || score > best.score) best = { score, interval, phase };
+      }
+    }
+
+    if (!best || best.score / onsets.total < BPMAnalyzer.GRID_FIT_FLOOR) return null;
+
+    // Recentre on the onsets it caught: the detector can only place them to the
+    // nearest frame, and their average pulls the grid inside that frame
+    const tolerance = Math.min(BPMAnalyzer.ONSET_TOLERANCE_SECONDS, best.interval / 8);
+    let weighted = 0;
+    let weight = 0;
+
+    for (let i = 0; i < onsets.times.length; i++) {
+      const from = onsets.times[i] - best.phase;
+      const drift = from - Math.round(from / best.interval) * best.interval;
+      if (Math.abs(drift) > tolerance) continue;
+
+      weighted += onsets.strengths[i] * drift;
+      weight += onsets.strengths[i];
+    }
+
+    const centred = best.phase + (weight ? weighted / weight : 0);
+
+    return {
+      interval: best.interval,
+      anchor: BPMAnalyzer.windowStart(audioBuffer, seconds, startSeconds) + centred,
+      confidence: best.score / onsets.total
+    };
+  }
+
   generateBeatMap(audioBuffer) {
     if (!audioBuffer || this.baseBPM <= 0) return;
-    
+
+    // Still the first thing you can hear, which is what the beat meter counts
+    // from — but no longer where the grid is pinned
     this.audioStartOffset = this.detectAudioStart(audioBuffer);
-    
-    this.beatInterval = 60 / this.baseBPM;
-    
+
+    const fit = this.fitGrid(audioBuffer);
+    this.beatInterval = fit ? fit.interval : 60 / this.baseBPM;
+
+    // Wind the anchor back to the top of the track, so the grid covers the
+    // intro too instead of starting wherever the fit happened to look
+    const anchor = fit ? fit.anchor : this.audioStartOffset;
+    let first = anchor - Math.floor(anchor / this.beatInterval) * this.beatInterval;
+
+    // A phase a hair under a whole interval is a line on zero that the wrap
+    // pushed to the far side of one, and it would cost the track its first beat
+    if (this.beatInterval - first < BPMAnalyzer.GRID_EPSILON_SECONDS) first = 0;
+
     this.beatPositions = [];
     const duration = audioBuffer.duration;
-    
-    for (let time = this.audioStartOffset; time < duration; time += this.beatInterval) {
-      this.beatPositions.push(time);
+    const count = Math.max(0, Math.ceil((duration - first) / this.beatInterval));
+
+    // Multiplied rather than accumulated: adding an interval a few thousand
+    // times is how a grid ends up late at the end of a long track
+    for (let i = 0; i < count; i++) {
+      this.beatPositions.push(first + i * this.beatInterval);
     }
-    
-    console.log(`Generated ${this.beatPositions.length} beats for ${duration.toFixed(2)}s track at ${this.baseBPM} BPM, starting from ${this.audioStartOffset.toFixed(3)}s`);
+
+    const fitted = fit
+      ? `fitted to ${(60 / fit.interval).toFixed(2)} BPM, ${(fit.confidence * 100).toFixed(0)}% of the kick`
+      : `no fit, ${this.baseBPM} BPM assumed`;
+    console.log(`Generated ${this.beatPositions.length} beats for ${duration.toFixed(2)}s on deck ${this.deckId}: ${fitted}, first at ${first.toFixed(3)}s`);
   }
 
   findNearestBeat(currentTime) {
@@ -230,7 +329,7 @@ class BPMAnalyzer {
     const { sampleRate, length, numberOfChannels } = audioBuffer;
 
     const windowLength = Math.min(length, Math.floor(seconds * sampleRate));
-    const start = Math.max(0, Math.min(Math.floor(startSeconds * sampleRate), length - windowLength));
+    const start = Math.floor(BPMAnalyzer.windowStart(audioBuffer, seconds, startSeconds) * sampleRate);
 
     const left = audioBuffer.getChannelData(0);
     const right = numberOfChannels > 1 ? audioBuffer.getChannelData(1) : null;
@@ -242,6 +341,17 @@ class BPMAnalyzer {
     }
 
     return samples;
+  }
+
+  /**
+   * Where a window actually begins once it has been clamped to the track, in
+   * seconds. Whoever reads the window back needs this to put what it found into
+   * the track's own time.
+   */
+  static windowStart(audioBuffer, seconds, startSeconds) {
+    const { sampleRate, length } = audioBuffer;
+    const windowLength = Math.min(length, Math.floor(seconds * sampleRate));
+    return Math.max(0, Math.min(Math.floor(startSeconds * sampleRate), length - windowLength)) / sampleRate;
   }
 
   /**

@@ -254,6 +254,9 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
    * Target horizontal scale. The zoom window follows the canvas width so a beat
    * occupies the same number of pixels on any screen — roughly 22px at 128bpm,
    * whether that is a phone or a full-width desktop canvas.
+   *
+   * Every zoom figure below is a span of real time, not of track time. See
+   * visibleSeconds().
    */
   static TARGET_PIXELS_PER_SECOND = 48;
   static MIN_ZOOM_SECONDS = 8;
@@ -438,6 +441,19 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     });
   }
 
+  /**
+   * How much track fits in the window right now, in seconds of the track.
+   *
+   * The zoom is a span of *real* time, so a deck running fast shows more of its
+   * track in the same width. That is the whole point: two decks at the same BPM
+   * then draw a beat the same number of pixels wide and scroll at the same
+   * speed, whatever their pitch faders say, and you can line up a drop by eye.
+   * Scale by track seconds instead and the faster deck runs away from the other.
+   */
+  visibleSeconds(deck) {
+    return this.zoomLevel * (deck?.playbackRate || 1);
+  }
+
   /** How much of the track one horizontal pixel covers at the current zoom. */
   secondsPerPixel() {
     const deck = window.audioEngine.getDeck(this.deckId);
@@ -447,7 +463,7 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     const width = this.canvas.getBoundingClientRect().width;
     if (!width) return 0;
 
-    const visible = Math.min(this.zoomLevel, deck.getDuration() - this.offsetSeconds);
+    const visible = Math.min(this.visibleSeconds(deck), deck.getDuration() - this.offsetSeconds);
     return Math.max(0, visible) / width;
   }
 
@@ -460,11 +476,12 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
 
     const currentTime = deck.getCurrentTime();
     const duration = deck.getDuration();
+    const visible = this.visibleSeconds(deck);
 
-    this.offsetSeconds = currentTime - this.zoomLevel / 2;
+    this.offsetSeconds = currentTime - visible / 2;
 
-    if (this.offsetSeconds + this.zoomLevel > duration) {
-      this.offsetSeconds = Math.max(0, duration - this.zoomLevel);
+    if (this.offsetSeconds + visible > duration) {
+      this.offsetSeconds = Math.max(0, duration - visible);
     }
   }
 
@@ -485,7 +502,7 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
 
     this.ctx.clearRect(0, 0, width, height);
 
-    const pixelsPerSecond = width / this.zoomLevel;
+    const pixelsPerSecond = width / this.visibleSeconds(deck);
     const windowStart = this.offsetSeconds;
     const playedUntil = deck.isPlaying || deck.isPaused ? deck.getCurrentTime() : -Infinity;
 
@@ -573,9 +590,9 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     const beats = deck.getBeatPositions();
     if (beats.length < 2) return; // BPM unknown, nothing trustworthy to draw
 
-    const pixelsPerSecond = width / this.zoomLevel;
+    const pixelsPerSecond = width / this.visibleSeconds(deck);
     const windowStart = this.offsetSeconds;
-    const windowEnd = windowStart + this.zoomLevel;
+    const windowEnd = windowStart + this.visibleSeconds(deck);
 
     // Beats are evenly spaced, so the first visible one can be indexed directly
     const interval = beats[1] - beats[0];
