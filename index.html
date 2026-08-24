@@ -632,6 +632,113 @@
         </div>
       </div>
     </div>
+
+    <!-- Sample sequencer mixed into the master bus -->
+    <section class="remix-station" id="remixStation" aria-labelledby="remixHeading">
+      <header class="remix-header">
+        <div>
+          <p class="remix-eyebrow">Performance module</p>
+          <h2 id="remixHeading">Remix Station</h2>
+          <p class="remix-subtitle">16-step drums and one custom sample, with momentary buildup FX.</p>
+        </div>
+        <span class="remix-status" id="remixStatus" role="status">Loading samples…</span>
+      </header>
+
+      <div class="remix-toolbar">
+        <div class="remix-control-group remix-transport" aria-label="Sequencer transport">
+          <button type="button" id="remixStartStop" class="remix-primary" aria-pressed="false">Start</button>
+          <button type="button" id="remixClear">Clear</button>
+          <button type="button" id="remixResync" title="Restart step 1 on the next beat">Resync</button>
+        </div>
+
+        <div class="remix-control-group">
+          <label for="remixBpm">BPM</label>
+          <input type="number" id="remixBpm" min="60" max="200" step="0.1" value="124" inputmode="decimal">
+          <button type="button" id="remixTap">Tap</button>
+        </div>
+
+        <div class="remix-control-group">
+          <label for="remixSyncSource">Clock</label>
+          <select id="remixSyncSource">
+            <option value="manual">Manual</option>
+            <option value="A">Deck A</option>
+            <option value="B">Deck B</option>
+          </select>
+        </div>
+
+        <div class="remix-control-group remix-master-level">
+          <label for="remixVolume">Level</label>
+          <input type="range" id="remixVolume" min="0" max="100" value="78" class="horizontal-fader">
+        </div>
+      </div>
+
+      <div class="remix-grid-scroll" tabindex="0" aria-label="Drum pattern, scroll horizontally for all steps">
+        <div class="remix-grid" id="remixGrid"></div>
+      </div>
+
+      <div class="remix-performance">
+        <section class="remix-fx-block remix-roll-block" aria-labelledby="remixRollHeading">
+          <div class="remix-fx-heading">
+            <div>
+              <span class="remix-fx-kicker">X-Pad style</span>
+              <h3 id="remixRollHeading">Roll · <b id="remixRollLane">Kick</b></h3>
+            </div>
+            <span>Hold a division</span>
+          </div>
+          <div class="remix-roll-buttons" role="group" aria-label="Roll division">
+            <button type="button" data-roll="4" aria-pressed="false">1/4</button>
+            <button type="button" data-roll="8" aria-pressed="false">1/8</button>
+            <button type="button" data-roll="16" aria-pressed="false">1/16</button>
+            <button type="button" data-roll="32" aria-pressed="false">1/32</button>
+          </div>
+        </section>
+
+        <section class="remix-fx-block" aria-labelledby="remixEchoHeading">
+          <div class="remix-fx-heading">
+            <div>
+              <span class="remix-fx-kicker">Beat FX</span>
+              <h3 id="remixEchoHeading">Echo</h3>
+            </div>
+            <span>Hold for buildup</span>
+          </div>
+          <div class="remix-fx-controls">
+            <button type="button" id="remixEcho" class="remix-fx-trigger" aria-pressed="false">Echo</button>
+            <label>
+              Time
+              <select id="remixEchoDivision" aria-label="Echo time">
+                <option value="4">1/4</option>
+                <option value="8" selected>1/8</option>
+                <option value="16">1/16</option>
+              </select>
+            </label>
+            <label class="remix-amount">
+              Amount
+              <input type="range" id="remixEchoAmount" min="0" max="100" value="58" class="horizontal-fader">
+            </label>
+          </div>
+        </section>
+
+        <section class="remix-fx-block" aria-labelledby="remixReverbHeading">
+          <div class="remix-fx-heading">
+            <div>
+              <span class="remix-fx-kicker">Scene FX style</span>
+              <h3 id="remixReverbHeading">Reverb</h3>
+            </div>
+            <span>Release leaves the tail</span>
+          </div>
+          <div class="remix-fx-controls">
+            <button type="button" id="remixReverb" class="remix-fx-trigger" aria-pressed="false">Reverb</button>
+            <label class="remix-amount">
+              Amount
+              <input type="range" id="remixReverbAmount" min="0" max="100" value="55" class="horizontal-fader">
+            </label>
+          </div>
+        </section>
+      </div>
+
+      <input type="file" id="remixCustomFile" accept="audio/*" hidden>
+      <button type="button" id="remixCustomLoad" class="remix-load-sample">Load</button>
+    </section>
   </div>
 
   <!-- Play list panel -->
@@ -868,6 +975,7 @@
   <script src="js/keyboard-shortcuts.js"></script>
   <script src="js/mixer.js"></script>
   <script src="js/sound-pad.js"></script>
+  <script src="js/remix-station.js"></script>
   <script src="js/recording.js"></script>
   <script src="js/settings.js"></script>
   <script src="js/mobile-nav.js"></script>

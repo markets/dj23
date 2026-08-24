@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.beatWaveformRenderers.B.startAnimation();
   
   window.soundPad = new SoundPad(window.audioEngine);
+  window.remixStation = new RemixStationController(window.audioEngine);
 
   window.keyboardShortcuts = new KeyboardShortcuts();
 
