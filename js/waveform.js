@@ -76,13 +76,15 @@ class BaseWaveformRenderer {
   drawCues(width, height, deck) {
     if (!deck || !deck.audioBuffer) return;
 
-    Object.entries(deck.cuePoints).forEach(([number, time], index) => {
+    const cues = Object.entries(deck.cuePoints);
+
+    cues.forEach(([number, time], index) => {
       if (time === null) return;
 
       const x = this.cueX(time, width, deck);
       if (x === null) return;
 
-      this.drawCue(x, this.cueLabelY(index, height), height, number);
+      this.drawCue(x, this.cueLabelY(index, height, cues.length), height, number);
     });
   }
 
@@ -91,8 +93,14 @@ class BaseWaveformRenderer {
     return (time / deck.getDuration()) * width;
   }
 
-  cueLabelY(index, height) {
-    return 14 + index * 14;
+  /** Labels stacked down the waveform so two cues close together in the track
+   *  still get a readable one each, tightening up on a short canvas rather than
+   *  running off the bottom of it. */
+  cueLabelY(index, height, count) {
+    const top = 14;
+    const step = count > 1 ? Math.min(14, Math.max(0, height - top - 2) / (count - 1)) : 0;
+
+    return top + index * step;
   }
 
   drawCue(x, textY, height, label) {
@@ -120,12 +128,14 @@ class BaseWaveformRenderer {
     this.ctx.fillText(label, boxX + style.textInset, textY);
   }
 
+  /** How far the placeholder's baseline sits above the middle line. */
+  static EMPTY_TEXT_OFFSET = 6;
+
   /** Placeholder for a deck with nothing loaded: a baseline and a prompt, plus
    *  whatever else the view keeps on screen when it is empty. */
   renderEmpty() {
     const width = this.canvas.clientWidth;
     const height = this.canvas.clientHeight;
-    const { message, textOffset } = this.constructor.EMPTY;
 
     this.ctx.clearRect(0, 0, width, height);
 
@@ -141,7 +151,9 @@ class BaseWaveformRenderer {
     this.ctx.fillStyle = Theme.color('border-light');
     this.ctx.font = '12px Inter';
     this.ctx.textAlign = 'center';
-    this.ctx.fillText(message, width / 2, height / 2 - textOffset);
+    // On the middle line, but never so high that a short canvas clips it
+    const textY = Math.max(12, height / 2 - BaseWaveformRenderer.EMPTY_TEXT_OFFSET);
+    this.ctx.fillText(this.constructor.EMPTY_MESSAGE, width / 2, textY);
   }
 
   /** The DOM playhead over the canvas: the overview's runs with the track, the
@@ -160,7 +172,7 @@ class WaveformRenderer extends BaseWaveformRenderer {
   /** Points across the whole track, whatever its length. */
   static SAMPLE_COUNT = 1000;
 
-  static EMPTY = { message: 'Load a track to see waveform', textOffset: 10 };
+  static EMPTY_MESSAGE = 'Load a track to see waveform';
 
   constructor(canvasId, deckId) {
     super(canvasId, deckId);
@@ -303,7 +315,7 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
   /** Below this the beat grid stops being a reference and becomes a haze. */
   static MIN_PIXELS_PER_BEAT = 5;
 
-  static EMPTY = { message: 'Load track for beat view', textOffset: 6 };
+  static EMPTY_MESSAGE = 'Load track for beat view';
 
   constructor(canvasId, deckId) {
     super(canvasId, deckId);
@@ -523,7 +535,20 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     // the tail: pinning the window to the last screenful instead would freeze
     // the waveform while the played wash kept crawling across it. Past the ends
     // the canvas is simply empty, which reads as "no track left".
-    this.offsetSeconds = deck.getCurrentTime() - this.visibleSeconds(deck) / 2;
+    const visible = this.visibleSeconds(deck);
+    const start = deck.getCurrentTime() - visible / 2;
+    // Zero while the canvas is off screen, which leaves the window unsnapped
+    // until it has a width to snap to
+    const secondsPerPixel = this.canvas.clientWidth ? visible / this.canvas.clientWidth : 0;
+
+    // Snapped to whole pixels, so every column always covers the same stretch
+    // of track and scrolling slides the picture instead of resampling it.
+    // Unsnapped, a column zoomed out spans hundreds of envelope buckets and a
+    // sub-pixel shift can swap which one is its peak — that is the shimmer.
+    // The playhead is then up to half a pixel off centre, which is invisible.
+    this.offsetSeconds = secondsPerPixel > 0
+      ? Math.round(start / secondsPerPixel) * secondsPerPixel
+      : start;
   }
 
   render() {

@@ -66,7 +66,7 @@
   --size-pad-btn: clamp(44px, 4.9vw, 70px);
   --size-track-cover: clamp(48px, 5vw, 70px);
   --size-center-min: clamp(176px, 19vw, 250px);
-  --size-waveform: clamp(46px, 4.4vw, 60px);
+  --size-waveform: clamp(39px, 3.7vw, 51px);
   --size-beat-waveform: clamp(46px, 4.6vw, 65px);
 
   /* Shadows */
