@@ -110,7 +110,6 @@
 
   .pitch-slider { height: 160px; }
 
-  .eq-slider { height: 100px; }
   .volume-slider { height: 120px; }
 
   .transport-controls button {
@@ -119,17 +118,9 @@
     font-size: 1rem;
   }
 
+  /* Four knobs fit across a phone without the scroller the faders needed */
   .eq-section {
     gap: var(--spacing-md);
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: var(--spacing-md);
-    scrollbar-width: thin;
-  }
-
-  .eq-band {
-    flex-shrink: 0;
-    min-width: 56px;
   }
 
   /* One panel at a time means there is width to spare — use it */

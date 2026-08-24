@@ -1,44 +1,133 @@
 /* ============================================================================
-   EQ — four bands, each with a kill switch and a reset dot
+   EQ — four knobs, each with a kill switch and a reset dot
    ============================================================================ */
-
-/* --- EQ ------------------------------------------------------------------- */
 .eq-section {
   display: flex;
   justify-content: space-around;
   gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
   background: var(--bg-secondary);
   padding: var(--spacing-md);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-primary);
 }
 
-.eq-band {
-  position: relative;
+.eq-knob {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: 6px;
+  min-width: 0;
 }
 
-.eq-band label {
-  font-weight: 600;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-}
-
-.eq-label-wrapper {
+.eq-knob-head {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
 }
 
-.eq-slider {
-  height: var(--size-fader-eq);
-  direction: rtl;
+.eq-knob-label {
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  transition: var(--transition-normal);
 }
 
+.eq-knob.is-killed .eq-knob-label { color: var(--color-secondary); }
+
+/* The shared reset dot hangs off the side of a fader; beside a knob it reads
+   better in flow, right after the name — and it dims when the band is already
+   flat and there is nothing to put back */
+.eq-knob .eq-reset-btn {
+  position: static;
+  transform: none;
+  width: 8px;
+  height: 8px;
+  opacity: 0.3;
+}
+
+.eq-knob.is-set .eq-reset-btn { opacity: 1; }
+
+.eq-knob .eq-reset-btn:hover {
+  opacity: 1;
+  transform: scale(1.3);
+  box-shadow: 0 0 8px var(--text-primary);
+}
+
+/* --- The dial -------------------------------------------------------------
+   The arc is a conic gradient with the middle masked out, the cap is a
+   radial one, and the pointer is a rotated bar. The knob only ever hands the
+   three custom properties below to CSS. */
+.knob {
+  position: relative;
+  width: var(--size-knob);
+  height: var(--size-knob);
+  cursor: ns-resize;
+  /* The knob owns the gesture: without this a drag scrolls the page on touch */
+  touch-action: none;
+  transition: opacity 0.2s ease;
+
+  --knob-angle: 0deg;   /* where the pointer looks */
+  --knob-from: 0deg;    /* where the arc starts, twelve o'clock or before it */
+  --knob-span: 0deg;    /* how much of it there is */
+  --knob-arc: var(--color-primary);
+}
+
+/* Green climbing for a boost, red falling for a cut: which way you went reads
+   before any number would */
+.knob.is-cut { --knob-arc: var(--color-secondary); }
+
+/* A killed band dims: the red K is the state, and the pointer underneath still
+   shows what it will come back to. The arc is dropped in js/eq-knob.js. */
+.eq-knob.is-killed .knob { opacity: 0.4; }
+
+.knob:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+  border-radius: var(--radius-full);
+}
+
+.knob-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-full);
+  background:
+    /* the arc, growing out of twelve o'clock */
+    conic-gradient(from var(--knob-from), var(--knob-arc) 0 var(--knob-span), transparent var(--knob-span)),
+    /* the notch that marks the centre, which the arc covers as it leaves */
+    conic-gradient(from -1deg, var(--text-muted) 0 2deg, transparent 2deg),
+    /* the track: 270 degrees of travel, with the gap at the bottom */
+    conic-gradient(from -135deg, rgba(255, 255, 255, 0.13) 0 270deg, transparent 270deg);
+  /* Hollow out the middle, so three filled discs read as one ring */
+  mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 6px));
+}
+
+.knob-cap {
+  position: absolute;
+  inset: 14%;
+  border-radius: var(--radius-full);
+  background: radial-gradient(circle at 35% 26%, #484848, #2a2a2a 55%, #171717);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  /* Lifts the cap off the panel, like every other raised control here */
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.55);
+}
+
+/* The pointer swings around the centre of the cap, which is where its own
+   bottom edge sits */
+.knob-cap::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 12%;
+  width: 3px;
+  height: 38%;
+  border-radius: 2px;
+  background: var(--text-primary);
+  transform: translateX(-50%) rotate(var(--knob-angle));
+  transform-origin: 50% 100%;
+}
+
+/* --- Kill ----------------------------------------------------------------- */
 .eq-kill-btn {
   background: var(--bg-tertiary);
   border: 1px solid var(--border-secondary);
@@ -62,8 +151,11 @@
   transform: scale(0.95);
 }
 
-.eq-value {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  font-variant-numeric: tabular-nums;
+/* Killing a band is the deepest cut there is, so it wears the colour of one */
+.eq-kill-btn.active {
+  background: linear-gradient(45deg, var(--color-secondary), var(--color-secondary-deep));
+  border-color: var(--color-secondary);
+  color: var(--bg-primary);
+  box-shadow: 0 0 12px rgba(var(--color-secondary-rgb), 0.35);
+  transform: none;
 }

@@ -40,7 +40,7 @@ through the Web Audio API.
 ### 🎛️ Mixing
 
 * **Crossfader**, per-channel volume faders and master volume
-* **4-band EQ** per deck (High / Mid / Low / Gain), each with a kill switch and a reset dot
+* **4-band EQ** per deck (High / Mid / Low / Gain), each with a hold-to-kill switch and a reset dot
 * An **FX pad** per deck driving six effects — filter, reverb, delay, phaser, flanger and a
   beat-synced gate
 * **SYNC** in both directions, matching BPM *and* beat position

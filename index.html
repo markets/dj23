@@ -208,57 +208,59 @@
           <button id="backSpinA" class="back-spin-btn" title="Back-spin">‹‹‹</button>
         </div>
 
-        <div class="eq-section">
-          <div class="eq-band">
-            <div class="eq-label-wrapper">
-              <label>High</label>
-              <button id="highKillA" class="eq-kill-btn" title="Kill High band">K</button>
+        <div class="eq-section" id="eqA">
+          <div class="eq-knob" data-band="high">
+            <div class="eq-knob-head">
+              <span class="eq-knob-label">High</span>
+              <button type="button" id="highResetA" class="eq-reset-btn" title="Reset High to 0"></button>
             </div>
-            <div class="eq-control-wrapper">
-              <input type="range" id="highA" min="-25" max="25" value="0" class="eq-slider vertical-fader" orient="vertical">
-              <button id="highResetA" class="eq-reset-btn" title="Reset High to 0"></button>
+            <div class="knob" tabindex="0" role="slider" aria-label="High"
+                 aria-valuemin="-25" aria-valuemax="25" aria-valuenow="0" aria-valuetext="flat">
+              <div class="knob-ring"></div>
+              <div class="knob-cap"></div>
             </div>
-            <span class="eq-value">0</span>
+            <button type="button" id="highKillA" class="eq-kill-btn" title="Kill High band">K</button>
           </div>
-          <div class="eq-band">
-            <div class="eq-label-wrapper">
-              <label>Mid</label>
-              <button id="midKillA" class="eq-kill-btn" title="Kill Mid band">K</button>
+          <div class="eq-knob" data-band="mid">
+            <div class="eq-knob-head">
+              <span class="eq-knob-label">Mid</span>
+              <button type="button" id="midResetA" class="eq-reset-btn" title="Reset Mid to 0"></button>
             </div>
-            <div class="eq-control-wrapper">
-              <input type="range" id="midA" min="-25" max="25" value="0" class="eq-slider vertical-fader" orient="vertical">
-              <button id="midResetA" class="eq-reset-btn" title="Reset Mid to 0"></button>
+            <div class="knob" tabindex="0" role="slider" aria-label="Mid"
+                 aria-valuemin="-25" aria-valuemax="25" aria-valuenow="0" aria-valuetext="flat">
+              <div class="knob-ring"></div>
+              <div class="knob-cap"></div>
             </div>
-            <span class="eq-value">0</span>
+            <button type="button" id="midKillA" class="eq-kill-btn" title="Kill Mid band">K</button>
           </div>
-          <div class="eq-band">
-            <div class="eq-label-wrapper">
-              <label>Low</label>
-              <button id="lowKillA" class="eq-kill-btn" title="Kill Low band">K</button>
+          <div class="eq-knob" data-band="low">
+            <div class="eq-knob-head">
+              <span class="eq-knob-label">Low</span>
+              <button type="button" id="lowResetA" class="eq-reset-btn" title="Reset Low to 0"></button>
             </div>
-            <div class="eq-control-wrapper">
-              <input type="range" id="lowA" min="-25" max="25" value="0" class="eq-slider vertical-fader" orient="vertical">
-              <button id="lowResetA" class="eq-reset-btn" title="Reset Low to 0"></button>
+            <div class="knob" tabindex="0" role="slider" aria-label="Low"
+                 aria-valuemin="-25" aria-valuemax="25" aria-valuenow="0" aria-valuetext="flat">
+              <div class="knob-ring"></div>
+              <div class="knob-cap"></div>
             </div>
-            <span class="eq-value">0</span>
+            <button type="button" id="lowKillA" class="eq-kill-btn" title="Kill Low band">K</button>
           </div>
-          <div class="eq-band">
-            <div class="eq-label-wrapper">
-              <label>Gain</label>
-              <button id="gainKillA" class="eq-kill-btn" title="Kill Gain band">K</button>
+          <div class="eq-knob" data-band="gain">
+            <div class="eq-knob-head">
+              <span class="eq-knob-label">Gain</span>
+              <button type="button" id="gainResetA" class="eq-reset-btn" title="Reset Gain to 0"></button>
             </div>
-            <div class="eq-control-wrapper">
-              <input type="range" id="gainA" min="-25" max="25" value="0" class="eq-slider vertical-fader" orient="vertical">
-              <button id="gainResetA" class="eq-reset-btn" title="Reset Gain to 0"></button>
+            <div class="knob" tabindex="0" role="slider" aria-label="Gain"
+                 aria-valuemin="-25" aria-valuemax="25" aria-valuenow="0" aria-valuetext="flat">
+              <div class="knob-ring"></div>
+              <div class="knob-cap"></div>
             </div>
-            <span class="eq-value">0</span>
+            <button type="button" id="gainKillA" class="eq-kill-btn" title="Kill Gain band">K</button>
           </div>
         </div>
 
         <div class="effects-section" id="effectsA">
           <div class="fx-unit" id="fxUnitA">
-            <span class="fx-unit-label">FX</span>
-
             <div class="fx-chips" role="group" aria-label="Effect">
               <button type="button" class="fx-chip" data-fx="filter"
                       aria-pressed="false">Filter<i class="fx-dot"></i></button>
@@ -547,57 +549,59 @@
           <button id="backSpinB" class="back-spin-btn" title="Back-spin">‹‹‹</button>
         </div>
 
-        <div class="eq-section">
-          <div class="eq-band">
-            <div class="eq-label-wrapper">
-              <label>High</label>
-              <button id="highKillB" class="eq-kill-btn" title="Kill High band">K</button>
+        <div class="eq-section" id="eqB">
+          <div class="eq-knob" data-band="high">
+            <div class="eq-knob-head">
+              <span class="eq-knob-label">High</span>
+              <button type="button" id="highResetB" class="eq-reset-btn" title="Reset High to 0"></button>
             </div>
-            <div class="eq-control-wrapper">
-              <input type="range" id="highB" min="-25" max="25" value="0" class="eq-slider vertical-fader" orient="vertical">
-              <button id="highResetB" class="eq-reset-btn" title="Reset High to 0"></button>
+            <div class="knob" tabindex="0" role="slider" aria-label="High"
+                 aria-valuemin="-25" aria-valuemax="25" aria-valuenow="0" aria-valuetext="flat">
+              <div class="knob-ring"></div>
+              <div class="knob-cap"></div>
             </div>
-            <span class="eq-value">0</span>
+            <button type="button" id="highKillB" class="eq-kill-btn" title="Kill High band">K</button>
           </div>
-          <div class="eq-band">
-            <div class="eq-label-wrapper">
-              <label>Mid</label>
-              <button id="midKillB" class="eq-kill-btn" title="Kill Mid band">K</button>
+          <div class="eq-knob" data-band="mid">
+            <div class="eq-knob-head">
+              <span class="eq-knob-label">Mid</span>
+              <button type="button" id="midResetB" class="eq-reset-btn" title="Reset Mid to 0"></button>
             </div>
-            <div class="eq-control-wrapper">
-              <input type="range" id="midB" min="-25" max="25" value="0" class="eq-slider vertical-fader" orient="vertical">
-              <button id="midResetB" class="eq-reset-btn" title="Reset Mid to 0"></button>
+            <div class="knob" tabindex="0" role="slider" aria-label="Mid"
+                 aria-valuemin="-25" aria-valuemax="25" aria-valuenow="0" aria-valuetext="flat">
+              <div class="knob-ring"></div>
+              <div class="knob-cap"></div>
             </div>
-            <span class="eq-value">0</span>
+            <button type="button" id="midKillB" class="eq-kill-btn" title="Kill Mid band">K</button>
           </div>
-          <div class="eq-band">
-            <div class="eq-label-wrapper">
-              <label>Low</label>
-              <button id="lowKillB" class="eq-kill-btn" title="Kill Low band">K</button>
+          <div class="eq-knob" data-band="low">
+            <div class="eq-knob-head">
+              <span class="eq-knob-label">Low</span>
+              <button type="button" id="lowResetB" class="eq-reset-btn" title="Reset Low to 0"></button>
             </div>
-            <div class="eq-control-wrapper">
-              <input type="range" id="lowB" min="-25" max="25" value="0" class="eq-slider vertical-fader" orient="vertical">
-              <button id="lowResetB" class="eq-reset-btn" title="Reset Low to 0"></button>
+            <div class="knob" tabindex="0" role="slider" aria-label="Low"
+                 aria-valuemin="-25" aria-valuemax="25" aria-valuenow="0" aria-valuetext="flat">
+              <div class="knob-ring"></div>
+              <div class="knob-cap"></div>
             </div>
-            <span class="eq-value">0</span>
+            <button type="button" id="lowKillB" class="eq-kill-btn" title="Kill Low band">K</button>
           </div>
-          <div class="eq-band">
-            <div class="eq-label-wrapper">
-              <label>Gain</label>
-              <button id="gainKillB" class="eq-kill-btn" title="Kill Gain band">K</button>
+          <div class="eq-knob" data-band="gain">
+            <div class="eq-knob-head">
+              <span class="eq-knob-label">Gain</span>
+              <button type="button" id="gainResetB" class="eq-reset-btn" title="Reset Gain to 0"></button>
             </div>
-            <div class="eq-control-wrapper">
-              <input type="range" id="gainB" min="-25" max="25" value="0" class="eq-slider vertical-fader" orient="vertical">
-              <button id="gainResetB" class="eq-reset-btn" title="Reset Gain to 0"></button>
+            <div class="knob" tabindex="0" role="slider" aria-label="Gain"
+                 aria-valuemin="-25" aria-valuemax="25" aria-valuenow="0" aria-valuetext="flat">
+              <div class="knob-ring"></div>
+              <div class="knob-cap"></div>
             </div>
-            <span class="eq-value">0</span>
+            <button type="button" id="gainKillB" class="eq-kill-btn" title="Kill Gain band">K</button>
           </div>
         </div>
 
         <div class="effects-section" id="effectsB">
           <div class="fx-unit" id="fxUnitB">
-            <span class="fx-unit-label">FX</span>
-
             <div class="fx-chips" role="group" aria-label="Effect">
               <button type="button" class="fx-chip" data-fx="filter"
                       aria-pressed="false">Filter<i class="fx-dot"></i></button>
@@ -860,6 +864,7 @@
   <script src="js/track-analyser.js"></script>
   <script src="js/deck.js"></script>
   <script src="js/vinyl.js"></script>
+  <script src="js/eq-knob.js"></script>
   <script src="js/effects.js"></script>
   <script src="js/fx-pad.js"></script>
   <script src="js/waveform.js"></script>

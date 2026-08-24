@@ -60,7 +60,7 @@
   --size-vinyl-gap: clamp(6px, 1.2vw, 20px);
   --size-fader-column: clamp(58px, 5.6vw, 80px);
   --size-fader-deck: clamp(96px, 11.5vw, 165px);
-  --size-fader-eq: clamp(68px, 7vw, 100px);
+  --size-knob: clamp(46px, 4.6vw, 64px);
   --size-fader-volume: clamp(82px, 8.5vw, 120px);
   --size-transport-btn: clamp(48px, 5.2vw, 72px);
   --size-pad-btn: clamp(44px, 4.9vw, 70px);

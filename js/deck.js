@@ -1,4 +1,8 @@
 class Deck {
+  /** How fast an EQ band follows the knob. Long enough to swallow the step
+   *  between two pointer positions, short enough that a kill still snaps. */
+  static EQ_GLIDE_SECONDS = 0.008;
+
   /** Pitch fader travel, in percent either side of zero. */
   static PITCH_RANGES = [8, 16, 32, 64];
   static DEFAULT_PITCH_RANGE = 32;
@@ -581,15 +585,18 @@ class Deck {
     return (this.playbackRate - 1) * 100;
   }
 
+  /** A band in decibels, -25 to +25. Gliding, because a knob under a hand
+   *  arrives as a stream of values and stepping them is audible. */
   setEQ(band, value) {
+    const glide = (param, target) => {
+      param.setTargetAtTime(target, this.audioContext.currentTime, Deck.EQ_GLIDE_SECONDS);
+    };
+
     if (band === 'gain') {
-      // Handle global gain - convert dB to linear gain
-      if (this.globalGainNode) {
-        const gainValue = Math.pow(10, value / 20);
-        this.globalGainNode.gain.value = gainValue;
-      }
+      // The gain band rides the output level, so decibels become a multiplier
+      if (this.globalGainNode) glide(this.globalGainNode.gain, Math.pow(10, value / 20));
     } else if (this.eqNodes[band]) {
-      this.eqNodes[band].gain.value = value;
+      glide(this.eqNodes[band].gain, value);
     }
   }
 
@@ -1184,70 +1191,9 @@ class DeckController {
       callback: () => this.updateBPMDisplay()
     });
 
-    ['high', 'mid', 'low', 'gain'].forEach(band => {
-      this.createSliderHandler(`${band}${this.deckId}`, 'setEQ', {
-        updateDisplay: false, // We'll handle display manually because setEQ needs band parameter
-        callback: (value) => {
-          const deck = window.audioEngine.getDeck(this.deckId);
-          if (deck) {
-            deck.setEQ(band, value);
-          }
-          const slider = document.getElementById(`${band}${this.deckId}`);
-          if (slider && slider.parentNode && slider.parentNode.nextElementSibling) {
-            slider.parentNode.nextElementSibling.textContent = value;
-          }
-        }
-      });
-
-      window.buttonHandler.createPressAndHoldHandler(
-        `${band}Kill${this.deckId}`,
-        () => {
-          const deck = window.audioEngine.getDeck(this.deckId);
-          const slider = document.getElementById(`${band}${this.deckId}`);
-          if (deck && slider) {
-            slider.dataset.originalValue = slider.value;
-            // Set to minimum value (-25) to "kill" the band
-            slider.value = -25;
-            deck.setEQ(band, -25);
-            if (slider.parentNode && slider.parentNode.nextElementSibling) {
-              slider.parentNode.nextElementSibling.textContent = '-25';
-            }
-          }
-        },
-        () => {
-          const deck = window.audioEngine.getDeck(this.deckId);
-          const slider = document.getElementById(`${band}${this.deckId}`);
-          if (deck && slider && slider.dataset.originalValue !== undefined) {
-            const originalValue = parseInt(slider.dataset.originalValue);
-            slider.value = originalValue;
-            deck.setEQ(band, originalValue);
-            if (slider.parentNode && slider.parentNode.nextElementSibling) {
-              slider.parentNode.nextElementSibling.textContent = originalValue.toString();
-            }
-            delete slider.dataset.originalValue;
-          }
-        },
-        { updateActiveState: true }
-      );
-
-      window.buttonHandler.createClickHandler(`${band}Reset${this.deckId}`, () => {
-        const deck = window.audioEngine.getDeck(this.deckId);
-        const slider = document.getElementById(`${band}${this.deckId}`);
-        if (deck && slider) {
-          slider.value = 0;
-          deck.setEQ(band, 0);
-          if (slider.parentNode && slider.parentNode.nextElementSibling) {
-            slider.parentNode.nextElementSibling.textContent = '0';
-          }
-        }
-      });
-    });
+    this.eqKnobs = EqKnob.BANDS.map(band => new EqKnob(this.deckId, band));
 
     this.createSliderHandler(`volume${this.deckId}`, 'setVolume', { suffix: '%' });
-
-    ['filter', 'reverb', 'delay', 'phaser', 'flanger'].forEach(effect => {
-      this.createSliderHandler(`${effect}${this.deckId}`, `set${effect.charAt(0).toUpperCase() + effect.slice(1)}`);
-    });
 
     window.buttonHandler.createPressAndHoldHandler(
       `pitchBendPlus${this.deckId}`,

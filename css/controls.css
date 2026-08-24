@@ -95,7 +95,6 @@
 }
 
 /* Wraps just the fader, so the reset dot can be centred on its travel */
-.eq-control-wrapper,
 .pitch-control-wrapper {
   position: relative;
   display: flex;
