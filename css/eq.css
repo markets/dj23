@@ -36,6 +36,7 @@
 
 .eq-slider {
   height: var(--size-fader-eq);
+  direction: rtl;
 }
 
 .eq-kill-btn {
