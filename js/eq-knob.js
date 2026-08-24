@@ -7,6 +7,9 @@
  *
  * The gesture is a vertical drag, not a circular one: nobody traces circles on
  * a mixer, and a straight drag is also what works with a finger.
+ *
+ * Nothing here draws anything. The dial is three custom properties and a pile
+ * of gradients in css/eq.css.
  */
 class EqKnob {
   /** Decibels either side of flat, matching the filters behind it. */
@@ -24,24 +27,6 @@ class EqKnob {
 
   static BANDS = ['high', 'mid', 'low', 'gain'];
 
-  /** A point on the dial, in the SVG's own 100×100 space. */
-  static polar(radius, degrees) {
-    const angle = (degrees - 90) * Math.PI / 180;
-    return [50 + radius * Math.cos(angle), 50 + radius * Math.sin(angle)];
-  }
-
-  /** Arc path between two angles, both measured from twelve o'clock. */
-  static arc(radius, from, to) {
-    if (Math.abs(to - from) < 0.15) return '';
-
-    const [x1, y1] = EqKnob.polar(radius, from);
-    const [x2, y2] = EqKnob.polar(radius, to);
-    const large = Math.abs(to - from) > 180 ? 1 : 0;
-    const sweep = to > from ? 1 : 0;
-
-    return `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${radius} ${radius} 0 ${large} ${sweep} ${x2.toFixed(2)} ${y2.toFixed(2)}`;
-  }
-
   constructor(deckId, band) {
     this.deckId = deckId;
     this.band = band;
@@ -52,8 +37,6 @@ class EqKnob {
     this.killed = false;
 
     this.dial = this.root.querySelector('.knob');
-    this.arcPath = this.root.querySelector('.knob-arc');
-    this.pointer = this.root.querySelector('.knob-pointer');
 
     this.setupEventListeners();
     this.render();
@@ -159,16 +142,18 @@ class EqKnob {
 
   render() {
     const angle = (this.value / EqKnob.RANGE) * EqKnob.SWEEP;
-    const [x1, y1] = EqKnob.polar(6, angle);
-    const [x2, y2] = EqKnob.polar(30, angle);
 
-    // A killed band shows no arc: the red K and the dimmed dial are the state,
-    // and the pointer still shows what it will come back to
-    this.arcPath.setAttribute('d', this.killed ? '' : EqKnob.arc(42, 0, angle));
-    this.pointer.setAttribute('x1', x1.toFixed(2));
-    this.pointer.setAttribute('y1', y1.toFixed(2));
-    this.pointer.setAttribute('x2', x2.toFixed(2));
-    this.pointer.setAttribute('y2', y2.toFixed(2));
+    // Three numbers is all the dial needs: where the pointer looks, and where
+    // the arc starts and ends. The drawing is entirely CSS's problem.
+    //
+    // A killed band draws no arc — and it has to be zeroed here rather than in
+    // the stylesheet, since these are inline properties and nothing in a sheet
+    // can outrank them.
+    const span = this.killed ? 0 : Math.abs(angle);
+
+    this.dial.style.setProperty('--knob-angle', `${angle.toFixed(1)}deg`);
+    this.dial.style.setProperty('--knob-from', `${Math.min(0, angle).toFixed(1)}deg`);
+    this.dial.style.setProperty('--knob-span', `${span.toFixed(1)}deg`);
 
     const rounded = Math.round(this.value);
     this.dial.classList.toggle('is-cut', this.value < -0.5);

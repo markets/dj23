@@ -55,18 +55,30 @@
 }
 
 /* --- The dial -------------------------------------------------------------
-   SVG rather than CSS: the arc keeps its round caps at any size, and the
-   pointer is one line to move. */
+   The arc is a conic gradient with the middle masked out, the cap is a
+   radial one, and the pointer is a rotated bar. The knob only ever hands the
+   three custom properties below to CSS. */
 .knob {
+  position: relative;
   width: var(--size-knob);
   height: var(--size-knob);
-  display: block;
   cursor: ns-resize;
   /* The knob owns the gesture: without this a drag scrolls the page on touch */
   touch-action: none;
   transition: opacity 0.2s ease;
+
+  --knob-angle: 0deg;   /* where the pointer looks */
+  --knob-from: 0deg;    /* where the arc starts, twelve o'clock or before it */
+  --knob-span: 0deg;    /* how much of it there is */
+  --knob-arc: var(--color-primary);
 }
 
+/* Green climbing for a boost, red falling for a cut: which way you went reads
+   before any number would */
+.knob.is-cut { --knob-arc: var(--color-secondary); }
+
+/* A killed band dims: the red K is the state, and the pointer underneath still
+   shows what it will come back to. The arc is dropped in js/eq-knob.js. */
 .eq-knob.is-killed .knob { opacity: 0.4; }
 
 .knob:focus-visible {
@@ -75,44 +87,44 @@
   border-radius: var(--radius-full);
 }
 
-.knob-track {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.13);
-  stroke-width: 6;
-  stroke-linecap: round;
+.knob-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-full);
+  background:
+    /* the arc, growing out of twelve o'clock */
+    conic-gradient(from var(--knob-from), var(--knob-arc) 0 var(--knob-span), transparent var(--knob-span)),
+    /* the notch that marks the centre, which the arc covers as it leaves */
+    conic-gradient(from -1deg, var(--text-muted) 0 2deg, transparent 2deg),
+    /* the track: 270 degrees of travel, with the gap at the bottom */
+    conic-gradient(from -135deg, rgba(255, 255, 255, 0.13) 0 270deg, transparent 270deg);
+  /* Hollow out the middle, so three filled discs read as one ring */
+  mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 6px));
 }
 
-/* The arc is the readout. Green climbing for a boost, red falling for a cut:
-   which way you went reads before any number would. */
-.knob-arc {
-  fill: none;
-  stroke: var(--color-primary);
-  stroke-width: 6;
-  stroke-linecap: round;
-  transition: stroke 0.15s ease;
-}
-
-.knob.is-cut .knob-arc { stroke: var(--color-secondary); }
-
-.knob-body {
-  fill: url(#knobBody);
-  stroke: rgba(255, 255, 255, 0.09);
-  stroke-width: 1;
+.knob-cap {
+  position: absolute;
+  inset: 14%;
+  border-radius: var(--radius-full);
+  background: radial-gradient(circle at 35% 26%, #484848, #2a2a2a 55%, #171717);
+  border: 1px solid rgba(255, 255, 255, 0.09);
   /* Lifts the cap off the panel, like every other raised control here */
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55));
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.55);
 }
 
-.knob-pointer {
-  stroke: var(--text-primary);
-  stroke-width: 3.5;
-  stroke-linecap: round;
-}
-
-/* The notch that says where twelve o'clock is */
-.knob-detent {
-  stroke: var(--text-muted);
-  stroke-width: 2;
-  stroke-linecap: round;
+/* The pointer swings around the centre of the cap, which is where its own
+   bottom edge sits */
+.knob-cap::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 12%;
+  width: 3px;
+  height: 38%;
+  border-radius: 2px;
+  background: var(--text-primary);
+  transform: translateX(-50%) rotate(var(--knob-angle));
+  transform-origin: 50% 100%;
 }
 
 /* --- Kill ----------------------------------------------------------------- */
