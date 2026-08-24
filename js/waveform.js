@@ -86,6 +86,73 @@ class BaseWaveformRenderer {
     };
     animate();
   }
+
+  /**
+   * Cue markers: a white line across the waveform with its number against it.
+   * Both renderers draw the same marker and differ only in where a cue lands
+   * (cueX) and where its label sits (cueLabelY) -- the overview stacks the
+   * labels down the waveform so two cues close together in the track still get
+   * a readable one each, while the zoomed view has room to keep them in a row.
+   * The metrics live in CUE_STYLE so a subclass can restyle without
+   * reimplementing the drawing.
+   */
+  static CUE_STYLE = {
+    lineWidth: 2,
+    font: 'bold 10px Inter',
+    labelOffset: 6,
+    labelPadding: 4,
+    textInset: 2,
+    boxAscent: 10,
+    boxHeight: 12,
+    boxAlpha: 0.7,
+  };
+
+  drawCues(width, height, deck) {
+    if (!deck || !deck.audioBuffer) return;
+
+    Object.entries(deck.cuePoints).forEach(([number, time], index) => {
+      if (time === null) return;
+
+      const x = this.cueX(time, width, deck);
+      if (x === null) return;
+
+      this.drawCue(x, this.cueLabelY(index, height), height, number);
+    });
+  }
+
+  /** Where the cue sits on the canvas, or null when it is not on screen. */
+  cueX(time, width, deck) {
+    return (time / deck.getDuration()) * width;
+  }
+
+  cueLabelY(index, height) {
+    return 14 + index * 14;
+  }
+
+  drawCue(x, textY, height, label) {
+    const style = this.constructor.CUE_STYLE;
+    const color = Theme.color('text-primary');
+
+    this.ctx.strokeStyle = color;
+    this.ctx.lineWidth = style.lineWidth;
+    this.ctx.setLineDash([]);
+    this.ctx.beginPath();
+    this.ctx.moveTo(x, 0);
+    this.ctx.lineTo(x, height);
+    this.ctx.stroke();
+
+    this.ctx.font = style.font;
+    this.ctx.textAlign = 'left';
+
+    const boxX = x + style.labelOffset;
+    const boxWidth = this.ctx.measureText(label).width + style.labelPadding;
+
+    this.ctx.fillStyle = `rgba(0, 0, 0, ${style.boxAlpha})`;
+    this.ctx.fillRect(boxX, textY - style.boxAscent, boxWidth, style.boxHeight);
+
+    this.ctx.fillStyle = color;
+    this.ctx.fillText(label, boxX + style.textInset, textY);
+  }
 }
 
 class WaveformRenderer extends BaseWaveformRenderer {
@@ -158,48 +225,8 @@ class WaveformRenderer extends BaseWaveformRenderer {
       }
     }
 
-    this.drawCuePoints(width, height, deck);
+    this.drawCues(width, height, deck);
     this.updatePlayhead();
-  }
-
-  /** Cue markers stack down the waveform so two cues close together in the
-   *  track still get a readable label each. */
-  drawCuePoints(width, height, deck) {
-    if (!deck || !deck.audioBuffer) return;
-
-    const duration = deck.getDuration();
-
-    Object.entries(deck.cuePoints).forEach(([number, time], index) => {
-      if (time === null) return;
-      this.drawSingleCuePoint(time, duration, width, height, number, 14 + index * 14);
-    });
-  }
-
-  drawSingleCuePoint(cueTime, duration, width, height, label, textY) {
-    const cuePointColor = Theme.color('text-primary');
-    const cuePosition = (cueTime / duration) * width;
-    
-    this.ctx.strokeStyle = cuePointColor;
-    this.ctx.lineWidth = 2;
-    this.ctx.setLineDash([]);
-    this.ctx.beginPath();
-    this.ctx.moveTo(cuePosition, 0);
-    this.ctx.lineTo(cuePosition, height);
-    this.ctx.stroke();
-    
-    this.ctx.font = 'bold 10px Inter';
-    const textMetrics = this.ctx.measureText(label);
-    
-    const textOffset = 8;
-    const textWidth = textMetrics.width + 4;
-    const textX = cuePosition + textOffset;
-    
-    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    this.ctx.fillRect(textX - 2, textY - 10, textWidth, 12);
-    
-    this.ctx.fillStyle = cuePointColor;
-    this.ctx.textAlign = 'left';
-    this.ctx.fillText(label, textX, textY);
   }
 
   renderEmpty() {
@@ -510,6 +537,8 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     // window scrolls, which reads as a shimmer
     this.drawBands(width, centerY, pixelsPerSecond, windowStart, playedUntil);
     this.drawBeatGrid(width, height, deck);
+    this.drawLoop(width, height, deck);
+    this.drawCues(width, height, deck);
 
     this.ctx.strokeStyle = Theme.color('color-playhead');
     this.ctx.lineWidth = 2;
@@ -618,6 +647,75 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     }
 
     this.ctx.stroke();
+  }
+
+  /**
+   * The loop as a region rather than as two marks: a wash over the stretch that
+   * is repeating, with a firmer line at each end. Coral because that is the
+   * colour the loop controls already wear, and a flat wash over the bars is not
+   * something the waveform itself ever looks like.
+   */
+  drawLoop(width, height, deck) {
+    if (!deck.isLooping || deck.loopStart === null || deck.loopEnd === null) return;
+
+    const pixelsPerSecond = width / this.visibleSeconds(deck);
+    const windowStart = this.offsetSeconds;
+    const windowEnd = windowStart + this.visibleSeconds(deck);
+    if (deck.loopEnd < windowStart || deck.loopStart > windowEnd) return;
+
+    const from = (deck.loopStart - windowStart) * pixelsPerSecond;
+    const to = (deck.loopEnd - windowStart) * pixelsPerSecond;
+    const left = Math.max(0, from);
+    const right = Math.min(width, to);
+
+    this.ctx.globalAlpha = 0.16;
+    this.ctx.fillStyle = Theme.color('color-secondary');
+    this.ctx.fillRect(left, 0, Math.max(1, right - left), height);
+    this.ctx.globalAlpha = 1;
+
+    // Only the ends that are actually on screen: a line at the edge of the
+    // canvas would read as a loop point that is not there
+    this.ctx.strokeStyle = Theme.color('color-secondary');
+    this.ctx.lineWidth = 2;
+    this.ctx.beginPath();
+
+    for (const edge of [from, to]) {
+      if (edge < 0 || edge > width) continue;
+      const x = Math.round(edge) + 0.5;
+      this.ctx.moveTo(x, 0);
+      this.ctx.lineTo(x, height);
+    }
+
+    this.ctx.stroke();
+  }
+
+  /**
+   * The zoomed view keeps the same marker as the overview, only smaller and
+   * pinned to the bottom: with no stacking needed here, the labels sit in a row
+   * out of the waveform's way. Cues outside the window are skipped, which is
+   * what makes them useful -- you can see the cue you are heading for.
+   */
+  static CUE_STYLE = {
+    lineWidth: 1.5,
+    font: '600 9px Inter',
+    labelOffset: 2,
+    labelPadding: 6,
+    textInset: 3,
+    boxAscent: 9,
+    boxHeight: 11,
+    boxAlpha: 0.75,
+  };
+
+  cueX(time, width, deck) {
+    const windowStart = this.offsetSeconds;
+    const windowEnd = windowStart + this.visibleSeconds(deck);
+    if (time < windowStart || time > windowEnd) return null;
+
+    return Math.round((time - windowStart) * (width / this.visibleSeconds(deck))) + 0.5;
+  }
+
+  cueLabelY(index, height) {
+    return height - 4;
   }
 
   renderEmpty() {
