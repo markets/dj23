@@ -13,6 +13,17 @@
   <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
+  <!-- The EQ knobs all paint their cap with this one gradient -->
+  <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+    <defs>
+      <radialGradient id="knobBody" cx="35%" cy="26%" r="88%">
+        <stop offset="0%" stop-color="#484848"/>
+        <stop offset="55%" stop-color="#2a2a2a"/>
+        <stop offset="100%" stop-color="#171717"/>
+      </radialGradient>
+    </defs>
+  </svg>
+
   <div class="mixer-container">
     <!-- Sticky top bar: header + beat matching waveforms -->
     <div class="app-topbar" id="appTopbar">
@@ -208,50 +219,66 @@
           <button id="backSpinA" class="back-spin-btn" title="Back-spin">‹‹‹</button>
         </div>
 
-        <div class="eq-section">
-          <div class="eq-band">
-            <div class="eq-label-wrapper">
-              <label>High</label>
-              <button id="highKillA" class="eq-kill-btn" title="Kill High band">K</button>
+        <div class="eq-section" id="eqA">
+          <div class="eq-knob" data-band="high">
+            <div class="eq-knob-head">
+              <span class="eq-knob-label">High</span>
+              <button type="button" id="highResetA" class="eq-reset-btn" title="Reset High to 0"></button>
             </div>
-            <div class="eq-control-wrapper">
-              <input type="range" id="highA" min="-25" max="25" value="0" class="eq-slider vertical-fader" orient="vertical">
-              <button id="highResetA" class="eq-reset-btn" title="Reset High to 0"></button>
-            </div>
-            <span class="eq-value">0</span>
+            <svg class="knob" viewBox="0 0 100 100" tabindex="0" role="slider" aria-label="High"
+                 aria-valuemin="-25" aria-valuemax="25" aria-valuenow="0" aria-valuetext="flat">
+              <path class="knob-track" d="M 20.30 79.70 A 42 42 0 1 1 79.70 79.70"/>
+              <path class="knob-arc" d=""/>
+              <line class="knob-detent" x1="50" y1="0.5" x2="50" y2="4"/>
+              <circle class="knob-body" cx="50" cy="50" r="33"/>
+              <line class="knob-pointer" x1="50" y1="44" x2="50" y2="20"/>
+            </svg>
+            <button type="button" id="highKillA" class="eq-kill-btn" title="Kill High band">K</button>
           </div>
-          <div class="eq-band">
-            <div class="eq-label-wrapper">
-              <label>Mid</label>
-              <button id="midKillA" class="eq-kill-btn" title="Kill Mid band">K</button>
+          <div class="eq-knob" data-band="mid">
+            <div class="eq-knob-head">
+              <span class="eq-knob-label">Mid</span>
+              <button type="button" id="midResetA" class="eq-reset-btn" title="Reset Mid to 0"></button>
             </div>
-            <div class="eq-control-wrapper">
-              <input type="range" id="midA" min="-25" max="25" value="0" class="eq-slider vertical-fader" orient="vertical">
-              <button id="midResetA" class="eq-reset-btn" title="Reset Mid to 0"></button>
-            </div>
-            <span class="eq-value">0</span>
+            <svg class="knob" viewBox="0 0 100 100" tabindex="0" role="slider" aria-label="Mid"
+                 aria-valuemin="-25" aria-valuemax="25" aria-valuenow="0" aria-valuetext="flat">
+              <path class="knob-track" d="M 20.30 79.70 A 42 42 0 1 1 79.70 79.70"/>
+              <path class="knob-arc" d=""/>
+              <line class="knob-detent" x1="50" y1="0.5" x2="50" y2="4"/>
+              <circle class="knob-body" cx="50" cy="50" r="33"/>
+              <line class="knob-pointer" x1="50" y1="44" x2="50" y2="20"/>
+            </svg>
+            <button type="button" id="midKillA" class="eq-kill-btn" title="Kill Mid band">K</button>
           </div>
-          <div class="eq-band">
-            <div class="eq-label-wrapper">
-              <label>Low</label>
-              <button id="lowKillA" class="eq-kill-btn" title="Kill Low band">K</button>
+          <div class="eq-knob" data-band="low">
+            <div class="eq-knob-head">
+              <span class="eq-knob-label">Low</span>
+              <button type="button" id="lowResetA" class="eq-reset-btn" title="Reset Low to 0"></button>
             </div>
-            <div class="eq-control-wrapper">
-              <input type="range" id="lowA" min="-25" max="25" value="0" class="eq-slider vertical-fader" orient="vertical">
-              <button id="lowResetA" class="eq-reset-btn" title="Reset Low to 0"></button>
-            </div>
-            <span class="eq-value">0</span>
+            <svg class="knob" viewBox="0 0 100 100" tabindex="0" role="slider" aria-label="Low"
+                 aria-valuemin="-25" aria-valuemax="25" aria-valuenow="0" aria-valuetext="flat">
+              <path class="knob-track" d="M 20.30 79.70 A 42 42 0 1 1 79.70 79.70"/>
+              <path class="knob-arc" d=""/>
+              <line class="knob-detent" x1="50" y1="0.5" x2="50" y2="4"/>
+              <circle class="knob-body" cx="50" cy="50" r="33"/>
+              <line class="knob-pointer" x1="50" y1="44" x2="50" y2="20"/>
+            </svg>
+            <button type="button" id="lowKillA" class="eq-kill-btn" title="Kill Low band">K</button>
           </div>
-          <div class="eq-band">
-            <div class="eq-label-wrapper">
-              <label>Gain</label>
-              <button id="gainKillA" class="eq-kill-btn" title="Kill Gain band">K</button>
+          <div class="eq-knob" data-band="gain">
+            <div class="eq-knob-head">
+              <span class="eq-knob-label">Gain</span>
+              <button type="button" id="gainResetA" class="eq-reset-btn" title="Reset Gain to 0"></button>
             </div>
-            <div class="eq-control-wrapper">
-              <input type="range" id="gainA" min="-25" max="25" value="0" class="eq-slider vertical-fader" orient="vertical">
-              <button id="gainResetA" class="eq-reset-btn" title="Reset Gain to 0"></button>
-            </div>
-            <span class="eq-value">0</span>
+            <svg class="knob" viewBox="0 0 100 100" tabindex="0" role="slider" aria-label="Gain"
+                 aria-valuemin="-25" aria-valuemax="25" aria-valuenow="0" aria-valuetext="flat">
+              <path class="knob-track" d="M 20.30 79.70 A 42 42 0 1 1 79.70 79.70"/>
+              <path class="knob-arc" d=""/>
+              <line class="knob-detent" x1="50" y1="0.5" x2="50" y2="4"/>
+              <circle class="knob-body" cx="50" cy="50" r="33"/>
+              <line class="knob-pointer" x1="50" y1="44" x2="50" y2="20"/>
+            </svg>
+            <button type="button" id="gainKillA" class="eq-kill-btn" title="Kill Gain band">K</button>
           </div>
         </div>
 
@@ -547,50 +574,66 @@
           <button id="backSpinB" class="back-spin-btn" title="Back-spin">‹‹‹</button>
         </div>
 
-        <div class="eq-section">
-          <div class="eq-band">
-            <div class="eq-label-wrapper">
-              <label>High</label>
-              <button id="highKillB" class="eq-kill-btn" title="Kill High band">K</button>
+        <div class="eq-section" id="eqB">
+          <div class="eq-knob" data-band="high">
+            <div class="eq-knob-head">
+              <span class="eq-knob-label">High</span>
+              <button type="button" id="highResetB" class="eq-reset-btn" title="Reset High to 0"></button>
             </div>
-            <div class="eq-control-wrapper">
-              <input type="range" id="highB" min="-25" max="25" value="0" class="eq-slider vertical-fader" orient="vertical">
-              <button id="highResetB" class="eq-reset-btn" title="Reset High to 0"></button>
-            </div>
-            <span class="eq-value">0</span>
+            <svg class="knob" viewBox="0 0 100 100" tabindex="0" role="slider" aria-label="High"
+                 aria-valuemin="-25" aria-valuemax="25" aria-valuenow="0" aria-valuetext="flat">
+              <path class="knob-track" d="M 20.30 79.70 A 42 42 0 1 1 79.70 79.70"/>
+              <path class="knob-arc" d=""/>
+              <line class="knob-detent" x1="50" y1="0.5" x2="50" y2="4"/>
+              <circle class="knob-body" cx="50" cy="50" r="33"/>
+              <line class="knob-pointer" x1="50" y1="44" x2="50" y2="20"/>
+            </svg>
+            <button type="button" id="highKillB" class="eq-kill-btn" title="Kill High band">K</button>
           </div>
-          <div class="eq-band">
-            <div class="eq-label-wrapper">
-              <label>Mid</label>
-              <button id="midKillB" class="eq-kill-btn" title="Kill Mid band">K</button>
+          <div class="eq-knob" data-band="mid">
+            <div class="eq-knob-head">
+              <span class="eq-knob-label">Mid</span>
+              <button type="button" id="midResetB" class="eq-reset-btn" title="Reset Mid to 0"></button>
             </div>
-            <div class="eq-control-wrapper">
-              <input type="range" id="midB" min="-25" max="25" value="0" class="eq-slider vertical-fader" orient="vertical">
-              <button id="midResetB" class="eq-reset-btn" title="Reset Mid to 0"></button>
-            </div>
-            <span class="eq-value">0</span>
+            <svg class="knob" viewBox="0 0 100 100" tabindex="0" role="slider" aria-label="Mid"
+                 aria-valuemin="-25" aria-valuemax="25" aria-valuenow="0" aria-valuetext="flat">
+              <path class="knob-track" d="M 20.30 79.70 A 42 42 0 1 1 79.70 79.70"/>
+              <path class="knob-arc" d=""/>
+              <line class="knob-detent" x1="50" y1="0.5" x2="50" y2="4"/>
+              <circle class="knob-body" cx="50" cy="50" r="33"/>
+              <line class="knob-pointer" x1="50" y1="44" x2="50" y2="20"/>
+            </svg>
+            <button type="button" id="midKillB" class="eq-kill-btn" title="Kill Mid band">K</button>
           </div>
-          <div class="eq-band">
-            <div class="eq-label-wrapper">
-              <label>Low</label>
-              <button id="lowKillB" class="eq-kill-btn" title="Kill Low band">K</button>
+          <div class="eq-knob" data-band="low">
+            <div class="eq-knob-head">
+              <span class="eq-knob-label">Low</span>
+              <button type="button" id="lowResetB" class="eq-reset-btn" title="Reset Low to 0"></button>
             </div>
-            <div class="eq-control-wrapper">
-              <input type="range" id="lowB" min="-25" max="25" value="0" class="eq-slider vertical-fader" orient="vertical">
-              <button id="lowResetB" class="eq-reset-btn" title="Reset Low to 0"></button>
-            </div>
-            <span class="eq-value">0</span>
+            <svg class="knob" viewBox="0 0 100 100" tabindex="0" role="slider" aria-label="Low"
+                 aria-valuemin="-25" aria-valuemax="25" aria-valuenow="0" aria-valuetext="flat">
+              <path class="knob-track" d="M 20.30 79.70 A 42 42 0 1 1 79.70 79.70"/>
+              <path class="knob-arc" d=""/>
+              <line class="knob-detent" x1="50" y1="0.5" x2="50" y2="4"/>
+              <circle class="knob-body" cx="50" cy="50" r="33"/>
+              <line class="knob-pointer" x1="50" y1="44" x2="50" y2="20"/>
+            </svg>
+            <button type="button" id="lowKillB" class="eq-kill-btn" title="Kill Low band">K</button>
           </div>
-          <div class="eq-band">
-            <div class="eq-label-wrapper">
-              <label>Gain</label>
-              <button id="gainKillB" class="eq-kill-btn" title="Kill Gain band">K</button>
+          <div class="eq-knob" data-band="gain">
+            <div class="eq-knob-head">
+              <span class="eq-knob-label">Gain</span>
+              <button type="button" id="gainResetB" class="eq-reset-btn" title="Reset Gain to 0"></button>
             </div>
-            <div class="eq-control-wrapper">
-              <input type="range" id="gainB" min="-25" max="25" value="0" class="eq-slider vertical-fader" orient="vertical">
-              <button id="gainResetB" class="eq-reset-btn" title="Reset Gain to 0"></button>
-            </div>
-            <span class="eq-value">0</span>
+            <svg class="knob" viewBox="0 0 100 100" tabindex="0" role="slider" aria-label="Gain"
+                 aria-valuemin="-25" aria-valuemax="25" aria-valuenow="0" aria-valuetext="flat">
+              <path class="knob-track" d="M 20.30 79.70 A 42 42 0 1 1 79.70 79.70"/>
+              <path class="knob-arc" d=""/>
+              <line class="knob-detent" x1="50" y1="0.5" x2="50" y2="4"/>
+              <circle class="knob-body" cx="50" cy="50" r="33"/>
+              <line class="knob-pointer" x1="50" y1="44" x2="50" y2="20"/>
+            </svg>
+            <button type="button" id="gainKillB" class="eq-kill-btn" title="Kill Gain band">K</button>
           </div>
         </div>
 
@@ -860,6 +903,7 @@
   <script src="js/track-analyser.js"></script>
   <script src="js/deck.js"></script>
   <script src="js/vinyl.js"></script>
+  <script src="js/eq-knob.js"></script>
   <script src="js/effects.js"></script>
   <script src="js/fx-pad.js"></script>
   <script src="js/waveform.js"></script>
