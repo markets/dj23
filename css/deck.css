@@ -26,7 +26,7 @@
   background: var(--bg-secondary);
   border-radius: var(--radius-lg);
   padding: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
   border: 1px solid var(--border-primary);
   display: flex;
   justify-content: space-between;
@@ -96,7 +96,7 @@
   position: relative;
   height: var(--size-waveform);
   background: var(--bg-primary);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   margin-bottom: var(--spacing-lg);
   overflow: hidden;
   cursor: pointer;

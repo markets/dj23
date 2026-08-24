@@ -39,116 +39,227 @@ class BPMAnalyzer {
   static MIN_BPM = 60;
   static MAX_BPM = 220;
 
+  /**
+   * How far the fitted grid may pull the tempo, and in how many steps. Enough
+   * to undo the rounding of a detected BPM — a whole number at 128 is out by up
+   * to 0.4% — without ever reaching the tempo next door.
+   */
+  static GRID_TEMPO_TOLERANCE = 0.008;
+  static GRID_TEMPO_STEPS = 40;
+
+  /** Under this share of the onsets explained, the fit is not saying anything
+   *  and the plain grid is the safer answer. */
+  static GRID_FIT_FLOOR = 0.15;
+
+  /** Closer than this to a grid line and it is that line, not the next one. */
+  static GRID_EPSILON_SECONDS = 0.005;
+
+  /** Rounding slack for beat lookups, in beats: a time computed as a multiple
+   *  of the interval can land a float's hair under its own index. */
+  static BEAT_INDEX_EPSILON = 1e-9;
+
   constructor(audioContext, deckId) {
     this.audioContext = audioContext;
     this.deckId = deckId;
     
-    this.beatPositions = []; // Array of beat positions in seconds
-    this.lastBeatTime = 0;   // Time of the last detected beat
-    this.beatInterval = 0.5; // Current beat interval in seconds (will be calculated)
-    
-    this.baseBPM = 120; // Default BPM, will be updated when track loads
-    
-    this.audioStartOffset = 0; // Time when actual audio content starts (after silence)
-    
-    this.bpmSource = null; // Can be: null, 'auto-detected', 'manual'
-    this.lastManualTapTime = 0; // Track when user last used TAP
+    this.beatPositions = [];
+    this.beatInterval = 0.5;
+    this.baseBPM = 120;
+    this.audioStartOffset = 0; // Where the track stops being silence
   }
 
+  /**
+   * The shape every onset collector returns: times, their strengths, the total
+   * to score against and the stretch they cover. Null when there is too little
+   * to say anything, which every caller treats as "no usable onsets".
+   */
+  static onsetSet(times, strengths, minimum) {
+    let total = 0;
+    for (const strength of strengths) total += strength;
+    if (times.length < minimum || total <= 0) return null;
+
+    return { times, strengths, total, span: times[times.length - 1] - times[0] };
+  }
+
+  /** How far an onset may sit from a grid line at this spacing. */
+  static gridTolerance(interval) {
+    return Math.min(BPMAnalyzer.ONSET_TOLERANCE_SECONDS, interval / 8);
+  }
+
+  /** Signed distance from an onset to its nearest line of a grid. */
+  static drift(time, phase, interval) {
+    const from = time - phase;
+    return from - Math.round(from / interval) * interval;
+  }
+
+  /** Where the track stops being silence: the first sample worth hearing in
+   *  the first 100ms chunk whose level clears the noise floor. */
   detectAudioStart(audioBuffer) {
-    if (!audioBuffer || !audioBuffer.getChannelData) {
-      return 0;
-    }
-    
+    if (!audioBuffer || !audioBuffer.getChannelData) return 0;
+
     const channelData = audioBuffer.getChannelData(0);
     const sampleRate = audioBuffer.sampleRate;
-    
-    const silenceThreshold = 0.01; // 1% of max amplitude
-    
-    const chunkSize = sampleRate * 0.1; // 100ms chunks
-    
+    const silenceThreshold = 0.01;
+    const chunkSize = sampleRate * 0.1;
+
     for (let i = 0; i < channelData.length; i += chunkSize) {
       const chunkEnd = Math.min(i + chunkSize, channelData.length);
-      
+
       let sumSquares = 0;
       for (let j = i; j < chunkEnd; j++) {
         sumSquares += channelData[j] * channelData[j];
       }
       const rms = Math.sqrt(sumSquares / (chunkEnd - i));
-      
+
       if (rms > silenceThreshold) {
         for (let k = i; k < chunkEnd; k++) {
-          if (Math.abs(channelData[k]) > silenceThreshold * 0.5) {
-            const startTime = k / sampleRate;
-            console.log(`Deck ${this.deckId}: Detected audio start at ${startTime.toFixed(3)}s`);
-            return startTime;
-          }
+          if (Math.abs(channelData[k]) > silenceThreshold * 0.5) return k / sampleRate;
         }
       }
     }
-    
-    console.log(`Deck ${this.deckId}: No significant audio detected, using time 0`);
+
     return 0;
+  }
+
+  /**
+   * Where the grid sits, fitted to the kick rather than assumed. A tempo does
+   * not place a grid on its own — it needs a phase, and the period has to be
+   * right to the last decimal or the grid walks away from the music. Every
+   * plausible period is tried against every phase; most kick wins.
+   */
+  fitGrid(audioBuffer) {
+    const seconds = BPMAnalyzer.ANALYSIS_WINDOW_SECONDS;
+    const startSeconds = BPMAnalyzer.ANALYSIS_SKIP_SECONDS;
+    const window = BPMAnalyzer.buildAnalysisWindow(audioBuffer, Float32Array, { seconds, startSeconds });
+    const onsets = this.lowBandOnsets(window, audioBuffer.sampleRate);
+    if (!onsets) return null;
+
+    const nominal = 60 / this.baseBPM;
+    const steps = BPMAnalyzer.GRID_TEMPO_STEPS;
+    let best = null;
+
+    for (let step = -steps; step <= steps; step++) {
+      const interval = nominal * (1 + (step / steps) * BPMAnalyzer.GRID_TEMPO_TOLERANCE);
+      const tolerance = BPMAnalyzer.gridTolerance(interval);
+
+      for (let phase = 0; phase < interval; phase += BPMAnalyzer.FLUX_TIME_STEP) {
+        let score = 0;
+
+        for (let i = 0; i < onsets.times.length; i++) {
+          const drift = Math.abs(BPMAnalyzer.drift(onsets.times[i], phase, interval));
+          if (drift > tolerance) continue;
+
+          // Weighted by how close it lands, so the peak is sharp enough to
+          // place a line rather than just find the right neighbourhood
+          score += onsets.strengths[i] * (1 - drift / tolerance);
+        }
+
+        if (!best || score > best.score) best = { score, interval, phase };
+      }
+    }
+
+    if (!best || best.score / onsets.total < BPMAnalyzer.GRID_FIT_FLOOR) return null;
+
+    // Recentre on the onsets it caught: the detector can only place them to the
+    // nearest frame, and their average pulls the grid inside that frame
+    const tolerance = BPMAnalyzer.gridTolerance(best.interval);
+    let weighted = 0;
+    let weight = 0;
+
+    for (let i = 0; i < onsets.times.length; i++) {
+      const drift = BPMAnalyzer.drift(onsets.times[i], best.phase, best.interval);
+      if (Math.abs(drift) > tolerance) continue;
+
+      weighted += onsets.strengths[i] * drift;
+      weight += onsets.strengths[i];
+    }
+
+    const centred = best.phase + (weight ? weighted / weight : 0);
+
+    return {
+      interval: best.interval,
+      anchor: BPMAnalyzer.windowStart(audioBuffer, seconds, startSeconds) + centred,
+      confidence: best.score / onsets.total
+    };
   }
 
   generateBeatMap(audioBuffer) {
     if (!audioBuffer || this.baseBPM <= 0) return;
-    
+
+    // Still the first thing you can hear, which is what the beat meter counts
+    // from — but no longer where the grid is pinned
     this.audioStartOffset = this.detectAudioStart(audioBuffer);
-    
-    this.beatInterval = 60 / this.baseBPM;
-    
+
+    const fit = this.fitGrid(audioBuffer);
+    this.beatInterval = fit ? fit.interval : 60 / this.baseBPM;
+
+    // Wind the anchor back to the top of the track, so the grid covers the
+    // intro too instead of starting wherever the fit happened to look
+    const anchor = fit ? fit.anchor : this.audioStartOffset;
+    let first = anchor - Math.floor(anchor / this.beatInterval) * this.beatInterval;
+
+    // A phase a hair under a whole interval is a line on zero that the wrap
+    // pushed to the far side of one, and it would cost the track its first beat
+    if (this.beatInterval - first < BPMAnalyzer.GRID_EPSILON_SECONDS) first = 0;
+
     this.beatPositions = [];
     const duration = audioBuffer.duration;
-    
-    for (let time = this.audioStartOffset; time < duration; time += this.beatInterval) {
-      this.beatPositions.push(time);
+    const count = Math.max(0, Math.ceil((duration - first) / this.beatInterval));
+
+    // Multiplied rather than accumulated: adding an interval a few thousand
+    // times is how a grid ends up late at the end of a long track
+    for (let i = 0; i < count; i++) {
+      this.beatPositions.push(first + i * this.beatInterval);
     }
-    
-    console.log(`Generated ${this.beatPositions.length} beats for ${duration.toFixed(2)}s track at ${this.baseBPM} BPM, starting from ${this.audioStartOffset.toFixed(3)}s`);
+
+    const fitted = fit
+      ? `fitted to ${(60 / fit.interval).toFixed(2)} BPM, ${(fit.confidence * 100).toFixed(0)}% of the kick`
+      : `no fit, ${this.baseBPM} BPM assumed`;
+    console.log(`Generated ${this.beatPositions.length} beats for ${duration.toFixed(2)}s on deck ${this.deckId}: ${fitted}, first at ${first.toFixed(3)}s`);
+  }
+
+  /**
+   * Where a time falls on the grid, as a fractional beat index. The grid is
+   * evenly spaced, so the three lookups below are arithmetic, not scans.
+   */
+  beatIndexAt(time) {
+    return (time - this.beatPositions[0]) / this.beatInterval;
+  }
+
+  /** The beat at an index, clamped to the ends of the grid. */
+  beatAt(index) {
+    return this.beatPositions[Math.min(this.beatPositions.length - 1, Math.max(0, index))];
   }
 
   findNearestBeat(currentTime) {
-    if (this.beatPositions.length === 0) return currentTime;
-    
-    let nearestBeat = this.beatPositions[0];
-    let minDistance = Math.abs(currentTime - nearestBeat);
-    
-    for (const beatTime of this.beatPositions) {
-      const distance = Math.abs(currentTime - beatTime);
-      if (distance < minDistance) {
-        minDistance = distance;
-        nearestBeat = beatTime;
-      }
-    }
-    
-    return nearestBeat;
+    if (!this.beatPositions.length) return currentTime;
+
+    // Halfway keeps the earlier beat, as a scan for the first smallest distance
+    // would; no slack here, or a midpoint would tip to the later one
+    return this.beatAt(Math.ceil(this.beatIndexAt(currentTime) - 0.5));
   }
 
+  /**
+   * The next beat strictly after this time, or the time itself past the last
+   * one. The slack is what keeps a time sitting on a beat from returning that
+   * same beat, since its index can come out a float's hair low.
+   */
   getNextBeat(currentTime) {
-    for (const beatTime of this.beatPositions) {
-      if (beatTime > currentTime) {
-        return beatTime;
-      }
-    }
-    return currentTime; // If no next beat found, return current time
+    if (!this.beatPositions.length) return currentTime;
+
+    const index = Math.floor(this.beatIndexAt(currentTime) + BPMAnalyzer.BEAT_INDEX_EPSILON) + 1;
+    return index >= this.beatPositions.length ? currentTime : this.beatAt(index);
   }
 
+  /** The beat before this time, or zero when there is none: the track's top. */
   getPreviousBeat(currentTime) {
-    let previousBeat = 0; // Start from beginning if no previous beat found
-    for (const beatTime of this.beatPositions) {
-      if (beatTime >= currentTime) {
-        break;
-      }
-      previousBeat = beatTime;
-    }
-    return previousBeat;
+    if (!this.beatPositions.length) return 0;
+
+    const index = Math.ceil(this.beatIndexAt(currentTime) - BPMAnalyzer.BEAT_INDEX_EPSILON) - 1;
+    return index < 0 ? 0 : this.beatAt(index);
   }
 
   calculateBPM(audioBuffer) {
-    this.bpmSource = null;
-    this.lastManualTapTime = 0;
-
     if (!audioBuffer || !audioBuffer.getChannelData) {
       console.warn(`BPM Analyzer: Invalid audio buffer for deck ${this.deckId}`);
       this.baseBPM = 0;
@@ -168,7 +279,6 @@ class BPMAnalyzer {
       }
 
       this.baseBPM = detected;
-      this.bpmSource = 'auto-detected';
       return detected;
     } catch (error) {
       // Unknown beats a guess: SYNC and the beat map skip a zero BPM, TAP fills it
@@ -217,20 +327,17 @@ class BPMAnalyzer {
    * effectively constant, so a window answers the same as the whole track at a
    * cost that does not grow with the file.
    *
-   * `Output` is the only thing that varies by caller. MusicTempo needs a plain
-   * Array and converts a Float32Array into one internally, so on the main
-   * thread it is cheaper to build the Array directly; the worker wants
-   * Float32Array, which transfers without a copy and converts off-thread.
+   * `Output` varies by caller: MusicTempo needs a plain Array, so the main
+   * thread builds one directly, while the worker wants Float32Array, which
+   * transfers without a copy.
    */
   static buildAnalysisWindow(audioBuffer, Output = Array, {
     seconds = BPMAnalyzer.ANALYSIS_WINDOW_SECONDS,
     // A little in, since intros often have no drums to lock onto
     startSeconds = BPMAnalyzer.ANALYSIS_SKIP_SECONDS
   } = {}) {
-    const { sampleRate, length, numberOfChannels } = audioBuffer;
-
-    const windowLength = Math.min(length, Math.floor(seconds * sampleRate));
-    const start = Math.max(0, Math.min(Math.floor(startSeconds * sampleRate), length - windowLength));
+    const { numberOfChannels } = audioBuffer;
+    const { start, windowLength } = BPMAnalyzer.windowBounds(audioBuffer, seconds, startSeconds);
 
     const left = audioBuffer.getChannelData(0);
     const right = numberOfChannels > 1 ? audioBuffer.getChannelData(1) : null;
@@ -242,6 +349,21 @@ class BPMAnalyzer {
     }
 
     return samples;
+  }
+
+  /** First sample of a window and how many it holds, both clamped to the track. */
+  static windowBounds(audioBuffer, seconds, startSeconds) {
+    const { sampleRate, length } = audioBuffer;
+    const windowLength = Math.min(length, Math.floor(seconds * sampleRate));
+    const start = Math.max(0, Math.min(Math.floor(startSeconds * sampleRate), length - windowLength));
+
+    return { start, windowLength };
+  }
+
+  /** Where a window begins in the track's own time, which is what a caller
+   *  needs to put whatever it found back on the timeline. */
+  static windowStart(audioBuffer, seconds, startSeconds) {
+    return BPMAnalyzer.windowBounds(audioBuffer, seconds, startSeconds).start / audioBuffer.sampleRate;
   }
 
   /**
@@ -311,7 +433,6 @@ class BPMAnalyzer {
 
     const times = [];
     const strengths = [];
-    let total = 0;
 
     for (let i = 0; i < peaks.length; i++) {
       const strength = flux[peaks[i]] - floor;
@@ -319,12 +440,9 @@ class BPMAnalyzer {
 
       times.push(events[i]);
       strengths.push(strength);
-      total += strength;
     }
 
-    if (times.length < 12 || total <= 0) return null;
-
-    return { times, strengths, total, span: times[times.length - 1] - times[0] };
+    return BPMAnalyzer.onsetSet(times, strengths, 12);
   }
 
   /**
@@ -372,7 +490,6 @@ class BPMAnalyzer {
 
     const times = [];
     const strengths = [];
-    let total = 0;
 
     for (let frame = 2; frame < frames - 2; frame++) {
       const value = rise[frame];
@@ -383,12 +500,9 @@ class BPMAnalyzer {
 
       times.push(frame * BPMAnalyzer.FLUX_TIME_STEP);
       strengths.push(value);
-      total += value;
     }
 
-    if (times.length < 8 || total <= 0) return null;
-
-    return { times, strengths, total, span: times[times.length - 1] - times[0] };
+    return BPMAnalyzer.onsetSet(times, strengths, 8);
   }
 
   /**
@@ -404,18 +518,14 @@ class BPMAnalyzer {
 
     const times = [];
     const strengths = [];
-    let total = 0;
 
     for (let i = 0; i < onsets.times.length; i++) {
       if (onsets.strengths[i] < threshold) continue;
       times.push(onsets.times[i]);
       strengths.push(onsets.strengths[i]);
-      total += onsets.strengths[i];
     }
 
-    if (times.length < 8 || total <= 0) return null;
-
-    return { times, strengths, total, span: times[times.length - 1] - times[0] };
+    return BPMAnalyzer.onsetSet(times, strengths, 8);
   }
 
   /**
@@ -456,10 +566,9 @@ class BPMAnalyzer {
   }
 
   /**
-   * Where listeners hear tempo. Log-normal about a middling BPM, which is the
-   * standard shape for this: it barely touches anything from drum and bass to
-   * hip-hop, and only asserts itself when two octaves explain the onsets about
-   * equally well.
+   * Where listeners hear tempo: log-normal about a middling BPM. It barely
+   * touches anything from drum and bass to hip-hop, and only asserts itself
+   * when two octaves explain the onsets about equally well.
    */
   static tempoPrior(bpm) {
     const octavesFromCentre = Math.log2(bpm / BPMAnalyzer.TEMPO_PRIOR_CENTRE);
@@ -481,23 +590,10 @@ class BPMAnalyzer {
     }
     
     this.baseBPM = Math.round(bpm);
-    this.bpmSource = 'manual';
-    this.lastManualTapTime = 0; // Will be updated to current playback time when called
-    console.log(`BPM Analyzer: Manual BPM set to ${this.baseBPM} for deck ${this.deckId} - limited auto-refinement for 3 seconds`);
     
     if (audioBuffer && audioBuffer.duration) {
       this.generateBeatMap(audioBuffer);
     }
     return true;
-  }
-
-  getAudioStartOffset() {
-    return this.audioStartOffset;
-  }
-
-  updateManualTapTime(currentTime) {
-    if (this.bpmSource === 'manual') {
-      this.lastManualTapTime = currentTime;
-    }
   }
 }

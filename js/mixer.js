@@ -217,43 +217,47 @@ class MixerController {
     });
   }
 
+  /** How close to a beat still counts as being on it. */
+  static ON_BEAT_SECONDS = 0.1;
+
+  /**
+   * Which beat each deck is on, read off the fitted beat grid rather than
+   * recomputed from where the silence ended and a rounded tempo — which is what
+   * used to make it flash off the beat and walk away over a long track.
+   */
   updateBeatMeter(deckId) {
     const deck = window.audioEngine.getDeck(deckId);
     const bars = this.beatMeters[deckId];
-    
-    if (!deck || !bars || !deck.audioBuffer || !deck.isPlaying) {
-      bars.forEach(bar => {
-        bar.classList.remove('active');
-      });
-      return;
+    if (!bars || !bars.length) return;
+
+    const beats = deck?.getBeatPositions();
+    const interval = deck?.getBeatInterval();
+
+    if (!deck || !deck.isPlaying || !beats?.length || !interval) {
+      return this.clearBeatMeter(bars);
     }
 
-    const currentTime = deck.getCurrentTime();
-    const audioStartOffset = deck.getAudioStartOffset();
-    
-    // Only show beat meter if we've reached the actual audio content
-    if (currentTime < audioStartOffset) {
-      bars.forEach(bar => {
-        bar.classList.remove('active');
-      });
-      return;
-    }
-    
-    const adjustedTime = currentTime - audioStartOffset;
-    const beatInterval = 60 / deck.getBPM(); // Time between beats in seconds
-    const timeSinceLastBeat = adjustedTime % beatInterval;
-    const currentBeat = Math.floor(adjustedTime / beatInterval) % 8; // 8 beats per measure
-    
-    // Check if we're close to a beat (within 100ms)
-    const isOnBeat = timeSinceLastBeat < 0.1 || timeSinceLastBeat > (beatInterval - 0.1);
-    
+    const position = (deck.getCurrentTime() - beats[0]) / interval;
+    if (!Number.isFinite(position)) return this.clearBeatMeter(bars);
+
+    // Before the first beat the count runs negative, and a negative modulo in
+    // JavaScript is still negative
+    const beat = Math.floor(position);
+    const current = ((beat % bars.length) + bars.length) % bars.length;
+
+    // Lit either side of the beat itself, so the pulse reads as a beat rather
+    // than as a light that is on most of the time
+    const since = (position - beat) * interval;
+    const onBeat = since < MixerController.ON_BEAT_SECONDS ||
+      interval - since < MixerController.ON_BEAT_SECONDS;
+
     bars.forEach((bar, index) => {
-      bar.classList.remove('active');
-      
-      if (index === currentBeat && isOnBeat) {
-        bar.classList.add('active');
-      }
+      bar.classList.toggle('active', onBeat && index === current);
     });
+  }
+
+  clearBeatMeter(bars) {
+    bars.forEach(bar => bar.classList.remove('active'));
   }
 
   startVUAnimation() {

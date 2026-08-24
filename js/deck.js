@@ -1062,10 +1062,6 @@ class Deck {
     return this.bpmAnalyzer.getBaseBPM();
   }
 
-  getAudioStartOffset() {
-    return this.bpmAnalyzer.getAudioStartOffset();
-  }
-
   getAnalyserData() {
     if (!this.source) return new Uint8Array(256);
 
@@ -1628,9 +1624,7 @@ class DeckController {
     // Validate BPM range
     if (bpm >= 60 && bpm <= 200) {
       deck.bpmAnalyzer.setBPM(bpm, deck.audioBuffer);
-      // Update the manual tap time with current playback time for refinement protection
       const currentTime = deck.getCurrentTime();
-      deck.bpmAnalyzer.updateManualTapTime(currentTime);
       deck.syncEffectTempo();
       this.updateBPMDisplay();
       console.log(`TAP: Manual BPM set to ${bpm} for deck ${this.deckId} at ${currentTime.toFixed(1)}s (${this.tapIntervals.length} intervals)`);
