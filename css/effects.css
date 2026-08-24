@@ -23,16 +23,6 @@
   container-type: inline-size;
 }
 
-.fx-unit-label {
-  display: block;
-  margin-bottom: var(--spacing-sm);
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
 .fx-chips {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
