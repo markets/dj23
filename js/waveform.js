@@ -315,6 +315,22 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
   /** Below this the beat grid stops being a reference and becomes a haze. */
   static MIN_PIXELS_PER_BEAT = 5;
 
+  static BEATS_PER_BAR = 4;
+
+  /** Bars per phrase out of the box, and what the settings menu starts on. */
+  static DEFAULT_PHRASE_BARS = 16;
+
+  /**
+   * The three weights of the metre, dimmest first. Beats stay ticks at the
+   * edges — there are too many of them to cross the waveform — while bars and
+   * phrases are full-height lines you can count along the row. The phrase line
+   * goes quieter while nobody has marked the 1, matching the count's own hedge.
+   */
+  static BEAT_ALPHA = 0.16;
+  static BAR_ALPHA = 0.3;
+  static PHRASE_ALPHA = 0.62;
+  static PHRASE_ALPHA_GUESS = 0.28;
+
   static EMPTY_MESSAGE = 'Load track for beat view';
 
   constructor(canvasId, deckId) {
@@ -485,6 +501,42 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     document.getElementById(`zoomOut${this.deckId}`).addEventListener('click', () => {
       this.zoom(2);
     });
+
+    this.phraseCount = document.getElementById(`phraseCount${this.deckId}`);
+
+    // Tapping the count says "the 1 is here"; the arrows move it a beat, which
+    // is what a tap in a live set is usually out by
+    this.phraseCount.addEventListener('click', () => {
+      const deck = window.audioEngine.getDeck(this.deckId);
+      if (!deck?.audioBuffer) return;
+
+      deck.setPhraseAnchor(deck.getCurrentTime());
+      this.phraseCount.classList.add('is-set');
+      setTimeout(() => this.phraseCount.classList.remove('is-set'), 260);
+      this.render();
+    });
+
+    for (const [id, beats] of [[`phraseBack${this.deckId}`, -1], [`phraseForward${this.deckId}`, 1]]) {
+      document.getElementById(id).addEventListener('click', () => {
+        const deck = window.audioEngine.getDeck(this.deckId);
+        if (!deck?.audioBuffer) return;
+
+        deck.nudgePhraseAnchor(beats);
+        this.render();
+      });
+    }
+  }
+
+  /** Bars per phrase, or 0 when the count is switched off. */
+  phraseBars() {
+    const bars = window.settings?.values?.phraseLength;
+    return bars === undefined ? BeatWaveformRenderer.DEFAULT_PHRASE_BARS : bars;
+  }
+
+  /** Seconds a phrase lasts, or 0 when there is nothing to count. */
+  phraseSeconds(deck) {
+    const beats = this.phraseBars() * BeatWaveformRenderer.BEATS_PER_BAR;
+    return deck.getBeatPositions().length < 2 ? 0 : beats * deck.getBeatInterval();
   }
 
   /**
@@ -569,11 +621,71 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
 
     this.drawBands(width, height, deck);
     this.drawBeatGrid(width, height, deck);
+    this.drawPhraseLines(width, height, deck);
     this.drawLoop(width, height, deck);
     this.drawCues(width, height, deck);
     this.drawPlayheadLine(width, height);
 
     this.updatePlayhead();
+    this.updatePhraseCount(deck);
+  }
+
+  /**
+   * A full-height line wherever a phrase starts, counted off the deck's anchor.
+   * It is the only line on the canvas that says something about the music
+   * rather than the metre, which is why it earns the whole height.
+   */
+  drawPhraseLines(width, height, deck) {
+    const span = this.phraseSeconds(deck);
+    if (!span) return;
+
+    const { start, end, pixelsPerSecond } = this.view(width, deck);
+    const anchor = deck.getPhraseAnchor();
+    const first = anchor + Math.ceil((start - anchor) / span) * span;
+
+    this.ctx.strokeStyle = Theme.color('text-primary');
+    this.ctx.globalAlpha = deck.isPhraseConfirmed
+      ? BeatWaveformRenderer.PHRASE_ALPHA
+      : BeatWaveformRenderer.PHRASE_ALPHA_GUESS;
+    this.ctx.lineWidth = 1;
+    this.ctx.beginPath();
+
+    for (let at = first; at <= end; at += span) {
+      if (at < 0) continue;
+      const x = Math.round((at - start) * pixelsPerSecond) + 0.5;
+      this.ctx.moveTo(x, 0);
+      this.ctx.lineTo(x, height);
+    }
+
+    this.ctx.stroke();
+    this.ctx.globalAlpha = 1;
+  }
+
+  /** Bars left of the phrase, in the corner. Counts down to 1, which is the
+   *  bar you act on: four beats later the next one starts. */
+  updatePhraseCount(deck) {
+    if (!this.phraseCount) return;
+
+    const span = this.phraseSeconds(deck);
+    if (!span) {
+      this.phraseCount.textContent = '–';
+      this.phraseCount.classList.remove('is-last', 'is-guess');
+      return;
+    }
+
+    const bars = this.phraseBars();
+
+    // Parked between two beats the answer is the beat you are parked on: mark
+    // the 1 while paused and the count has to read a full phrase, not the tail
+    // of the one before. Playing, the exact time is what keeps the number
+    // turning over on the line rather than just before it.
+    const now = deck.isPlaying ? deck.getCurrentTime() : deck.findNearestBeat(deck.getCurrentTime());
+    const from = (now - deck.getPhraseAnchor()) / (span / bars);
+    const left = bars - Math.floor(((from % bars) + bars) % bars);
+
+    this.phraseCount.textContent = left;
+    this.phraseCount.classList.toggle('is-last', left === 1);
+    this.phraseCount.classList.toggle('is-guess', !deck.isPhraseConfirmed);
   }
 
   drawPlayheadLine(width, height) {
@@ -646,41 +758,81 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
   }
 
   /**
-   * Faint, evenly weighted tick per beat, sitting behind the waveform as a
-   * metric reference. Every beat is drawn the same on purpose: without downbeat
-   * detection there is no way to know which one is the "one", so emphasising
-   * every fourth would put a strong line wherever the count happened to start.
+   * The metre behind the waveform: a short faint tick per beat, and a full
+   * height line per bar so the bars can be counted along the row rather than
+   * squinted at in the corners. Bars are counted off the deck's phrase anchor,
+   * so marking the 1 moves them with it — without that anchor there is no way
+   * to know which beat starts a bar, and a bar line in the wrong place is
+   * worse than none.
    */
   drawBeatGrid(width, height, deck) {
     const beats = deck.getBeatPositions();
     if (beats.length < 2) return; // BPM unknown, nothing trustworthy to draw
 
-    const { start: windowStart, end: windowEnd, pixelsPerSecond } = this.view(width, deck);
+    const { start, end, pixelsPerSecond } = this.view(width, deck);
 
     // Beats are evenly spaced, so the first visible one can be indexed directly
     const interval = beats[1] - beats[0];
+    const spacing = interval * pixelsPerSecond;
+    const perBar = BeatWaveformRenderer.BEATS_PER_BAR;
 
-    // Zoomed out over a whole track the ticks land a pixel or two apart and
-    // read as a grey wash over the waveform. No grid says more than that.
-    if (interval * pixelsPerSecond < BeatWaveformRenderer.MIN_PIXELS_PER_BEAT) return;
-
-    const from = Math.max(0, Math.floor((windowStart - beats[0]) / interval));
-    const tick = height * 0.16;
-
-    this.ctx.strokeStyle = Theme.color('border-primary');
-    this.ctx.lineWidth = 1;
-    this.ctx.beginPath();
-
-    for (let i = from; i < beats.length && beats[i] <= windowEnd; i++) {
-      if (beats[i] < windowStart) continue;
-      const x = Math.round((beats[i] - windowStart) * pixelsPerSecond) + 0.5;
-      this.ctx.moveTo(x, 0);
-      this.ctx.lineTo(x, tick);
-      this.ctx.moveTo(x, height - tick);
-      this.ctx.lineTo(x, height);
+    // Zoomed out the ticks land a pixel or two apart and read as a grey wash
+    // over the waveform. Bar ticks survive four times longer than beat ones, so
+    // each level is measured on its own spacing.
+    const levels = [];
+    if (spacing >= BeatWaveformRenderer.MIN_PIXELS_PER_BEAT) {
+      levels.push({
+        every: 1,
+        tick: height * 0.16,
+        colour: Theme.color('text-primary'),
+        alpha: BeatWaveformRenderer.BEAT_ALPHA
+      });
     }
+    if (this.phraseBars() && spacing * perBar >= BeatWaveformRenderer.MIN_PIXELS_PER_BEAT) {
+      // Held back while the 1 is only a guess: the bar lines are no better
+      // than the anchor they are counted from
+      levels.push({
+        every: perBar,
+        tick: height / 2,
+        colour: Theme.color('text-primary'),
+        alpha: deck.isPhraseConfirmed
+          ? BeatWaveformRenderer.BAR_ALPHA
+          : BeatWaveformRenderer.BAR_ALPHA * 0.55
+      });
+    }
+    if (!levels.length) return;
 
-    this.ctx.stroke();
+    const anchor = deck.getPhraseAnchor();
+    const from = Math.max(0, Math.floor((start - beats[0]) / interval));
+
+    for (const level of levels) {
+      this.ctx.strokeStyle = level.colour;
+      this.ctx.globalAlpha = level.alpha;
+      this.ctx.lineWidth = 1;
+      this.ctx.beginPath();
+
+      for (let i = from; i < beats.length && beats[i] <= end; i++) {
+        if (beats[i] < start) continue;
+        if (level.every > 1 && this.beatInBar(beats[i], anchor, interval) !== 0) continue;
+
+        const x = Math.round((beats[i] - start) * pixelsPerSecond) + 0.5;
+        this.ctx.moveTo(x, 0);
+        this.ctx.lineTo(x, level.tick);
+        this.ctx.moveTo(x, height - level.tick);
+        this.ctx.lineTo(x, height);
+      }
+
+      this.ctx.stroke();
+      this.ctx.globalAlpha = 1;
+    }
+  }
+
+  /** Where a beat falls inside its bar, counting from the anchor: 0 is the one. */
+  beatInBar(time, anchor, interval) {
+    const beat = Math.round((time - anchor) / interval);
+    const perBar = BeatWaveformRenderer.BEATS_PER_BAR;
+
+    return ((beat % perBar) + perBar) % perBar;
   }
 
   /**

@@ -73,6 +73,56 @@
   transform: translateY(0);
 }
 
+/* --- Phrase counter, sharing the corner with the zoom buttons ------------- */
+.phrase-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-right: 4px;
+  margin-right: 2px;
+  border-right: 1px solid var(--border-secondary);
+}
+
+/* Bars left of the phrase. Tapping it says "the 1 is here". */
+.phrase-count {
+  min-width: 30px;
+  padding: 2px 7px;
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The last bar: the change lands in four beats */
+.phrase-count.is-last {
+  color: var(--color-primary);
+  text-shadow: 0 0 10px rgba(var(--color-primary-rgb), 0.5);
+}
+
+/* Nobody has marked the 1 yet, so the count is the app's own guess */
+.phrase-count.is-guess { color: var(--text-muted); }
+
+.phrase-count.is-guess::after {
+  content: "?";
+  margin-left: 3px;
+  font-size: 0.72em;
+  vertical-align: super;
+  opacity: 0.8;
+}
+
+.phrase-count.is-set {
+  background: rgba(var(--color-primary-rgb), 0.9);
+  color: var(--bg-primary);
+}
+
+.phrase-nudge {
+  min-width: 18px;
+  padding: 2px 4px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.phrase-nudge:hover { color: var(--text-primary); }
+
 .beat-waveform-wrapper {
   position: relative;
   width: 100%;

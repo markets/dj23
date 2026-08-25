@@ -82,6 +82,11 @@ class Deck {
     this.lastCueTime = null; // Hot cue most recently set or fired
     this.defaultCuePoint = null; // Auto-set cue point for when no manual cue points exist
 
+    // Where the phrase count starts, and whether it was marked by ear. Null
+    // means nobody has said where the 1 is, so the count is only a guess.
+    this.phraseAnchor = null;
+    this.isPhraseConfirmed = false;
+
     // Cue and loop points land on the beat grid unless this is turned off
     this.isQuantizeEnabled = true;
 
@@ -176,6 +181,37 @@ class Deck {
   // Beat times in seconds, empty while the BPM is unknown
   getBeatPositions() {
     return this.bpmAnalyzer.beatPositions;
+  }
+
+  /**
+   * The beat the phrase counts from. Until it is marked by ear this is just the
+   * first beat of the grid — the grid itself is trustworthy, which beat is the
+   * "one" is not, so anything counted off this is a guess until confirmed.
+   */
+  getPhraseAnchor() {
+    if (this.phraseAnchor !== null) return this.phraseAnchor;
+
+    const beats = this.getBeatPositions();
+    return beats.length ? beats[0] : 0;
+  }
+
+  /** Mark the 1 here. Always snapped to the grid, quantize or not: a tap is
+   *  never sample-accurate, and the grid is the thing being counted. */
+  setPhraseAnchor(time) {
+    this.phraseAnchor = this.findNearestBeat(time);
+    this.isPhraseConfirmed = true;
+    return this.phraseAnchor;
+  }
+
+  /** Move the count by whole beats, for a tap that landed late. */
+  nudgePhraseAnchor(beats) {
+    this.phraseAnchor = this.getPhraseAnchor() + beats * this.getBeatInterval();
+    this.isPhraseConfirmed = true;
+  }
+
+  resetPhraseAnchor() {
+    this.phraseAnchor = null;
+    this.isPhraseConfirmed = false;
   }
 
   play() {
@@ -1323,6 +1359,7 @@ class DeckController {
       if (success) {
         deck.resetCuePoints();
         deck.resetLoopPoints();
+        deck.resetPhraseAnchor();
         this.pads.reset();
       
         await this.extractAndDisplayMetadata(file);
