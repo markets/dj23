@@ -31,8 +31,8 @@
   color: var(--color-primary);
   text-transform: uppercase;
   letter-spacing: 1px;
-  font-size: 0.75rem;
-  background: rgba(0, 0, 0, 0.7);
+  font-size: 0.8rem;
+  background: rgba(0, 0, 0, 0.8);
   padding: 2px 8px;
   border-radius: var(--radius-sm);
 }
@@ -52,11 +52,11 @@
 }
 
 .zoom-btn {
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.8);
   border: none;
   color: var(--text-secondary);
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   padding: 2px 8px;
   border-radius: var(--radius-sm);
   cursor: pointer;
