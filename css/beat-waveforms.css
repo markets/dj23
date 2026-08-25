@@ -3,7 +3,7 @@
    ============================================================================ */
 
 /* --- Global beat waveforms ------------------------------------------------ */
-.global-beat-waveforms {
+.beat-waveforms {
   background: transparent;
   margin-top: var(--spacing-lg);
   border-radius: var(--radius-lg);
@@ -13,16 +13,16 @@
   transition: var(--transition-normal);
 }
 
-.global-beat-waveforms:hover {
+.beat-waveforms:hover {
   border-color: var(--color-primary);
   box-shadow: 0 4px 15px rgba(var(--color-primary-rgb), 0.2);
 }
 
-.global-beat-waveform-container {
+.beat-waveform-container {
   position: relative;
 }
 
-.global-beat-waveform-container > label {
+.beat-waveform-container > label {
   position: absolute;
   top: var(--spacing-xs);
   left: var(--spacing-xs);
@@ -37,13 +37,18 @@
   border-radius: var(--radius-sm);
 }
 
-.zoom-controls {
+.beat-waveform-controls {
   position: absolute;
   top: var(--spacing-xs);
   right: var(--spacing-xs);
   z-index: 15;
   display: flex;
   gap: 4px;
+}
+
+.zoom-controls {
+  display: flex;
+  gap: 2px;
 }
 
 .zoom-btn {
@@ -133,7 +138,7 @@
   background: linear-gradient(145deg, var(--bg-tertiary), var(--bg-secondary));
 }
 
-.global-beat-waveform-container:first-child .beat-waveform-wrapper {
+.beat-waveform-container:first-child .beat-waveform-wrapper {
   border-top: none;
 }
 

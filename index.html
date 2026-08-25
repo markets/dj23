@@ -93,33 +93,37 @@
       </header>
 
       <!-- Beat Matching Waveforms Section -->
-      <div class="global-beat-waveforms">
-        <div class="global-beat-waveform-container">
+      <div class="beat-waveforms">
+        <div class="beat-waveform-container">
           <label>Deck A</label>
-          <div class="zoom-controls">
+          <div class="beat-waveform-controls">
             <div class="phrase-controls">
               <button id="phraseBackA" class="zoom-btn phrase-nudge" title="Phrase one beat earlier">◂</button>
               <button id="phraseCountA" class="zoom-btn phrase-count" title="Tap it on the 1">–</button>
               <button id="phraseForwardA" class="zoom-btn phrase-nudge" title="Phrase one beat later">▸</button>
             </div>
-            <button id="zoomOutA" class="zoom-btn" title="Zoom Out">-</button>
-            <button id="zoomInA" class="zoom-btn" title="Zoom In">+</button>
+            <div class="zoom-controls">
+              <button id="zoomOutA" class="zoom-btn" title="Zoom Out">-</button>
+              <button id="zoomInA" class="zoom-btn" title="Zoom In">+</button>
+            </div>
           </div>
           <div class="beat-waveform-wrapper">
             <canvas id="beatWaveformA" class="beat-waveform-global-fullwidth"></canvas>
             <div class="beat-playhead" id="beatPlayheadA"></div>
           </div>
         </div>
-        <div class="global-beat-waveform-container">
+        <div class="beat-waveform-container">
           <label>Deck B</label>
-          <div class="zoom-controls">
+          <div class="beat-waveform-controls">
             <div class="phrase-controls">
               <button id="phraseBackB" class="zoom-btn phrase-nudge" title="Phrase one beat earlier">◂</button>
               <button id="phraseCountB" class="zoom-btn phrase-count" title="Tap it on the 1">–</button>
               <button id="phraseForwardB" class="zoom-btn phrase-nudge" title="Phrase one beat later">▸</button>
             </div>
-            <button id="zoomOutB" class="zoom-btn" title="Zoom Out">-</button>
-            <button id="zoomInB" class="zoom-btn" title="Zoom In">+</button>
+            <div class="zoom-controls">
+              <button id="zoomOutB" class="zoom-btn" title="Zoom Out">-</button>
+              <button id="zoomInB" class="zoom-btn" title="Zoom In">+</button>
+            </div>
           </div>
           <div class="beat-waveform-wrapper">
             <canvas id="beatWaveformB" class="beat-waveform-global-fullwidth"></canvas>
