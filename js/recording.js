@@ -59,13 +59,14 @@ class Recording {
     else if (this.phase === 'idle') this.start();
   }
 
-  start() {
+  async start() {
     if (!window.audioEngine?.isInitialized) {
       this.render();
       return;
     }
 
-    if (!window.audioEngine.startRecording()) {
+    // Awaited because the MP3 encoder has to be loaded before the first sample
+    if (!await window.audioEngine.startRecording()) {
       console.error('Recording: the engine refused to start');
       return;
     }
@@ -88,6 +89,14 @@ class Recording {
 
     if (this.takeSeconds < Recording.MIN_TAKE_SECONDS) {
       console.log(`Recording: ${this.takeSeconds}s discarded as a mis-click`);
+      this.reset();
+      return;
+    }
+
+    // Nothing came back: the encoder gave up mid-take, and there is no file to
+    // offer. Saying so beats a save button that does nothing.
+    if (!blob) {
+      console.error('Recording: the take could not be encoded');
       this.reset();
       return;
     }
@@ -170,13 +179,16 @@ class Recording {
     return `${mins}:${String(secs).padStart(2, '0')}`;
   }
 
+  /** Takes are MP3, except on browsers that fell back to MediaRecorder, so the
+   *  extension comes from the take itself rather than from an assumption. */
   filename() {
     const now = new Date();
     const pad = value => String(value).padStart(2, '0');
     const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
     const time = `${pad(now.getHours())}-${pad(now.getMinutes())}`;
+    const extension = this.blob?.type.includes('mpeg') ? 'mp3' : 'webm';
 
-    return `dj23_${date}_${time}.webm`;
+    return `dj23_${date}_${time}.${extension}`;
   }
 
   render() {
