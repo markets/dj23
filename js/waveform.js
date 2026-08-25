@@ -308,7 +308,7 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
   static MIN_ZOOM_SECONDS = 4;
   /** Widest window. Room to see a whole intro or breakdown at once, without
    *  going so far out that the waveform stops being a beat reference. */
-  static MAX_ZOOM_SECONDS = 150;
+  static MAX_ZOOM_SECONDS = 200;
   /** Zoom moves by a proportion, not by seconds: a notch has to feel the same
    *  whether the window is two bars or six minutes wide. */
   static ZOOM_STEP = 1.15;

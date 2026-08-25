@@ -49,7 +49,7 @@
 .zoom-btn {
   background: rgba(0, 0, 0, 0.7);
   border: none;
-  color: var(--color-primary);
+  color: var(--text-secondary);
   font-weight: 600;
   font-size: 0.9rem;
   padding: 2px 8px;
@@ -79,15 +79,13 @@
   align-items: center;
   gap: 2px;
   padding-right: 4px;
-  margin-right: 2px;
-  border-right: 1px solid var(--border-secondary);
+  margin-right: 4px;
 }
 
 /* Bars left of the phrase. Tapping it says "the 1 is here". */
 .phrase-count {
   min-width: 30px;
   padding: 2px 7px;
-  color: var(--text-secondary);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -118,10 +116,7 @@
   min-width: 18px;
   padding: 2px 4px;
   font-size: 0.8rem;
-  color: var(--text-muted);
 }
-
-.phrase-nudge:hover { color: var(--text-primary); }
 
 .beat-waveform-wrapper {
   position: relative;
