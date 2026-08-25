@@ -374,16 +374,18 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
   }
 
   /**
-   * How far out the pair can go: the longest track loaded, so a window can hold
-   * a whole one. The decks share a zoom, so the shorter of the two simply runs
-   * out of track and shows empty canvas at the sides. Zero until something is
-   * loaded, and then there is nothing to be too far out for.
+   * How far out the pair can go: twice the longest track loaded. Twice, because
+   * the playhead holds the centre — a window one track wide only holds the
+   * whole of it from the halfway point, while this one does from anywhere, at
+   * the cost of empty canvas on the side you are nearer to. The decks share a
+   * zoom, so the shorter of the two simply runs out of track sooner. Zero until
+   * something is loaded, and then there is nothing to be too far out for.
    */
   static maxZoom() {
-    const durations = Object.keys(window.beatWaveformRenderers || {})
-      .map(deckId => window.audioEngine?.getDeck(deckId)?.getDuration() || 0);
+    const spans = Object.keys(window.beatWaveformRenderers || {})
+      .map(deckId => (window.audioEngine?.getDeck(deckId)?.getDuration() || 0) * 2);
 
-    return Math.max(0, ...durations);
+    return Math.max(0, ...spans);
   }
 
   static clampZoom(seconds) {
