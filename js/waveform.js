@@ -306,9 +306,6 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
    */
   static TARGET_PIXELS_PER_SECOND = 48;
   static MIN_ZOOM_SECONDS = 4;
-  /** Widest window. Room to see a whole intro or breakdown at once, without
-   *  going so far out that the waveform stops being a beat reference. */
-  static MAX_ZOOM_SECONDS = 200;
   /** Zoom moves by a proportion, not by seconds: a notch has to feel the same
    *  whether the window is two bars or six minutes wide. */
   static ZOOM_STEP = 1.15;
@@ -376,11 +373,26 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     return renderers;
   }
 
+  /**
+   * How far out the pair can go: twice the longest track loaded. Twice, because
+   * the playhead holds the centre — a window one track wide only holds the
+   * whole of it from the halfway point, while this one does from anywhere, at
+   * the cost of empty canvas on the side you are nearer to. The decks share a
+   * zoom, so the shorter of the two simply runs out of track sooner. Zero until
+   * something is loaded, and then there is nothing to be too far out for.
+   */
+  static maxZoom() {
+    const spans = Object.keys(window.beatWaveformRenderers || {})
+      .map(deckId => (window.audioEngine?.getDeck(deckId)?.getDuration() || 0) * 2);
+
+    return Math.max(0, ...spans);
+  }
+
   static clampZoom(seconds) {
-    return Math.min(
-      BeatWaveformRenderer.MAX_ZOOM_SECONDS,
-      Math.max(BeatWaveformRenderer.MIN_ZOOM_SECONDS, seconds)
-    );
+    const wanted = Math.max(BeatWaveformRenderer.MIN_ZOOM_SECONDS, seconds);
+    const max = BeatWaveformRenderer.maxZoom();
+
+    return max ? Math.min(max, wanted) : wanted;
   }
 
   /** Zoom window that keeps the horizontal scale constant across screen sizes. */
@@ -472,6 +484,10 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     }
 
     this.bands = { low, mid, high, bucketsPerSecond: sampleRate / samplesPerBucket };
+
+    // Zooming an empty row has nothing to be measured against, so the window
+    // may be wider than the track that just arrived
+    BeatWaveformRenderer.shareZoom(BeatWaveformRenderer.clampZoom(this.zoomLevel));
   }
 
   setupEventListeners() {
@@ -640,6 +656,11 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     if (!span) return;
 
     const { start, end, pixelsPerSecond } = this.view(width, deck);
+
+    // Zoomed out over a whole track the phrases can land a few pixels apart,
+    // where they stop marking anything and just fog the waveform
+    if (span * pixelsPerSecond < BeatWaveformRenderer.MIN_PIXELS_PER_BEAT * 4) return;
+
     const anchor = deck.getPhraseAnchor();
     const first = anchor + Math.ceil((start - anchor) / span) * span;
 
@@ -753,11 +774,16 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     // playhead. Fading bands separately would shift the hue and break the
     // colour comparison between decks.
     if (playedUntil > windowStart) {
+      // From the top of the track, not the edge of the canvas: zoomed right
+      // out there is empty room before the first beat, and washing it would
+      // read as track that has already gone by
+      const from = Math.max(0, Math.round(-windowStart * pixelsPerSecond));
       const until = Math.min(width, Math.round((playedUntil - windowStart) * pixelsPerSecond));
-      if (until > 0) {
+
+      if (until > from) {
         this.ctx.globalAlpha = 0.55;
         this.ctx.fillStyle = Theme.color('bg-primary');
-        this.ctx.fillRect(0, 0, until, height);
+        this.ctx.fillRect(from, 0, until - from, height);
         this.ctx.globalAlpha = 1;
       }
     }
