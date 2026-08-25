@@ -237,7 +237,10 @@ class MixerController {
       return this.clearBeatMeter(bars);
     }
 
-    const position = (deck.getCurrentTime() - beats[0]) / interval;
+    // Counted off the phrase anchor, not the start of the grid: once the 1 has
+    // been marked, the leftmost bar is the 1, and two decks lighting the same
+    // bar together are in phrase as well as in time
+    const position = (deck.getCurrentTime() - deck.getPhraseAnchor()) / interval;
     if (!Number.isFinite(position)) return this.clearBeatMeter(bars);
 
     // Before the first beat the count runs negative, and a negative modulo in

@@ -130,6 +130,14 @@ class EqKnob {
     this.render();
   }
 
+  /** Flat again, kill included: a channel should not carry the last track's
+   *  EQ into the next one. */
+  reset() {
+    this.killed = false;
+    this.root.classList.remove('is-killed');
+    this.set(0);
+  }
+
   set(value) {
     this.value = Math.max(-EqKnob.RANGE, Math.min(EqKnob.RANGE, Math.round(value * 10) / 10));
 

@@ -1361,6 +1361,7 @@ class DeckController {
         deck.resetLoopPoints();
         deck.resetPhraseAnchor();
         this.pads.reset();
+        this.eqKnobs.forEach(knob => knob.reset());
       
         await this.extractAndDisplayMetadata(file);
         this.updateTrackTime();

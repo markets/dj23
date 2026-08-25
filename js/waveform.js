@@ -681,7 +681,13 @@ class BeatWaveformRenderer extends BaseWaveformRenderer {
     // turning over on the line rather than just before it.
     const now = deck.isPlaying ? deck.getCurrentTime() : deck.findNearestBeat(deck.getCurrentTime());
     const from = (now - deck.getPhraseAnchor()) / (span / bars);
-    const left = bars - Math.floor(((from % bars) + bars) % bars);
+
+    // The anchor snaps to the nearest beat, which can be a few milliseconds
+    // ahead of the playhead that set it. Sitting inside that beat is being on
+    // the 1, not at the tail of the phrase before it — without this the count
+    // flashes 1 before settling on a full phrase.
+    const counted = from < 0 && from > -1 ? 0 : from;
+    const left = bars - Math.floor(((counted % bars) + bars) % bars);
 
     this.phraseCount.textContent = left;
     this.phraseCount.classList.toggle('is-last', left === 1);
