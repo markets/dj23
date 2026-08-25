@@ -1,14 +1,18 @@
 /**
- * Header settings menu. Owns the two preferences that change how the mixer
- * behaves — pitch fader range and output routing — and persists them.
+ * Header settings menu. Owns the preferences that change how the mixer behaves
+ * — pitch fader range, phrase length and output routing — and persists them.
  */
 class Settings {
   static STORAGE_KEY = 'dj23.settings';
 
   static DEFAULTS = {
     pitchRange: Deck.DEFAULT_PITCH_RANGE,
+    phraseLength: BeatWaveformRenderer.DEFAULT_PHRASE_BARS,
     outputRouting: AudioEngine.DEFAULT_ROUTING
   };
+
+  /** Settings whose value is a number rather than a name. */
+  static NUMERIC = ['pitchRange', 'phraseLength'];
 
   constructor() {
     this.values = { ...Settings.DEFAULTS, ...this.read() };
@@ -87,7 +91,7 @@ class Settings {
     document.querySelectorAll('[data-setting]').forEach(button => {
       button.addEventListener('click', () => {
         const { setting, value } = button.dataset;
-        this.set(setting, setting === 'pitchRange' ? Number(value) : value);
+        this.set(setting, Settings.NUMERIC.includes(setting) ? Number(value) : value);
       });
     });
   }
@@ -96,8 +100,18 @@ class Settings {
 
   apply() {
     this.applyPitchRange();
+    this.applyPhraseLength();
     this.applyOutputRouting();
     this.markSelectedOptions();
+  }
+
+  /** Off leaves the beat rows as they were before any of this existed: no
+   *  count in the corner, no phrase lines on the waveform. */
+  applyPhraseLength() {
+    const off = !this.values.phraseLength;
+
+    document.querySelectorAll('.phrase-controls').forEach(el => { el.hidden = off; });
+    Object.values(window.beatWaveformRenderers || {}).forEach(renderer => renderer?.render());
   }
 
   markSelectedOptions() {
