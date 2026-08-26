@@ -1,0 +1,343 @@
+/* ============================================================================
+   MIDI — the settings entry and the mapping modal
+   ============================================================================ */
+
+/* --- The line in the settings menu ---------------------------------------- */
+.midi-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  transition: var(--transition-normal);
+}
+
+.midi-summary:hover {
+  border-color: var(--color-primary);
+}
+
+.midi-dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  background: var(--border-light);
+}
+
+.midi-dot.is-live {
+  background: var(--color-primary);
+  box-shadow: 0 0 8px rgba(var(--color-primary-rgb), 0.6);
+}
+
+.midi-summary-text { flex: 1; min-width: 0; }
+
+.midi-summary-name {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.midi-summary-note {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.midi-summary-go {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* --- Tabs ----------------------------------------------------------------- */
+.midi-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 var(--spacing-xl);
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.midi-tab {
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-normal);
+}
+
+.midi-tab:hover { color: var(--text-primary); }
+
+.midi-tab.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+.midi-body { padding: var(--spacing-lg) var(--spacing-xl); }
+
+.midi-empty,
+.midi-notice {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: var(--spacing-md);
+  text-align: center;
+}
+
+.midi-notice {
+  color: var(--color-level-mid);
+  border: 1px solid var(--color-level-mid);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+/* --- Devices -------------------------------------------------------------- */
+.midi-device {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
+}
+
+.midi-device.is-offline { opacity: 0.5; }
+
+.midi-device-text { flex: 1; min-width: 0; }
+
+.midi-device-name {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.midi-device-note {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.midi-btn {
+  padding: 6px 12px;
+  background: var(--gradient-surface);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: var(--transition-normal);
+}
+
+.midi-btn:hover {
+  background: var(--gradient-surface-hover);
+  color: var(--text-primary);
+}
+
+.midi-btn.is-primary {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* --- Setups --------------------------------------------------------------- */
+.midi-search {
+  width: 100%;
+  padding: 8px var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.82rem;
+}
+
+.midi-presets {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.midi-preset {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 8px var(--spacing-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  transition: var(--transition-normal);
+}
+
+.midi-preset:hover { border-color: var(--border-light); }
+.midi-preset.is-match { border-color: var(--color-primary); }
+
+.midi-preset-name {
+  flex: 1;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.midi-preset-tag {
+  padding: 2px 6px;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.midi-preset-tag.is-verified {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+/* --- Mapping table -------------------------------------------------------- */
+.midi-group-label {
+  margin: var(--spacing-md) 0 6px;
+  color: var(--text-muted);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.midi-group-label:first-child { margin-top: 0; }
+
+.midi-map-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 5px var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  transition: var(--transition-normal);
+}
+
+.midi-map-row:hover { background: var(--bg-overlay); }
+
+/* Waiting for the hardware to say something, which is the one moment the row
+   is doing anything on its own */
+.midi-map-row.is-learning { background: rgba(var(--color-secondary-rgb), 0.12); }
+
+.midi-map-name {
+  flex: 1;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.midi-map-msg {
+  min-width: 118px;
+  padding: 3px 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.midi-map-msg.is-empty {
+  color: var(--text-muted);
+  border-style: dashed;
+}
+
+.midi-map-msg.is-listening {
+  color: var(--color-secondary);
+  border-color: var(--color-secondary);
+}
+
+.midi-learn {
+  width: 54px;
+  padding: 3px 0;
+  background: var(--gradient-surface);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition-normal);
+}
+
+.midi-learn:hover { color: var(--text-primary); }
+
+.midi-learn.is-learning {
+  border-color: var(--color-secondary);
+  color: var(--color-secondary);
+}
+
+.midi-clear {
+  width: 24px;
+  background: none;
+  border: none;
+  color: var(--border-light);
+  font-family: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.midi-clear:hover { color: var(--color-secondary); }
+
+/* --- Monitor & footer ----------------------------------------------------- */
+/* Without this, debugging a mapping is guesswork: it is the only place that
+   says what the controller actually sent */
+.midi-monitor {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.midi-monitor-msg { color: var(--color-primary); }
+
+.midi-spacer { flex: 1; }
+
+.midi-modal-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-top: 1px solid var(--border-primary);
+}
+
+@media (max-width: 768px) {
+  .midi-device {
+    flex-wrap: wrap;
+  }
+
+  .midi-map-name {
+    font-size: 0.76rem;
+  }
+
+  .midi-map-msg {
+    min-width: 92px;
+  }
+}

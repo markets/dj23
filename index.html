@@ -74,6 +74,19 @@
                 </div>
               </div>
 
+              <div class="settings-group" role="group" aria-label="MIDI controller">
+                <div class="settings-label">MIDI controller</div>
+                <p class="settings-hint">Map a controller to the mixer, or load one of the built-in setups.</p>
+                <button type="button" class="midi-summary" id="midiSummary">
+                  <span class="midi-dot"></span>
+                  <span class="midi-summary-text">
+                    <span class="midi-summary-name" data-midi-name>No controller</span>
+                    <span class="midi-summary-note" data-midi-note>Connect one to get started</span>
+                  </span>
+                  <span class="midi-summary-go" aria-hidden="true">›</span>
+                </button>
+              </div>
+
               <div class="settings-group" role="group" aria-label="Output routing">
                 <div class="settings-label">Output routing</div>
                 <div class="settings-choices settings-choices-stacked">
@@ -688,6 +701,29 @@
   </nav>
 
   <!-- Keyboard Shortcuts Modal -->
+  <div id="midiModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>MIDI</h2>
+        <button id="midiClose" class="icon-button" aria-label="Close">✕</button>
+      </div>
+
+      <div class="midi-tabs">
+        <button type="button" class="midi-tab active" data-midi-tab="devices">Devices</button>
+        <button type="button" class="midi-tab" data-midi-tab="presets">Setups</button>
+        <button type="button" class="midi-tab" data-midi-tab="mapping">Mapping</button>
+      </div>
+
+      <div class="midi-body" data-midi-body></div>
+
+      <div class="midi-modal-foot">
+        <button type="button" class="midi-btn" data-midi-import>Import…</button>
+        <button type="button" class="midi-btn" data-midi-export>Export</button>
+        <input type="file" id="midiImportInput" accept="application/json,.json" class="file-input">
+      </div>
+    </div>
+  </div>
+
   <div id="keyboardShortcutsModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -884,6 +920,9 @@
   <script src="js/button-handler.js"></script>
   <script src="js/performance-pads.js"></script>
   <script src="js/keyboard-shortcuts.js"></script>
+  <script src="js/midi-actions.js"></script>
+  <script src="js/midi.js"></script>
+  <script src="js/midi-ui.js"></script>
   <script src="js/mixer.js"></script>
   <script src="js/sound-pad.js"></script>
   <script src="js/recording.js"></script>

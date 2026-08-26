@@ -61,6 +61,8 @@ through the Web Audio API.
 * **Sound pad** with 9 slots — airhorn, siren, scratch, clap, boom, laser, applause, drop and
   whoosh — and every slot can be replaced with your own audio file
 * **Record your mix** as it plays and download it as an MP3
+* **MIDI controllers** — plug one in and map it from the settings menu, with a built-in setup
+  for the Numark Mixtrack Pro, MIDI learn for everything else, and mappings you can import and export
 * **Keyboard shortcuts** for everything you need mid-mix, with a `?` cheat sheet
 * **Responsive layout** — so you can even mix from your phone
 
