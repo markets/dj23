@@ -60,7 +60,7 @@ through the Web Audio API.
   its artwork, artist, length, BPM and key
 * **Sound pad** with 9 slots — airhorn, siren, scratch, clap, boom, laser, applause, drop and
   whoosh — and every slot can be replaced with your own audio file
-* **Record your mix** as it plays and download it as a WebM file
+* **Record your mix** as it plays and download it as an MP3
 * **Keyboard shortcuts** for everything you need mid-mix, with a `?` cheat sheet
 * **Responsive layout** — so you can even mix from your phone
 
@@ -86,7 +86,8 @@ Global: <kbd>Space</kbd> play/pause the active deck, <kbd>←</kbd> <kbd>→</kb
 ## 🌐 Browser support
 
 Needs a modern browser with Web Audio and `ResizeObserver` — recent Chrome, Edge, Firefox or
-Safari. Recording uses `MediaRecorder`, which is unavailable in some older Safari versions.
+Safari. Recording encodes MP3 through an `AudioWorklet`; browsers without one fall back to
+`MediaRecorder` and save the take as WebM instead.
 
 ## 🆔 The name
 

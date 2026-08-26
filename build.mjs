@@ -17,7 +17,8 @@ const TARGET = ['safari16', 'chrome111', 'firefox113', 'edge111'];
 // Copied out so the page never points at node_modules
 const VENDOR = [
   'node_modules/jsmediatags/dist/jsmediatags.min.js',
-  'node_modules/music-tempo/dist/browser/music-tempo.min.js'
+  'node_modules/music-tempo/dist/browser/music-tempo.min.js',
+  'node_modules/@breezystack/lamejs/dist/lamejs.iife.js'
 ];
 
 const flags = new Set(process.argv.slice(2));

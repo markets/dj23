@@ -8,6 +8,7 @@
     "esbuild": "^0.28.2"
   },
   "dependencies": {
+    "@breezystack/lamejs": "^1.2.7",
     "jsmediatags": "^3.9.7",
     "music-tempo": "^1.0.3"
   }

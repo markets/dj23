@@ -5,6 +5,9 @@ class AudioEngine {
   static ROUTINGS = ['main', 'cue-split'];
   static DEFAULT_ROUTING = 'main';
 
+  /** Stereo, and generous enough that a mix survives the one encode it gets. */
+  static RECORDING_BITRATE = 192;
+
   constructor() {
     this.audioContext = null;
     this.masterGain = null;
@@ -17,6 +20,10 @@ class AudioEngine {
     this.recordedChunks = [];
     this.isRecording = false;
     this.recordingStartTime = null;
+    this.recorderNode = null;
+    this.recorderSink = null;
+    this.mp3Worker = null;
+    this.recordedFrames = 0;
     this.outputRouting = AudioEngine.DEFAULT_ROUTING;
   }
 
@@ -24,6 +31,8 @@ class AudioEngine {
     if (this.isInitialized) return;
 
     try {
+      // 44100 is also one of the three sample rates MP3 is defined at, which is
+      // what lets a take be encoded without being resampled first
       this.audioContext = new AudioContext({ sampleRate: 44100 });
 
       this.channelMerger = this.audioContext.createChannelMerger(2);
@@ -75,14 +84,21 @@ class AudioEngine {
       this.cueGain.connect(this.channelMerger, 0, 0);    // CUE -> Left channel
       this.masterGain.connect(this.channelMerger, 0, 1); // MAIN -> Right channel
       this.channelMerger.connect(this.audioContext.destination);
-      this.channelMerger.connect(this.mediaStreamDestination);
+      this.captureTaps().forEach(tap => this.channelMerger.connect(tap));
     } else {
       // Straight through, so the main mix keeps its stereo image
       this.masterGain.connect(this.audioContext.destination);
-      this.masterGain.connect(this.mediaStreamDestination);
+      this.captureTaps().forEach(tap => this.masterGain.connect(tap));
     }
 
     return this.outputRouting;
+  }
+
+  /** Everything listening in on the output stage. Rewiring goes through here so
+   *  that changing the routing mid-take keeps the recorder on the mix rather
+   *  than on whatever the previous routing left connected. */
+  captureTaps() {
+    return [this.mediaStreamDestination, this.recorderNode].filter(Boolean);
   }
 
   isCueAvailable() {
@@ -113,14 +129,76 @@ class AudioEngine {
     return this.decks[deckId];
   }
 
-  startRecording() {
+  /**
+   * Records the mix straight to MP3. An AudioWorklet copies the output stage
+   * and a worker encodes it as it arrives, so the take is only ever lossy once
+   * and stopping costs nothing — the file is already written. Browsers that
+   * cannot do that fall back to MediaRecorder and a WebM take, which is better
+   * than losing the mix.
+   */
+  async startRecording() {
     if (!this.isInitialized || this.isRecording) return false;
 
+    if (await this.startMp3Recording()) return true;
+    return this.startMediaRecorder();
+  }
+
+  async startMp3Recording() {
+    if (!this.audioContext.audioWorklet || typeof Worker === 'undefined') return false;
+
+    try {
+      await this.audioContext.audioWorklet.addModule('js/recorder-worklet.js');
+
+      this.mp3Worker = new Worker('js/mp3-worker.js');
+      this.mp3Worker.postMessage({
+        type: 'start',
+        sampleRate: this.audioContext.sampleRate,
+        bitRate: AudioEngine.RECORDING_BITRATE
+      });
+
+      this.recorderNode = new AudioWorkletNode(this.audioContext, 'recorder-processor', {
+        numberOfOutputs: 1,
+        outputChannelCount: [1]
+      });
+
+      this.recordedFrames = 0;
+      this.recorderNode.port.onmessage = ({ data }) => {
+        if (data.type !== 'block') {
+          this.mp3Worker.postMessage({ type: 'end' });
+          return;
+        }
+
+        // Counted before the buffers leave, because after the transfer they are
+        // no longer ours to read
+        this.recordedFrames += data.left.length;
+        this.mp3Worker.postMessage(data, [data.left.buffer, data.right.buffer]);
+      };
+
+      // A worklet whose output goes nowhere is never pulled by the graph, and a
+      // node that is never pulled never runs. The silence keeps it turning.
+      this.recorderSink = this.audioContext.createGain();
+      this.recorderSink.gain.value = 0;
+      this.recorderNode.connect(this.recorderSink);
+      this.recorderSink.connect(this.audioContext.destination);
+
+      this.setOutputRouting(this.outputRouting); // puts the tap on the mix
+
+      this.isRecording = true;
+      console.log('Recording started (MP3)');
+      return true;
+    } catch (error) {
+      console.warn('Recording: no MP3 encoder, falling back to WebM:', error);
+      this.teardownMp3Recording();
+      return false;
+    }
+  }
+
+  startMediaRecorder() {
     try {
       this.recordedChunks = [];
-      
+
       const options = { mimeType: 'audio/webm;codecs=opus' };
-      
+
       // Fallback for browsers that don't support the preferred codec
       if (!MediaRecorder.isTypeSupported(options.mimeType)) {
         options.mimeType = 'audio/webm';
@@ -130,7 +208,7 @@ class AudioEngine {
       }
 
       this.mediaRecorder = new MediaRecorder(this.mediaStreamDestination.stream, options);
-      
+
       this.mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           this.recordedChunks.push(event.data);
@@ -144,8 +222,8 @@ class AudioEngine {
       this.mediaRecorder.start(1000); // Collect data every second
       this.isRecording = true;
       this.recordingStartTime = Date.now();
-      
-      console.log('Recording started');
+
+      console.log('Recording started (WebM)');
       return true;
     } catch (error) {
       console.error('Failed to start recording:', error);
@@ -154,8 +232,46 @@ class AudioEngine {
   }
 
   stopRecording() {
-    if (!this.isRecording || !this.mediaRecorder) return null;
+    if (!this.isRecording) return null;
+    if (this.recorderNode) return this.stopMp3Recording();
+    if (this.mediaRecorder) return this.stopMediaRecorder();
 
+    return null;
+  }
+
+  stopMp3Recording() {
+    return new Promise((resolve) => {
+      this.mp3Worker.onmessage = ({ data }) => {
+        this.isRecording = false;
+        this.teardownMp3Recording();
+        console.log('Recording stopped, blob size:', data.blob ? data.blob.size : 0);
+        resolve(data.type === 'done' ? data.blob : null);
+      };
+
+      // Stops the tap. The last partial block, and the end of stream behind it,
+      // reach the worker through the handler already listening.
+      this.recorderNode.port.postMessage('stop');
+    });
+  }
+
+  teardownMp3Recording() {
+    if (this.recorderNode) {
+      this.recorderNode.port.onmessage = null;
+      this.recorderNode.disconnect();
+    }
+    this.recorderSink?.disconnect();
+    this.mp3Worker?.terminate();
+
+    this.recorderNode = null;
+    this.recorderSink = null;
+    this.mp3Worker = null;
+    this.recordedFrames = 0;
+
+    // Rewires the output stage without the tap on it
+    if (this.audioContext) this.setOutputRouting(this.outputRouting);
+  }
+
+  stopMediaRecorder() {
     return new Promise((resolve) => {
       this.mediaRecorder.onstop = () => {
         this.isRecording = false;
@@ -172,7 +288,15 @@ class AudioEngine {
   }
 
   getRecordingDuration() {
-    if (!this.isRecording || !this.recordingStartTime) return 0;
+    if (!this.isRecording) return 0;
+
+    // While encoding, the take is counted in the samples that reached the
+    // encoder: its own clock, which cannot drift away from the finished file
+    if (this.recorderNode) {
+      return Math.floor(this.recordedFrames / this.audioContext.sampleRate);
+    }
+
+    if (!this.recordingStartTime) return 0;
     return Math.floor((Date.now() - this.recordingStartTime) / 1000);
   }
 
