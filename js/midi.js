@@ -73,6 +73,8 @@ class MidiController {
     }
 
     this.error = null;
+    await MidiPresets.load();
+
     this.access.onstatechange = () => this.collect();
     this.collect();
 
@@ -96,10 +98,12 @@ class MidiController {
       input.onmidimessage = event => this.handleMessage(name, event);
       this.devices.set(name, { input, connected: input.state === 'connected' });
 
-      // A controller with a setup of its own arrives ready to play
+      // A controller with a setup of its own arrives ready to play. Not
+      // awaited: the sweep must not stall on a fetch, and applyPreset
+      // announces once the file lands.
       if (!this.mappings[name]) {
         const preset = MidiPresets.forDevice(name);
-        if (preset) this.applyPreset(name, preset.id, { quiet: true });
+        if (preset) this.applyPreset(name, preset.id);
       }
       console.log(`MIDI: ${name} connected`);
     }
@@ -135,14 +139,15 @@ class MidiController {
     return this.mappings[deviceName] || {};
   }
 
-  applyPreset(deviceName, presetId, { quiet = false } = {}) {
+  /** Async because the bindings live in a file that is fetched on demand. */
+  async applyPreset(deviceName, presetId) {
     const preset = MidiPresets.byId(presetId);
     if (!preset) return;
 
-    this.mappings[deviceName] = { ...preset.bindings };
+    this.mappings[deviceName] = await MidiPresets.bindings(presetId);
     this.write();
     this.rebuildRoutes();
-    if (!quiet) this.announce();
+    this.announce();
 
     console.log(`MIDI: ${deviceName} set up as ${preset.name}`);
   }
@@ -267,11 +272,13 @@ class MidiController {
 
   // --- import / export ------------------------------------------------------
 
+  /** The same shape the files under mappings/ use, so an export can be sent
+   *  back to the repo as a built-in setup without being rewritten. */
   export(deviceName) {
     return {
       app: 'dj23',
       kind: 'midi-mapping',
-      device: deviceName,
+      name: deviceName,
       bindings: this.mappingFor(deviceName)
     };
   }
@@ -282,16 +289,7 @@ class MidiController {
       return 'That file is not a DJ23 mapping.';
     }
 
-    const bindings = {};
-    for (const [actionId, binding] of Object.entries(payload.bindings)) {
-      if (!MidiActions.byId(actionId)) continue;               // an action we dropped
-      if (!binding || typeof binding.number !== 'number') continue;
-      bindings[actionId] = {
-        type: binding.type === MidiPresets.CC ? MidiPresets.CC : MidiPresets.NOTE,
-        channel: Number(binding.channel) || 1,
-        number: binding.number
-      };
-    }
+    const bindings = MidiPresets.clean(payload.bindings);
 
     if (!Object.keys(bindings).length) return 'That mapping has nothing this version understands.';
 

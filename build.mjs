@@ -28,7 +28,7 @@ await rm(OUT, { recursive: true, force: true });
 await mkdir(OUT, { recursive: true });
 await copyIndex();
 
-for (const dir of ['images', 'sounds']) {
+for (const dir of ['images', 'sounds', 'mappings']) {
   await cp(dir, `${OUT}/${dir}`, { recursive: true, filter: p => !p.endsWith('.DS_Store') });
 }
 for (const src of VENDOR) {

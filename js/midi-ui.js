@@ -102,9 +102,8 @@ class MidiPanel {
 
     const preset = e.target.closest('[data-midi-preset]');
     if (preset) {
-      this.midi.applyPreset(this.deviceName, preset.dataset.midiPreset);
       this.tab = 'mapping';
-      return this.render();
+      return this.midi.applyPreset(this.deviceName, preset.dataset.midiPreset);
     }
 
     const learn = e.target.closest('[data-midi-learn]');

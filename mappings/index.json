@@ -1,0 +1,12 @@
+[
+  {
+    "id": "numark-mixtrack-pro",
+    "name": "Numark Mixtrack Pro",
+    "file": "numark-mixtrack-pro.json",
+    "matches": [
+      "mixtrack pro",
+      "mix track pro"
+    ],
+    "source": "Mixxx"
+  }
+]
