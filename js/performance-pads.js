@@ -214,7 +214,6 @@ class PerformancePads {
     this.isRollLatched = !this.isRollLatched;
     if (!this.isRollLatched) this.stopLoop();
 
-    this.thirdButton.classList.toggle('latched', this.isRollLatched);
     this.syncOperations();
   }
 
@@ -236,6 +235,9 @@ class PerformancePads {
 
     this.thirdButton.textContent = PerformancePads.LABELS[this.mode];
     this.thirdButton.classList.toggle('is-idle', this.mode === 'loop' && !isLooping);
+    // The latch belongs to ROLL: switching to LOOP turns it off, and the slot
+    // has to stop looking held the moment it stops being it
+    this.thirdButton.classList.toggle('latched', this.mode === 'roll' && this.isRollLatched);
   }
 
   toggleQuantize() {
@@ -251,7 +253,6 @@ class PerformancePads {
   reset() {
     this.heldChip = null;
     this.isRollLatched = false;
-    this.thirdButton.classList.remove('latched');
 
     this.highlightChip(null);
     this.syncCues();

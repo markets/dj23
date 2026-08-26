@@ -1,6 +1,15 @@
 class MixerController {
+  /**
+   * Half the width of the notch at the centre of the crossfader, in percent.
+   * Drag inside it and the fader drops into the middle: hardware has a detent
+   * there and a range input has nothing, so coming back to both decks meant
+   * finding 50 by eye in the middle of a mix.
+   */
+  static CENTRE_DETENT = 4;
+
   constructor() {
     this.crossfaderValue = 50;
+    this.isDraggingCrossfader = false;
     this.vuMeters = {
       A: null,
       B: null,
@@ -49,8 +58,22 @@ class MixerController {
     }, { suffix: '%' });
 
     const crossfader = document.getElementById('crossfader');
+
+    // Only a drag falls into the notch. The arrow keys walk the fader a point
+    // at a time on purpose, and a detent would eat those steps whole.
+    crossfader.addEventListener('pointerdown', () => { this.isDraggingCrossfader = true; });
+    for (const event of ['pointerup', 'pointercancel']) {
+      window.addEventListener(event, () => { this.isDraggingCrossfader = false; });
+    }
+
     crossfader.addEventListener('input', (e) => {
-      this.crossfaderValue = parseInt(e.target.value);
+      const dragged = parseInt(e.target.value);
+      const value = this.isDraggingCrossfader &&
+        Math.abs(dragged - 50) <= MixerController.CENTRE_DETENT ? 50 : dragged;
+
+      if (value !== dragged) e.target.value = value;
+
+      this.crossfaderValue = value;
       this.updateCrossfader();
     });
 

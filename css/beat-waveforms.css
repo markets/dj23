@@ -87,9 +87,12 @@
   margin-right: 4px;
 }
 
-/* Bars left of the phrase. Tapping it says "the 1 is here". */
+/* Bars left of the phrase. Tapping it says "the 1 is here", so its width is
+   fixed at the widest it ever gets: a button that resizes as the count changes
+   slides out from under the finger aiming at it. */
 .phrase-count {
-  min-width: 30px;
+  position: relative;
+  width: 38px;
   padding: 2px 7px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -104,11 +107,13 @@
 /* Nobody has marked the 1 yet, so the count is the app's own guess */
 .phrase-count.is-guess { color: var(--text-muted); }
 
+/* Out of the flow, so the digits stay put when the guess is confirmed */
 .phrase-count.is-guess::after {
   content: "?";
-  margin-left: 3px;
+  position: absolute;
+  top: 1px;
+  right: 4px;
   font-size: 0.72em;
-  vertical-align: super;
   opacity: 0.8;
 }
 
