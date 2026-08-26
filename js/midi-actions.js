@@ -81,14 +81,18 @@ class MidiActions {
           amount => knob(deckId, band, amount));
       }
 
+      // Flipped on purpose: a DJ pitch fader reads + at the bottom and − at
+      // the top, the opposite of the number the hardware sends
       add('Pitch', `deck${deckId}.pitch`, `Deck ${deckId} · Pitch fader`, 'range',
-        amount => slide(`pitch${deckId}`, amount));
+        amount => slide(`pitch${deckId}`, 1 - amount));
       add('Pitch', `deck${deckId}.bendDown`, `Deck ${deckId} · Pitch bend −`, 'hold',
         () => deck(deckId)?.pitchBend(-1),
         () => deck(deckId)?.stopPitchBend());
       add('Pitch', `deck${deckId}.bendUp`, `Deck ${deckId} · Pitch bend +`, 'hold',
         () => deck(deckId)?.pitchBend(1),
         () => deck(deckId)?.stopPitchBend());
+      add('Pitch', `deck${deckId}.jog`, `Deck ${deckId} · Jog (pitch bend)`, 'relative',
+        delta => MidiActions.nudge(deckId, delta));
     }
 
     add('Mixer', 'mixer.crossfader', 'Crossfader', 'range', amount => slide('crossfader', amount));
@@ -96,6 +100,31 @@ class MidiActions {
     add('Mixer', 'mixer.cue', 'Cue volume', 'range', amount => slide('cueVolume', amount));
 
     return actions;
+  }
+
+  /**
+   * How hard a jog bends, per unit of turn, and how long it may sit still
+   * before the bend is let go of.
+   *
+   * A wheel reports turns and never a release, so the release has to be
+   * inferred: the bend holds while the wheel keeps talking and springs back
+   * once it goes quiet.
+   */
+  static JOG_PERCENT_PER_STEP = 1.2;
+  static JOG_RELEASE_MS = 140;
+
+  static jogTimers = {};
+
+  /** Bend by how hard the wheel was turned, so a nudge and a shove differ. */
+  static nudge(deckId, delta) {
+    const deck = window.audioEngine?.getDeck(deckId);
+    if (!delta || !deck?.audioBuffer) return;
+
+    const amount = Math.min(Deck.BEND_PERCENT, Math.abs(delta) * MidiActions.JOG_PERCENT_PER_STEP);
+    deck.pitchBend(delta > 0 ? 1 : -1, amount);
+
+    clearTimeout(MidiActions.jogTimers[deckId]);
+    MidiActions.jogTimers[deckId] = setTimeout(() => deck.stopPitchBend(), MidiActions.JOG_RELEASE_MS);
   }
 
   /** Decks whose clear button is being held right now. */

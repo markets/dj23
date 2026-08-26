@@ -229,6 +229,30 @@
   color: var(--text-muted);
 }
 
+/* --- Output device -------------------------------------------------------- */
+.output-device {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.output-device-select {
+  width: 100%;
+  padding: 6px var(--spacing-sm);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.78rem;
+}
+
+/* Offered but not usable on this output: dimmed rather than hidden, so the
+   reason can be read in the tooltip instead of the option just missing */
+.settings-choice.is-unavailable {
+  opacity: 0.45;
+}
+
 .settings-choice.active .settings-choice-note {
   color: rgba(0, 0, 0, 0.7);
 }

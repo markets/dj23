@@ -98,6 +98,18 @@
                     <span class="settings-choice-name">Cue split</span>
                     <span class="settings-choice-note">Cue on the left channel, mix on the right — for pre-listening on one headphone.</span>
                   </button>
+                  <div class="output-device">
+                    <button type="button" class="settings-choice output-device-pick" id="outputDevicePick">
+                      <span class="settings-choice-name">Sound card</span>
+                      <span class="settings-choice-note" id="outputDeviceNote">Using the system output. Pick the card by name to reach all its outputs.</span>
+                    </button>
+                    <select id="outputDeviceSelect" class="output-device-select" hidden></select>
+                  </div>
+
+                  <button class="settings-choice" role="menuitemradio" aria-checked="false" data-setting="outputRouting" data-value="split-4" id="routingSplit4">
+                    <span class="settings-choice-name">Four outputs</span>
+                    <span class="settings-choice-note">Mix on outputs 1-2, cue on 3-4 — for a controller with its own sound card. Pick it as the system output first.</span>
+                  </button>
                 </div>
               </div>
             </div>

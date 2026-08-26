@@ -98,10 +98,11 @@ class MidiController {
       input.onmidimessage = event => this.handleMessage(name, event);
       this.devices.set(name, { input, connected: input.state === 'connected' });
 
-      // A controller with a setup of its own arrives ready to play
-      if (!this.mappings[name]) {
-        const preset = MidiPresets.forDevice(name);
-        if (preset) this.applyPreset(name, preset.id);
+      // A controller with a setup of its own arrives ready to play, and one
+      // that was set up before the setup grew gets the new controls
+      const preset = MidiPresets.forDevice(name);
+      if (preset) {
+        this.mappings[name] ? this.topUp(name, preset.id) : this.applyPreset(name, preset.id);
       }
       console.log(`MIDI: ${name} connected`);
     }
@@ -147,6 +148,38 @@ class MidiController {
     this.announce();
 
     console.log(`MIDI: ${deviceName} set up as ${preset.name}`);
+  }
+
+  /**
+   * Fills in what a built-in setup has gained since this controller was set up.
+   *
+   * Only untouched actions are filled: a binding already in the mapping stays,
+   * and a message already spoken for is left alone rather than being stolen
+   * from whatever the DJ pointed it at. The cost is that an action deliberately
+   * cleared comes back when the setup later learns to drive it.
+   */
+  topUp(deviceName, presetId) {
+    const mapping = { ...this.mappingFor(deviceName) };
+    const taken = new Set(Object.values(mapping).map(MidiController.key));
+    let added = 0;
+
+    for (const [actionId, binding] of Object.entries(MidiPresets.bindings(presetId))) {
+      if (mapping[actionId] || taken.has(MidiController.key(binding))) continue;
+
+      mapping[actionId] = binding;
+      taken.add(MidiController.key(binding));
+      added++;
+    }
+
+    if (!added) return 0;
+
+    this.mappings[deviceName] = mapping;
+    this.write();
+    this.rebuildRoutes();
+    this.announce();
+
+    console.log(`MIDI: ${deviceName} picked up ${added} new control${added === 1 ? '' : 's'} from its setup`);
+    return added;
   }
 
   bind(deviceName, actionId, binding) {
@@ -225,11 +258,30 @@ class MidiController {
     this.announce();
   }
 
+  /** Jog wheels count in 7-bit two's complement: 1-63 is one way round,
+   *  65-127 read as negative for the other. */
+  static toTurn(value) {
+    return value > 63 ? value - 128 : value;
+  }
+
+  /**
+   * 0-127 onto 0-1, with 64 landing dead centre.
+   *
+   * A pitch fader clicks into a detent in the middle and sends 64 there, but
+   * 64/127 is a hair over half — enough to leave the pitch at -0.3% and the EQ
+   * off flat. The two halves are scaled separately so the detent means zero,
+   * which is what Mixxx does with the same hardware for the same reason.
+   */
+  static toAmount(value) {
+    return value < 64 ? value / 128 : 0.5 + (value - 64) / 126;
+  }
+
   fire(actionId, value, isRelease) {
     const action = MidiActions.byId(actionId);
     if (!action) return;
 
-    if (action.kind === 'range') return action.run(value / 127);
+    if (action.kind === 'range') return action.run(MidiController.toAmount(value));
+    if (action.kind === 'relative') return action.run(MidiController.toTurn(value));
 
     // A hold needs both edges; everything else only cares about the press
     if (action.kind === 'hold') {
