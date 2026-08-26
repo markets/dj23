@@ -5,10 +5,11 @@
 //   node build.mjs --watch --serve  development
 
 import esbuild from 'esbuild';
-import { copyFile, cp, mkdir, readdir, rm } from 'node:fs/promises';
+import { copyFile, cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { watch } from 'node:fs';
 
 const OUT = 'build';
+const MAPPINGS = 'mappings';
 const PORT = Number(process.env.PORT) || 8080;
 
 // Floor set by color-mix() and @container in css/; lowering only adds unused prefixes.
@@ -24,11 +25,29 @@ const VENDOR = [
 const flags = new Set(process.argv.slice(2));
 const copyIndex = () => copyFile('index.html', `${OUT}/index.html`);
 
+/**
+ * Rolls mappings/ into the single file the app fetches. The folder is the
+ * source of truth — one JSON per controller, named after it — and the id comes
+ * from the filename, so adding a controller is dropping a file in and nothing
+ * else. There is deliberately no index to keep in step.
+ */
+const bundleMappings = async () => {
+  const files = (await readdir(MAPPINGS)).filter(name => name.endsWith('.json')).sort();
+
+  const catalogue = await Promise.all(files.map(async name => ({
+    id: name.replace(/\.json$/, ''),
+    ...JSON.parse(await readFile(`${MAPPINGS}/${name}`, 'utf8'))
+  })));
+
+  await writeFile(`${OUT}/mappings.json`, JSON.stringify(catalogue));
+};
+
 await rm(OUT, { recursive: true, force: true });
 await mkdir(OUT, { recursive: true });
 await copyIndex();
+await bundleMappings();
 
-for (const dir of ['images', 'sounds', 'mappings']) {
+for (const dir of ['images', 'sounds']) {
   await cp(dir, `${OUT}/${dir}`, { recursive: true, filter: p => !p.endsWith('.DS_Store') });
 }
 for (const src of VENDOR) {
@@ -73,6 +92,12 @@ if (flags.has('--watch')) {
     if (filename !== 'index.html') return;
     clearTimeout(pending);
     pending = setTimeout(() => copyIndex().catch(e => console.error('[watch]', e.message)), 50);
+  });
+
+  let pendingMappings;
+  watch(MAPPINGS, () => {
+    clearTimeout(pendingMappings);
+    pendingMappings = setTimeout(() => bundleMappings().catch(e => console.error('[watch]', e.message)), 50);
   });
 }
 

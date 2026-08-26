@@ -1,0 +1,164 @@
+{
+  "app": "dj23",
+  "kind": "midi-mapping",
+  "name": "Pioneer DDJ-400",
+  "matches": [
+    "ddj-400"
+  ],
+  "untested": true,
+  "source": "Mixxx",
+  "sourceUrl": "https://github.com/mixxxdj/mixxx/blob/main/res/controllers/Pioneer-DDJ-400.midi.xml",
+  "notes": "Translated from the Mixxx project mapping. 30 controls came across; 104 more are driven by scripts there, so what they do cannot be read off the file \u2014 use LEARN for those. Untested against the hardware.",
+  "bindings": {
+    "deckA.cue": {
+      "type": "note",
+      "channel": 1,
+      "number": 12
+    },
+    "deckA.cue1": {
+      "type": "note",
+      "channel": 8,
+      "number": 0
+    },
+    "deckA.cue2": {
+      "type": "note",
+      "channel": 8,
+      "number": 1
+    },
+    "deckA.cue3": {
+      "type": "note",
+      "channel": 8,
+      "number": 2
+    },
+    "deckA.cue4": {
+      "type": "note",
+      "channel": 8,
+      "number": 3
+    },
+    "deckA.eq.gain": {
+      "type": "cc",
+      "channel": 1,
+      "number": 36
+    },
+    "deckA.eq.high": {
+      "type": "cc",
+      "channel": 1,
+      "number": 39
+    },
+    "deckA.eq.low": {
+      "type": "cc",
+      "channel": 1,
+      "number": 47
+    },
+    "deckA.eq.mid": {
+      "type": "cc",
+      "channel": 1,
+      "number": 43
+    },
+    "deckA.loop4": {
+      "type": "note",
+      "channel": 8,
+      "number": 100
+    },
+    "deckA.loopExit": {
+      "type": "note",
+      "channel": 1,
+      "number": 77
+    },
+    "deckA.playPause": {
+      "type": "note",
+      "channel": 1,
+      "number": 11
+    },
+    "deckA.preListen": {
+      "type": "note",
+      "channel": 1,
+      "number": 84
+    },
+    "deckA.volume": {
+      "type": "cc",
+      "channel": 1,
+      "number": 51
+    },
+    "deckB.cue": {
+      "type": "note",
+      "channel": 2,
+      "number": 12
+    },
+    "deckB.cue1": {
+      "type": "note",
+      "channel": 10,
+      "number": 0
+    },
+    "deckB.cue2": {
+      "type": "note",
+      "channel": 10,
+      "number": 1
+    },
+    "deckB.cue3": {
+      "type": "note",
+      "channel": 10,
+      "number": 2
+    },
+    "deckB.cue4": {
+      "type": "note",
+      "channel": 10,
+      "number": 3
+    },
+    "deckB.eq.gain": {
+      "type": "cc",
+      "channel": 2,
+      "number": 36
+    },
+    "deckB.eq.high": {
+      "type": "cc",
+      "channel": 2,
+      "number": 39
+    },
+    "deckB.eq.low": {
+      "type": "cc",
+      "channel": 2,
+      "number": 47
+    },
+    "deckB.eq.mid": {
+      "type": "cc",
+      "channel": 2,
+      "number": 43
+    },
+    "deckB.loop4": {
+      "type": "note",
+      "channel": 10,
+      "number": 100
+    },
+    "deckB.loopExit": {
+      "type": "note",
+      "channel": 2,
+      "number": 77
+    },
+    "deckB.playPause": {
+      "type": "note",
+      "channel": 2,
+      "number": 11
+    },
+    "deckB.preListen": {
+      "type": "note",
+      "channel": 2,
+      "number": 84
+    },
+    "deckB.volume": {
+      "type": "cc",
+      "channel": 2,
+      "number": 51
+    },
+    "mixer.crossfader": {
+      "type": "cc",
+      "channel": 7,
+      "number": 31
+    },
+    "mixer.cue": {
+      "type": "cc",
+      "channel": 7,
+      "number": 45
+    }
+  }
+}

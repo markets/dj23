@@ -2,9 +2,13 @@
   "app": "dj23",
   "kind": "midi-mapping",
   "name": "Numark Mixtrack Pro",
-  "notes": "Translated from the Mixxx project's mapping, where it was verified against the hardware. Everything is on channel 1: this controller tells the decks apart by number, not by channel.",
+  "matches": [
+    "mixtrack pro",
+    "mix track pro"
+  ],
   "source": "Mixxx",
   "sourceUrl": "https://github.com/mixxxdj/mixxx/blob/main/res/controllers/Numark%20Mixtrack%20Pro.midi.xml",
+  "notes": "Translated from the Mixxx project's mapping, where it was verified against the hardware. Everything is on channel 1: this controller tells the decks apart by number, not by channel.",
   "bindings": {
     "deckA.playPause": {
       "type": "note",

@@ -98,9 +98,7 @@ class MidiController {
       input.onmidimessage = event => this.handleMessage(name, event);
       this.devices.set(name, { input, connected: input.state === 'connected' });
 
-      // A controller with a setup of its own arrives ready to play. Not
-      // awaited: the sweep must not stall on a fetch, and applyPreset
-      // announces once the file lands.
+      // A controller with a setup of its own arrives ready to play
       if (!this.mappings[name]) {
         const preset = MidiPresets.forDevice(name);
         if (preset) this.applyPreset(name, preset.id);
@@ -139,12 +137,11 @@ class MidiController {
     return this.mappings[deviceName] || {};
   }
 
-  /** Async because the bindings live in a file that is fetched on demand. */
-  async applyPreset(deviceName, presetId) {
+  applyPreset(deviceName, presetId) {
     const preset = MidiPresets.byId(presetId);
     if (!preset) return;
 
-    this.mappings[deviceName] = await MidiPresets.bindings(presetId);
+    this.mappings[deviceName] = MidiPresets.bindings(presetId);
     this.write();
     this.rebuildRoutes();
     this.announce();

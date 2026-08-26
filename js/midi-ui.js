@@ -61,6 +61,11 @@ class MidiPanel {
     document.body.style.overflow = 'hidden';
     this.render();
 
+    // The setups are worth reading with nothing plugged in, so the catalogue
+    // does not wait on the permission prompt
+    await MidiPresets.load();
+    this.render();
+
     // Asked for here, with the panel already open, so the prompt arrives when
     // the reason for it is on screen
     await this.midi.connect();
@@ -189,13 +194,9 @@ class MidiPanel {
       tab.classList.toggle('active', tab.dataset.midiTab === this.tab);
     });
 
-    if (this.midi.error) {
-      this.body.innerHTML = `<p class="midi-empty">${this.midi.error}</p>`;
-      return;
-    }
-
     this.body.innerHTML =
       (this.notice ? `<p class="midi-notice">${this.notice}</p>` : '') +
+      (this.midi.error ? `<p class="midi-notice">${this.midi.error}</p>` : '') +
       (this.tab === 'devices' ? this.renderDevices() : '') +
       (this.tab === 'presets' ? this.renderPresets() : '') +
       (this.tab === 'mapping' ? this.renderMapping() : '') +
@@ -228,23 +229,24 @@ class MidiPanel {
   }
 
   renderPresets() {
-    if (!this.deviceName) return `<p class="midi-empty">Connect a controller first.</p>`;
-
     const needle = this.filter.trim().toLowerCase();
     const matched = MidiPresets.forDevice(this.deviceName);
     const presets = MidiPresets.ALL.filter(p => p.name.toLowerCase().includes(needle));
 
     const rows = presets.map(preset => `
-      <button type="button" class="midi-preset${preset.id === matched?.id ? ' is-match' : ''}" data-midi-preset="${preset.id}">
+      <button type="button" class="midi-preset${preset.id === matched?.id ? ' is-match' : ''}"
+              data-midi-preset="${preset.id}"${this.deviceName ? '' : ' disabled'}>
         <span class="midi-preset-name">${preset.name}</span>
         ${preset.id === matched?.id ? '<span class="midi-preset-tag is-verified">DETECTED</span>' : ''}
         ${preset.source ? `<span class="midi-preset-tag is-verified">FROM ${preset.source.toUpperCase()}</span>` : ''}
+        ${preset.untested ? '<span class="midi-preset-tag is-untested">UNTESTED</span>' : ''}
       </button>`).join('');
 
     return `
       <input class="midi-search" type="search" placeholder="Search controllers…"
              value="${this.filter}" data-midi-search>
-      <div class="midi-presets">${rows || '<p class="midi-empty">Nothing matches. Pick Generic MIDI and learn it.</p>'}</div>`;
+      <div class="midi-presets">${rows || '<p class="midi-empty">Nothing matches. Pick Generic MIDI and learn it.</p>'}</div>
+      ${this.deviceName ? '' : '<p class="midi-empty">Connect a controller to load one of these.</p>'}`;
   }
 
   renderMapping() {

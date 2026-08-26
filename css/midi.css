@@ -211,6 +211,13 @@
   border-color: var(--color-primary);
 }
 
+/* Real numbers from a real source, but nobody has had the hardware in front of
+   them yet. Better said out loud than discovered mid-set. */
+.midi-preset-tag.is-untested {
+  color: var(--color-level-mid);
+  border-color: var(--color-level-mid);
+}
+
 /* --- Mapping table -------------------------------------------------------- */
 .midi-group-label {
   margin: var(--spacing-md) 0 6px;
