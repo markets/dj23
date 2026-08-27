@@ -127,12 +127,6 @@ class AudioEngine {
     }
   }
 
-  /** True when the card being asked for is not the one the context was built
-   *  against, which is the only time a reload actually buys anything. */
-  needsReloadFor(deviceId) {
-    return (deviceId || '') !== (this.sinkId || '');
-  }
-
   async resumeContext() {
     if (this.audioContext && this.audioContext.state === 'suspended') {
       await this.audioContext.resume();

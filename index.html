@@ -110,7 +110,9 @@
                   </button>
 
                   <div class="routing-external" id="routingExternal">
-                    <select id="outputDeviceSelect" class="routing-select"></select>
+                    <select id="outputDeviceSelect" class="routing-select" aria-label="Sound card">
+                      <option value="">System output</option>
+                    </select>
                     <div class="routing-pairs">
                       <label for="channelMain">MAIN</label>
                       <select id="channelMain" class="routing-select" data-pair="main"></select>

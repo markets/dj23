@@ -211,13 +211,6 @@
   border-color: var(--color-primary);
 }
 
-/* Real numbers from a real source, but nobody has had the hardware in front of
-   them yet. Better said out loud than discovered mid-set. */
-.midi-preset-tag.is-untested {
-  color: var(--color-level-mid);
-  border-color: var(--color-level-mid);
-}
-
 /* --- Mapping table -------------------------------------------------------- */
 .midi-group-label {
   margin: var(--spacing-md) 0 6px;
@@ -306,27 +299,7 @@
 
 .midi-clear:hover { color: var(--color-secondary); }
 
-/* --- Monitor & footer ----------------------------------------------------- */
-/* Without this, debugging a mapping is guesswork: it is the only place that
-   says what the controller actually sent */
-.midi-monitor {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  margin-top: var(--spacing-lg);
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--bg-primary);
-  border: 1px solid var(--border-primary);
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  font-size: 0.72rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.midi-monitor-msg { color: var(--color-primary); }
-
-.midi-spacer { flex: 1; }
-
+/* --- Footer --------------------------------------------------------------- */
 .midi-modal-foot {
   display: flex;
   align-items: center;

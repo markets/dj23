@@ -1,22 +1,16 @@
 /**
  * Header settings menu. Owns the preferences that change how the mixer behaves
- * — pitch fader range, phrase length and output routing — and persists them.
+ * — pitch fader range, phrase length, and where the sound goes — and persists
+ * them.
+ *
+ * The output settings are the one copy of the truth: the audio engine is told
+ * what to apply and never keeps its own opinion.
  */
 class Settings {
   static STORAGE_KEY = 'dj23.settings';
 
-  /** Empty means whatever the system is pointing at. */
+  /** An empty card id means whatever the system is pointing at. */
   static SYSTEM_OUTPUT = '';
-
-  /** Read before any instance exists: the audio context is built at startup and
-   *  needs to know which card to open against. */
-  static savedOutputDevice() {
-    try {
-      return JSON.parse(localStorage.getItem(Settings.STORAGE_KEY))?.outputDevice || '';
-    } catch (error) {
-      return '';
-    }
-  }
 
   static DEFAULTS = {
     pitchRange: Deck.DEFAULT_PITCH_RANGE,
@@ -28,6 +22,16 @@ class Settings {
 
   /** Settings whose value is a number rather than a name. */
   static NUMERIC = ['pitchRange', 'phraseLength'];
+
+  /** Read before any instance exists: the audio context is built at startup and
+   *  has to know which card to open against. */
+  static savedOutputDevice() {
+    try {
+      return JSON.parse(localStorage.getItem(Settings.STORAGE_KEY))?.outputDevice || Settings.SYSTEM_OUTPUT;
+    } catch (error) {
+      return Settings.SYSTEM_OUTPUT;
+    }
+  }
 
   constructor() {
     this.values = { ...Settings.DEFAULTS, ...this.read() };
@@ -51,8 +55,12 @@ class Settings {
     this.routingNote = document.getElementById('routingNote');
     if (!this.deviceSelect) return;
 
-    // Opening the list is what costs a permission, so it waits for the click
-    this.deviceSelect.addEventListener('mousedown', () => this.revealCards(), { once: true });
+    // Naming the cards costs a permission, so it waits for someone to reach for
+    // the list rather than happening on the way past
+    const reveal = () => this.revealCards();
+    this.deviceSelect.addEventListener('pointerdown', reveal, { once: true });
+    this.deviceSelect.addEventListener('focus', reveal, { once: true });
+
     this.deviceSelect.addEventListener('change', () => this.useOutputDevice(this.deviceSelect.value));
 
     this.external.addEventListener('change', (e) => {
@@ -60,16 +68,11 @@ class Settings {
       if (bus) this.setPair(bus, Number(e.target.value));
     });
 
-    // A card chosen last time is asked for again quietly: the browser still
-    // knows the id, so re-listing would mean re-asking for the permission
-    if (this.values.outputDevice) {
-      this.useOutputDevice(this.values.outputDevice, { quiet: true });
-    } else {
-      AudioEngine.probeChannels('').then(channels => {
-        this.cardChannels = channels;
-        this.describeExternal();
-      });
-    }
+    this.showSavedCard();
+
+    // Asked for again quietly: the browser still knows the id, so re-listing
+    // would mean re-asking for the permission
+    this.useOutputDevice(this.values.outputDevice, { quiet: true });
   }
 
   /**
@@ -79,6 +82,13 @@ class Settings {
    * microphone is the only key the browser offers — so it is asked for, the
    * stream is handed straight back, and nothing is ever listened to.
    */
+  /** Something to read before the list has been earned. */
+  showSavedCard() {
+    const saved = this.values.outputDevice;
+    this.deviceSelect.innerHTML =
+      `<option value="${saved}">${saved ? 'Saved card' : 'System output'}</option>`;
+  }
+
   async revealCards() {
     let outputs;
     try {
@@ -141,10 +151,6 @@ class Settings {
         `<option value="${index}">${index * 2 + 1}/${index * 2 + 2}</option>`).join('');
       select.value = String(Math.min(engine.channelMap[bus] ?? 0, pairs - 1));
     });
-
-    if (this.deviceSelect.options.length === 0) {
-      this.deviceSelect.innerHTML = `<option value="${this.values.outputDevice}">${this.values.outputDevice ? 'Saved card' : 'System output'}</option>`;
-    }
 
     const sharing = engine.channelMap.main === engine.channelMap.cue;
 

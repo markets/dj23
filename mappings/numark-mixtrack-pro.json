@@ -6,9 +6,7 @@
     "mixtrack pro",
     "mix track pro"
   ],
-  "source": "Mixxx",
-  "sourceUrl": "https://github.com/mixxxdj/mixxx/blob/main/res/controllers/Numark%20Mixtrack%20Pro.midi.xml",
-  "notes": "Translated from the Mixxx project's mapping, where it was verified against the hardware. Everything is on channel 1: this controller tells the decks apart by number, not by channel.",
+  "notes": "Translated from the Mixxx project mapping, which is where these numbers were read off real hardware. 45 controls; anything the controller has beyond them is driven by scripts there and cannot be read off the file, so use MIDI learn for those. Verified against the hardware. Everything is on channel 1: this controller tells the decks apart by number, not by channel.",
   "bindings": {
     "deckA.bendDown": {
       "type": "note",

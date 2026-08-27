@@ -7,9 +7,7 @@
     "mc-4000"
   ],
   "untested": true,
-  "source": "Mixxx",
-  "sourceUrl": "https://github.com/mixxxdj/mixxx/blob/main/res/controllers/Denon%20MC4000.midi.xml",
-  "notes": "Translated from the Mixxx project mapping. 42 controls came across; 12 more are driven by scripts there, so what they do cannot be read off the file \u2014 use LEARN for those. Untested against the hardware.",
+  "notes": "Translated from the Mixxx project mapping, which is where these numbers were read off real hardware. 44 controls; anything the controller has beyond them is driven by scripts there and cannot be read off the file, so use MIDI learn for those. Untested against the hardware.",
   "bindings": {
     "deckA.bendDown": {
       "type": "note",

@@ -6,9 +6,7 @@
     "inpulse 300"
   ],
   "untested": true,
-  "source": "Mixxx",
-  "sourceUrl": "https://github.com/mixxxdj/mixxx/blob/main/res/controllers/Hercules_DJControl_Inpulse_300.midi.xml",
-  "notes": "Translated from the Mixxx project mapping. 33 controls came across; 104 more are driven by scripts there, so what they do cannot be read off the file \u2014 use LEARN for those. Untested against the hardware.",
+  "notes": "Translated from the Mixxx project mapping, which is where these numbers were read off real hardware. 35 controls; anything the controller has beyond them is driven by scripts there and cannot be read off the file, so use MIDI learn for those. The decks answer on channels 2 and 3, not 1 and 2. Untested against the hardware.",
   "bindings": {
     "deckA.cue": {
       "type": "note",

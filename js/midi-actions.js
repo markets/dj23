@@ -1,14 +1,15 @@
 /**
- * What a controller is allowed to do, and what the built-in setups send.
+ * Everything a controller is allowed to reach, and how each one gets there.
  *
- * Every action carries its own way of reaching the mixer. Continuous ones move
- * the real slider and let its `input` handler do the work, so the display and
- * the audio can never drift apart from what the hardware says.
+ * Continuous controls move the slider the DJ would have dragged rather than the
+ * audio node behind it, so the display and the sound can never drift apart from
+ * what the hardware says.
  */
 class MidiActions {
   /**
-   * `button` fires on press, `hold` also needs the release, `range` is
-   * continuous. The kind is what tells the engine how to read a message.
+   * How the engine should read a message for this action: `button` fires on
+   * press, `hold` needs the release too, `range` is a fader or knob, and
+   * `relative` is a wheel reporting how far it turned.
    */
   static ALL = MidiActions.build();
 
@@ -17,8 +18,6 @@ class MidiActions {
     const deck = deckId => window.audioEngine?.getDeck(deckId);
     const pads = deckId => controller(deckId)?.pads;
 
-    /** Drive the control the user would have dragged, rather than the audio
-     *  node behind it: one path, one set of side effects. */
     const slide = (id, amount) => {
       const el = document.getElementById(id);
       if (!el) return;

@@ -14,16 +14,12 @@ class MidiController {
   static NOTE_OFF = 0x80;
   static CONTROL_CHANGE = 0xb0;
 
-  /** Messages worth showing in the monitor before it starts repeating itself. */
-  static MONITOR_KEEP = 1;
-
   constructor() {
     this.access = null;
     this.devices = new Map();     // name -> { input, connected }
     this.mappings = this.read();  // name -> { actionId: binding }
     this.routes = new Map();      // name -> Map('cc:1:16' -> actionId)
     this.learning = null;         // { device, actionId }
-    this.lastMessage = null;
     this.listeners = new Set();
     this.error = null;
   }
@@ -246,8 +242,6 @@ class MidiController {
 
     const isRelease = command === MidiController.NOTE_OFF ||
       (command === MidiController.NOTE_ON && value === 0);
-
-    this.lastMessage = { deviceName, type, channel, number, value };
 
     if (this.learning) return this.captureLearn(deviceName, { type, channel, number }, isRelease);
 

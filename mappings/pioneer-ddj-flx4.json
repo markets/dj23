@@ -6,9 +6,7 @@
     "ddj-flx4"
   ],
   "untested": true,
-  "source": "Mixxx",
-  "sourceUrl": "https://github.com/mixxxdj/mixxx/blob/main/res/controllers/Pioneer-DDJ-FLX4.midi.xml",
-  "notes": "Translated from the Mixxx project mapping. 29 controls came across; 186 more are driven by scripts there, so what they do cannot be read off the file \u2014 use LEARN for those. Untested against the hardware.",
+  "notes": "Translated from the Mixxx project mapping, which is where these numbers were read off real hardware. 33 controls; anything the controller has beyond them is driven by scripts there and cannot be read off the file, so use MIDI learn for those. The jog counts either side of 64 rather than in two's complement, which is why its binding carries an encoding. Untested against the hardware.",
   "bindings": {
     "deckA.cue": {
       "type": "note",

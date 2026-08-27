@@ -2,13 +2,11 @@
  * The MIDI modal: what is plugged in, which setup it uses, and the mapping
  * table with its learn buttons.
  *
- * It owns no state of its own beyond which device is being edited — everything
- * else is read back from MidiController on every render, so a controller
- * appearing or a message arriving redraws the same way a click does.
+ * It owns no state of its own beyond which device is being edited and which tab
+ * is open — everything else is read back from MidiController on every render,
+ * so a controller being plugged in redraws the same way a click does.
  */
 class MidiPanel {
-  static TABS = ['devices', 'presets', 'mapping'];
-
   constructor() {
     this.modal = null;
     this.deviceName = null;

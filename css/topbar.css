@@ -287,8 +287,8 @@
   line-height: 1.4;
 }
 
-/* Offered but not usable on this output: dimmed rather than hidden, so the
-   reason can be read in the tooltip instead of the option just missing */
+/* Offered but not usable on the chosen card: dimmed rather than hidden, so the
+   note underneath can say why instead of the option just going missing */
 .settings-choice.is-unavailable {
   opacity: 0.45;
 }
