@@ -1,0 +1,184 @@
+{
+  "app": "dj23",
+  "kind": "midi-mapping",
+  "name": "Pioneer DDJ-400",
+  "matches": [
+    "ddj-400"
+  ],
+  "untested": true,
+  "notes": "Translated from the Mixxx project mapping, which is where these numbers were read off real hardware. 34 controls; anything the controller has beyond them is driven by scripts there and cannot be read off the file, so use MIDI learn for those. The jog counts either side of 64 rather than in two's complement, which is why its binding carries an encoding. Untested against the hardware.",
+  "bindings": {
+    "deckA.cue": {
+      "type": "note",
+      "channel": 1,
+      "number": 12
+    },
+    "deckA.cue1": {
+      "type": "note",
+      "channel": 8,
+      "number": 0
+    },
+    "deckA.cue2": {
+      "type": "note",
+      "channel": 8,
+      "number": 1
+    },
+    "deckA.cue3": {
+      "type": "note",
+      "channel": 8,
+      "number": 2
+    },
+    "deckA.cue4": {
+      "type": "note",
+      "channel": 8,
+      "number": 3
+    },
+    "deckA.eq.gain": {
+      "type": "cc",
+      "channel": 1,
+      "number": 36
+    },
+    "deckA.eq.high": {
+      "type": "cc",
+      "channel": 1,
+      "number": 39
+    },
+    "deckA.eq.low": {
+      "type": "cc",
+      "channel": 1,
+      "number": 47
+    },
+    "deckA.eq.mid": {
+      "type": "cc",
+      "channel": 1,
+      "number": 43
+    },
+    "deckA.jog": {
+      "type": "cc",
+      "channel": 1,
+      "number": 34,
+      "encoding": "offset"
+    },
+    "deckA.loop4": {
+      "type": "note",
+      "channel": 8,
+      "number": 100
+    },
+    "deckA.loopExit": {
+      "type": "note",
+      "channel": 1,
+      "number": 77
+    },
+    "deckA.pitch": {
+      "type": "cc",
+      "channel": 1,
+      "number": 0
+    },
+    "deckA.playPause": {
+      "type": "note",
+      "channel": 1,
+      "number": 11
+    },
+    "deckA.preListen": {
+      "type": "note",
+      "channel": 1,
+      "number": 84
+    },
+    "deckA.volume": {
+      "type": "cc",
+      "channel": 1,
+      "number": 51
+    },
+    "deckB.cue": {
+      "type": "note",
+      "channel": 2,
+      "number": 12
+    },
+    "deckB.cue1": {
+      "type": "note",
+      "channel": 10,
+      "number": 0
+    },
+    "deckB.cue2": {
+      "type": "note",
+      "channel": 10,
+      "number": 1
+    },
+    "deckB.cue3": {
+      "type": "note",
+      "channel": 10,
+      "number": 2
+    },
+    "deckB.cue4": {
+      "type": "note",
+      "channel": 10,
+      "number": 3
+    },
+    "deckB.eq.gain": {
+      "type": "cc",
+      "channel": 2,
+      "number": 36
+    },
+    "deckB.eq.high": {
+      "type": "cc",
+      "channel": 2,
+      "number": 39
+    },
+    "deckB.eq.low": {
+      "type": "cc",
+      "channel": 2,
+      "number": 47
+    },
+    "deckB.eq.mid": {
+      "type": "cc",
+      "channel": 2,
+      "number": 43
+    },
+    "deckB.jog": {
+      "type": "cc",
+      "channel": 2,
+      "number": 34,
+      "encoding": "offset"
+    },
+    "deckB.loop4": {
+      "type": "note",
+      "channel": 10,
+      "number": 100
+    },
+    "deckB.loopExit": {
+      "type": "note",
+      "channel": 2,
+      "number": 77
+    },
+    "deckB.pitch": {
+      "type": "cc",
+      "channel": 2,
+      "number": 0
+    },
+    "deckB.playPause": {
+      "type": "note",
+      "channel": 2,
+      "number": 11
+    },
+    "deckB.preListen": {
+      "type": "note",
+      "channel": 2,
+      "number": 84
+    },
+    "deckB.volume": {
+      "type": "cc",
+      "channel": 2,
+      "number": 51
+    },
+    "mixer.crossfader": {
+      "type": "cc",
+      "channel": 7,
+      "number": 31
+    },
+    "mixer.cue": {
+      "type": "cc",
+      "channel": 7,
+      "number": 45
+    }
+  }
+}

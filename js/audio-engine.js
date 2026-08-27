@@ -1,9 +1,26 @@
 class AudioEngine {
-  /** 'main' sends the full stereo mix to the output; 'cue-split' puts the cue
-   *  bus on the left channel and the main mix on the right, which is how you
-   *  pre-listen through one headphone without a second sound card. */
-  static ROUTINGS = ['main', 'cue-split'];
+  /**
+   * 'main' sends the full stereo mix to the output. 'cue-split' puts the cue
+   * bus on the left channel and the main mix on the right, which is how you
+   * pre-listen through one headphone without a second sound card. 'split-4'
+   * is for an interface with four outputs — a DJ controller with its own sound
+   * card, typically — and gives the mix its own stereo pair and the cue
+   * another, so the headphones hear the cue in full.
+   */
+  static ROUTINGS = ['main', 'cue-split', 'split-4'];
   static DEFAULT_ROUTING = 'main';
+
+  /**
+   * Which stereo pair each bus lands on, counted from zero: pair 0 is outputs
+   * 1/2, pair 1 is 3/4, and so on.
+   *
+   * Outputs come in pairs on every card worth plugging a deck into, so the
+   * question is which pair rather than which four numbers. The usual wiring is
+   * mix on the first and cue on the second, but cards disagree, so it stays a
+   * setting.
+   */
+  static DEFAULT_CHANNEL_MAP = { main: 0, cue: 1 };
+  static BUSES = ['main', 'cue'];
 
   /** Stereo, and generous enough that a mix survives the one encode it gets. */
   static RECORDING_BITRATE = 192;
@@ -25,17 +42,28 @@ class AudioEngine {
     this.mp3Worker = null;
     this.recordedFrames = 0;
     this.outputRouting = AudioEngine.DEFAULT_ROUTING;
+    this.channelMap = { ...AudioEngine.DEFAULT_CHANNEL_MAP };
   }
 
-  async initialize() {
+  /**
+   * `sinkId` names the sound card to open against, and it has to be given here
+   * rather than switched later: how many outputs a card offers is read when the
+   * context is built, so one asked for afterwards still only ever admits to two.
+   */
+  async initialize(sinkId = '') {
     if (this.isInitialized) return;
 
     try {
-      // 44100 is also one of the three sample rates MP3 is defined at, which is
-      // what lets a take be encoded without being resampled first
-      this.audioContext = new AudioContext({ sampleRate: 44100 });
+      const sink = await AudioEngine.resolveSink(sinkId);
+      this.audioContext = AudioEngine.createContext(sink);
+      this.sinkId = sink;
 
       this.channelMerger = this.audioContext.createChannelMerger(2);
+
+      // Sending each bus to a numbered output means breaking both back out
+      // into left and right first
+      this.masterSplitter = this.audioContext.createChannelSplitter(2);
+      this.cueSplitter = this.audioContext.createChannelSplitter(2);
 
       this.cueGain = this.audioContext.createGain();
       this.masterGain = this.audioContext.createGain();
@@ -59,6 +87,46 @@ class AudioEngine {
     }
   }
 
+  /**
+   * Checks the saved card is still there before opening against it.
+   *
+   * A context will happily be built naming a card that has been unplugged —
+   * nothing throws, and the sound goes nowhere. Falling back to the system
+   * output is the difference between a missing headphone feed and total
+   * silence. A card whose permission has lapsed reads as gone, which is the
+   * right answer too: its id is no longer usable.
+   */
+  static async resolveSink(sinkId) {
+    if (!sinkId) return '';
+
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const present = devices.some(d => d.kind === 'audiooutput' && d.deviceId === sinkId);
+
+      if (!present) console.warn('The saved sound card is not there, using the system output');
+      return present ? sinkId : '';
+    } catch (error) {
+      console.warn('Could not check the saved sound card:', error);
+      return '';
+    }
+  }
+
+  /** 44100 is also one of the three sample rates MP3 is defined at, which is
+   *  what lets a take be encoded without being resampled first. */
+  static createContext(sinkId) {
+    const options = { sampleRate: 44100 };
+    if (!sinkId) return new AudioContext(options);
+
+    try {
+      return new AudioContext({ ...options, sinkId });
+    } catch (error) {
+      // The card may be unplugged, or its id may have gone stale with the
+      // permission that revealed it. Better the default output than silence.
+      console.warn('Could not open the saved sound card, using the system output:', error);
+      return new AudioContext(options);
+    }
+  }
+
   async resumeContext() {
     if (this.audioContext && this.audioContext.state === 'suspended') {
       await this.audioContext.resume();
@@ -79,19 +147,105 @@ class AudioEngine {
     this.cueGain.disconnect();
     this.masterGain.disconnect();
     this.channelMerger.disconnect();
+    this.masterSplitter.disconnect();
+    this.cueSplitter.disconnect();
+    this.splitMerger?.disconnect();
 
-    if (this.outputRouting === 'cue-split') {
+    // Anything but the multi-output mode wants the destination back in stereo
+    const destination = this.audioContext.destination;
+
+    if (this.outputRouting === 'split-4') {
+      this.wireToChannels(destination);
+
+      // The take is the mix, never the cue: what the room hears is what gets
+      // recorded, whatever the headphones are doing
+      this.captureTaps().forEach(tap => this.masterGain.connect(tap));
+    } else if (this.outputRouting === 'cue-split') {
+      destination.channelCount = Math.min(2, destination.maxChannelCount);
+      destination.channelInterpretation = 'speakers';
       this.cueGain.connect(this.channelMerger, 0, 0);    // CUE -> Left channel
       this.masterGain.connect(this.channelMerger, 0, 1); // MAIN -> Right channel
       this.channelMerger.connect(this.audioContext.destination);
       this.captureTaps().forEach(tap => this.channelMerger.connect(tap));
     } else {
       // Straight through, so the main mix keeps its stereo image
+      destination.channelCount = Math.min(2, destination.maxChannelCount);
+      destination.channelInterpretation = 'speakers';
       this.masterGain.connect(this.audioContext.destination);
       this.captureTaps().forEach(tap => this.masterGain.connect(tap));
     }
 
     return this.outputRouting;
+  }
+
+  /**
+   * Feeds each bus to the outputs the channel map names.
+   *
+   * The merger is built to fit rather than kept around: how many inputs it
+   * needs depends on the highest output in use, and that changes with the card
+   * and with the map. Anything the card cannot reach is clamped, so a map left
+   * over from a four-output interface cannot silently point at nothing.
+   */
+  wireToChannels(destination) {
+    const available = Math.max(2, destination.maxChannelCount);
+    const pairs = Math.max(1, Math.floor(available / 2));
+    const pair = bus => Math.min(this.channelMap[bus] ?? 0, pairs - 1);
+    const wanted = Math.min((Math.max(pair('main'), pair('cue')) + 1) * 2, available);
+
+    // A card can advertise outputs it then refuses to open, and a throw here
+    // would leave the mixer with no output at all rather than a missing cue
+    try {
+      destination.channelCount = wanted;
+    } catch (error) {
+      console.warn(`This card would not take ${wanted} outputs, staying stereo:`, error);
+      destination.channelCount = Math.min(2, destination.maxChannelCount);
+    }
+
+    destination.channelCountMode = 'explicit';
+    destination.channelInterpretation = 'discrete';
+
+    // Read back rather than assumed: whatever the card settled on is what the
+    // map has to fit inside
+    const outputs = destination.channelCount;
+    const left = bus => Math.max(0, Math.min(pair(bus) * 2, outputs - 2));
+    const right = bus => Math.min(left(bus) + 1, outputs - 1);
+
+    this.splitMerger = this.audioContext.createChannelMerger(outputs);
+
+    this.masterGain.connect(this.masterSplitter);
+    this.masterSplitter.connect(this.splitMerger, 0, left('main'));
+    this.masterSplitter.connect(this.splitMerger, 1, right('main'));
+
+    this.cueGain.connect(this.cueSplitter);
+    this.cueSplitter.connect(this.splitMerger, 0, left('cue'));
+    this.cueSplitter.connect(this.splitMerger, 1, right('cue'));
+
+    this.splitMerger.connect(destination);
+  }
+
+  /** Stereo pairs the card offers, as the picker needs them. */
+  get outputPairs() {
+    return Math.max(1, Math.floor(this.outputChannels / 2));
+  }
+
+  /**
+   * Takes the map without rewiring, for callers about to set the routing anyway
+   * and who would otherwise wire the output stage twice.
+   *
+   * Only the buses this version knows survive, so a map saved by an older one
+   * is read for what still applies instead of being carried around forever.
+   */
+  useChannelMap(map) {
+    this.channelMap = {};
+
+    for (const bus of AudioEngine.BUSES) {
+      const pair = map?.[bus];
+      this.channelMap[bus] = Number.isInteger(pair) && pair >= 0
+        ? pair
+        : AudioEngine.DEFAULT_CHANNEL_MAP[bus];
+    }
+
+    return this.channelMap;
   }
 
   /** Everything listening in on the output stage. Rewiring goes through here so
@@ -115,6 +269,74 @@ class AudioEngine {
     if (this.cueGain) {
       this.cueGain.gain.value = value / 100;
     }
+  }
+
+  /** Outputs the current device can take. Four is what a DJ controller with a
+   *  sound card of its own reports, and what 'split-4' needs. */
+  get outputChannels() {
+    return this.audioContext?.destination.maxChannelCount ?? 2;
+  }
+
+  /**
+   * Point the output at a particular sound card.
+   *
+   * This is what unlocks the four-output mode: the browser hands the *default*
+   * device over as plain stereo, so a controller with four outputs only admits
+   * to them when it is asked for by name. Passing an empty id goes back to
+   * following the system default.
+   */
+  async setOutputDevice(deviceId = '') {
+    if (!this.audioContext || typeof this.audioContext.setSinkId !== 'function') return false;
+
+    try {
+      await this.audioContext.setSinkId(deviceId);
+    } catch (error) {
+      console.warn('Could not switch the output device:', error);
+      return false;
+    }
+
+    // The channel count belongs to the sink, so the routing has to be rebuilt
+    // against whatever the new one can take
+    this.setOutputRouting(this.outputRouting);
+    return true;
+  }
+
+  /**
+   * How many outputs a card has, asked without disturbing the one in use.
+   *
+   * A live context cannot be re-asked: the count belongs to the sink it was
+   * built against and never changes afterwards. So a throwaway context is
+   * opened against the card, asked, and closed — which is the only way to say
+   * anything true about a card before committing to it.
+   */
+  static async probeChannels(deviceId) {
+    let context;
+
+    try {
+      context = deviceId ? new AudioContext({ sinkId: deviceId }) : new AudioContext();
+      return context.destination.maxChannelCount;
+    } catch (error) {
+      console.warn('Could not ask that card how many outputs it has:', error);
+      return 0;
+    } finally {
+      await context?.close();
+    }
+  }
+
+  /**
+   * Sound cards the browser will name.
+   *
+   * Output devices come back nameless and without ids until the page holds an
+   * audio permission, which is why this asks for one and hands the stream
+   * straight back — the microphone is never listened to, it is the only key
+   * the browser offers to the list.
+   */
+  static async listOutputs() {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach(track => track.stop());
+
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    return devices.filter(device => device.kind === 'audiooutput');
   }
 
   getMasterVolume() {

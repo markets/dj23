@@ -1,0 +1,237 @@
+{
+  "app": "dj23",
+  "kind": "midi-mapping",
+  "name": "Numark Mixtrack Pro",
+  "matches": [
+    "mixtrack pro",
+    "mix track pro"
+  ],
+  "notes": "Translated from the Mixxx project mapping, which is where these numbers were read off real hardware. 45 controls; anything the controller has beyond them is driven by scripts there and cannot be read off the file, so use MIDI learn for those. Verified against the hardware. Everything is on channel 1: this controller tells the decks apart by number, not by channel.",
+  "bindings": {
+    "deckA.bendDown": {
+      "type": "note",
+      "channel": 1,
+      "number": 67
+    },
+    "deckA.bendUp": {
+      "type": "note",
+      "channel": 1,
+      "number": 68
+    },
+    "deckA.clearCue": {
+      "type": "note",
+      "channel": 1,
+      "number": 89
+    },
+    "deckA.cue": {
+      "type": "note",
+      "channel": 1,
+      "number": 51
+    },
+    "deckA.cue1": {
+      "type": "note",
+      "channel": 1,
+      "number": 90
+    },
+    "deckA.cue2": {
+      "type": "note",
+      "channel": 1,
+      "number": 91
+    },
+    "deckA.cue3": {
+      "type": "note",
+      "channel": 1,
+      "number": 92
+    },
+    "deckA.eq.gain": {
+      "type": "cc",
+      "channel": 1,
+      "number": 29
+    },
+    "deckA.eq.high": {
+      "type": "cc",
+      "channel": 1,
+      "number": 16
+    },
+    "deckA.eq.low": {
+      "type": "cc",
+      "channel": 1,
+      "number": 20
+    },
+    "deckA.eq.mid": {
+      "type": "cc",
+      "channel": 1,
+      "number": 18
+    },
+    "deckA.jog": {
+      "type": "cc",
+      "channel": 1,
+      "number": 25
+    },
+    "deckA.loop4": {
+      "type": "note",
+      "channel": 1,
+      "number": 85
+    },
+    "deckA.loopDouble": {
+      "type": "note",
+      "channel": 1,
+      "number": 84
+    },
+    "deckA.loopExit": {
+      "type": "note",
+      "channel": 1,
+      "number": 97
+    },
+    "deckA.loopHalve": {
+      "type": "note",
+      "channel": 1,
+      "number": 83
+    },
+    "deckA.pitch": {
+      "type": "cc",
+      "channel": 1,
+      "number": 13
+    },
+    "deckA.playPause": {
+      "type": "note",
+      "channel": 1,
+      "number": 59
+    },
+    "deckA.preListen": {
+      "type": "note",
+      "channel": 1,
+      "number": 101
+    },
+    "deckA.sync": {
+      "type": "note",
+      "channel": 1,
+      "number": 64
+    },
+    "deckA.volume": {
+      "type": "cc",
+      "channel": 1,
+      "number": 8
+    },
+    "deckB.bendDown": {
+      "type": "note",
+      "channel": 1,
+      "number": 69
+    },
+    "deckB.bendUp": {
+      "type": "note",
+      "channel": 1,
+      "number": 70
+    },
+    "deckB.clearCue": {
+      "type": "note",
+      "channel": 1,
+      "number": 93
+    },
+    "deckB.cue": {
+      "type": "note",
+      "channel": 1,
+      "number": 60
+    },
+    "deckB.cue1": {
+      "type": "note",
+      "channel": 1,
+      "number": 94
+    },
+    "deckB.cue2": {
+      "type": "note",
+      "channel": 1,
+      "number": 95
+    },
+    "deckB.cue3": {
+      "type": "note",
+      "channel": 1,
+      "number": 96
+    },
+    "deckB.eq.gain": {
+      "type": "cc",
+      "channel": 1,
+      "number": 32
+    },
+    "deckB.eq.high": {
+      "type": "cc",
+      "channel": 1,
+      "number": 17
+    },
+    "deckB.eq.low": {
+      "type": "cc",
+      "channel": 1,
+      "number": 21
+    },
+    "deckB.eq.mid": {
+      "type": "cc",
+      "channel": 1,
+      "number": 19
+    },
+    "deckB.jog": {
+      "type": "cc",
+      "channel": 1,
+      "number": 24
+    },
+    "deckB.loop4": {
+      "type": "note",
+      "channel": 1,
+      "number": 88
+    },
+    "deckB.loopDouble": {
+      "type": "note",
+      "channel": 1,
+      "number": 87
+    },
+    "deckB.loopExit": {
+      "type": "note",
+      "channel": 1,
+      "number": 98
+    },
+    "deckB.loopHalve": {
+      "type": "note",
+      "channel": 1,
+      "number": 86
+    },
+    "deckB.pitch": {
+      "type": "cc",
+      "channel": 1,
+      "number": 14
+    },
+    "deckB.playPause": {
+      "type": "note",
+      "channel": 1,
+      "number": 66
+    },
+    "deckB.preListen": {
+      "type": "note",
+      "channel": 1,
+      "number": 102
+    },
+    "deckB.sync": {
+      "type": "note",
+      "channel": 1,
+      "number": 71
+    },
+    "deckB.volume": {
+      "type": "cc",
+      "channel": 1,
+      "number": 9
+    },
+    "mixer.crossfader": {
+      "type": "cc",
+      "channel": 1,
+      "number": 10
+    },
+    "mixer.cue": {
+      "type": "cc",
+      "channel": 1,
+      "number": 11
+    },
+    "mixer.master": {
+      "type": "cc",
+      "channel": 1,
+      "number": 23
+    }
+  }
+}

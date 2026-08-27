@@ -1,0 +1,233 @@
+{
+  "app": "dj23",
+  "kind": "midi-mapping",
+  "name": "Denon MC4000",
+  "matches": [
+    "mc4000",
+    "mc-4000"
+  ],
+  "untested": true,
+  "notes": "Translated from the Mixxx project mapping, which is where these numbers were read off real hardware. 44 controls; anything the controller has beyond them is driven by scripts there and cannot be read off the file, so use MIDI learn for those. Untested against the hardware.",
+  "bindings": {
+    "deckA.bendDown": {
+      "type": "note",
+      "channel": 1,
+      "number": 12
+    },
+    "deckA.bendUp": {
+      "type": "note",
+      "channel": 1,
+      "number": 13
+    },
+    "deckA.cue": {
+      "type": "note",
+      "channel": 1,
+      "number": 1
+    },
+    "deckA.cue1": {
+      "type": "note",
+      "channel": 5,
+      "number": 20
+    },
+    "deckA.cue2": {
+      "type": "note",
+      "channel": 5,
+      "number": 21
+    },
+    "deckA.cue3": {
+      "type": "note",
+      "channel": 5,
+      "number": 22
+    },
+    "deckA.cue4": {
+      "type": "note",
+      "channel": 5,
+      "number": 23
+    },
+    "deckA.eq.gain": {
+      "type": "cc",
+      "channel": 1,
+      "number": 22
+    },
+    "deckA.eq.high": {
+      "type": "cc",
+      "channel": 1,
+      "number": 23
+    },
+    "deckA.eq.low": {
+      "type": "cc",
+      "channel": 1,
+      "number": 25
+    },
+    "deckA.eq.mid": {
+      "type": "cc",
+      "channel": 1,
+      "number": 24
+    },
+    "deckA.jog": {
+      "type": "cc",
+      "channel": 1,
+      "number": 6
+    },
+    "deckA.loop4": {
+      "type": "note",
+      "channel": 5,
+      "number": 50
+    },
+    "deckA.loopDouble": {
+      "type": "note",
+      "channel": 5,
+      "number": 53
+    },
+    "deckA.loopExit": {
+      "type": "note",
+      "channel": 5,
+      "number": 51
+    },
+    "deckA.loopHalve": {
+      "type": "note",
+      "channel": 5,
+      "number": 52
+    },
+    "deckA.pitch": {
+      "type": "cc",
+      "channel": 1,
+      "number": 9
+    },
+    "deckA.playPause": {
+      "type": "note",
+      "channel": 1,
+      "number": 0
+    },
+    "deckA.preListen": {
+      "type": "note",
+      "channel": 1,
+      "number": 27
+    },
+    "deckA.sync": {
+      "type": "note",
+      "channel": 1,
+      "number": 2
+    },
+    "deckA.volume": {
+      "type": "cc",
+      "channel": 1,
+      "number": 28
+    },
+    "deckB.bendDown": {
+      "type": "note",
+      "channel": 2,
+      "number": 12
+    },
+    "deckB.bendUp": {
+      "type": "note",
+      "channel": 2,
+      "number": 13
+    },
+    "deckB.cue": {
+      "type": "note",
+      "channel": 2,
+      "number": 1
+    },
+    "deckB.cue1": {
+      "type": "note",
+      "channel": 6,
+      "number": 20
+    },
+    "deckB.cue2": {
+      "type": "note",
+      "channel": 6,
+      "number": 21
+    },
+    "deckB.cue3": {
+      "type": "note",
+      "channel": 6,
+      "number": 22
+    },
+    "deckB.cue4": {
+      "type": "note",
+      "channel": 6,
+      "number": 23
+    },
+    "deckB.eq.gain": {
+      "type": "cc",
+      "channel": 2,
+      "number": 22
+    },
+    "deckB.eq.high": {
+      "type": "cc",
+      "channel": 2,
+      "number": 23
+    },
+    "deckB.eq.low": {
+      "type": "cc",
+      "channel": 2,
+      "number": 25
+    },
+    "deckB.eq.mid": {
+      "type": "cc",
+      "channel": 2,
+      "number": 24
+    },
+    "deckB.jog": {
+      "type": "cc",
+      "channel": 2,
+      "number": 6
+    },
+    "deckB.loop4": {
+      "type": "note",
+      "channel": 6,
+      "number": 50
+    },
+    "deckB.loopDouble": {
+      "type": "note",
+      "channel": 6,
+      "number": 53
+    },
+    "deckB.loopExit": {
+      "type": "note",
+      "channel": 6,
+      "number": 51
+    },
+    "deckB.loopHalve": {
+      "type": "note",
+      "channel": 6,
+      "number": 52
+    },
+    "deckB.pitch": {
+      "type": "cc",
+      "channel": 2,
+      "number": 9
+    },
+    "deckB.playPause": {
+      "type": "note",
+      "channel": 2,
+      "number": 0
+    },
+    "deckB.preListen": {
+      "type": "note",
+      "channel": 2,
+      "number": 27
+    },
+    "deckB.sync": {
+      "type": "note",
+      "channel": 2,
+      "number": 2
+    },
+    "deckB.volume": {
+      "type": "cc",
+      "channel": 2,
+      "number": 28
+    },
+    "mixer.crossfader": {
+      "type": "cc",
+      "channel": 16,
+      "number": 8
+    },
+    "mixer.cue": {
+      "type": "cc",
+      "channel": 16,
+      "number": 12
+    }
+  }
+}

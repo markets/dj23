@@ -58,6 +58,8 @@ through the Web Audio API.
 
 * **Track list** — drag a whole folder onto the page and every track in it shows up with
   its artwork, artist, length, BPM and key
+* **MIDI controllers** — plug one in and map it from the settings menu, with built-in setups for
+  common models, MIDI learn for anything they miss, and mappings you can import and export as JSON
 * **Sound pad** with 9 slots — airhorn, siren, scratch, clap, boom, laser, applause, drop and
   whoosh — and every slot can be replaced with your own audio file
 * **Record your mix** as it plays and download it as an MP3

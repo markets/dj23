@@ -172,6 +172,13 @@ class PerformancePads {
     this.syncOperations();
   }
 
+  /** Fire a length as if its chip had been pressed, for callers that have a
+   *  number rather than a button — the keyboard and MIDI. */
+  pressLength(beats) {
+    const chip = this.chipRow.querySelector(`[data-beats="${beats}"]`);
+    if (chip) this.handleChipPress(chip);
+  }
+
   releaseHeldChip() {
     if (!this.heldChip) return;
 

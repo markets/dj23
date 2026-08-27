@@ -1,7 +1,9 @@
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('🎧 Initializing...');
     
-  await window.audioEngine.initialize();
+  // Built against the saved sound card, since a card named after the fact
+  // never offers more than two outputs
+  await window.audioEngine.initialize(Settings.savedOutputDevice());
 
   // The record button starts out disabled — there is nothing to capture until
   // the engine exists, and this is where it finds out

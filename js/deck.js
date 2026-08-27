@@ -23,6 +23,9 @@ class Deck {
    */
   static SCRATCH_WINDOW_SECONDS = 20;
 
+  /** Percent the bend buttons pull the pitch by. */
+  static BEND_PERCENT = 6;
+
   /** Beat loop lengths, and the shorter scale a roll works in. */
   static LOOP_BEATS = [0.5, 1, 2, 4, 8, 16];
   static ROLL_BEATS = [0.0625, 0.125, 0.25, 0.5, 1, 2];
@@ -1019,14 +1022,17 @@ class Deck {
     this.isPaused = true;
   }
 
-  pitchBend(direction) {
+  /**
+   * Nudge the pitch and remember where to put it back. `amount` lets a jog
+   * wheel bend by how hard it was turned, where a button always bends flat out.
+   */
+  pitchBend(direction, amount = Deck.BEND_PERCENT) {
     if (!this.isPitchBending) {
       this.originalPitchBeforeBend = this.getPitch();
       this.isPitchBending = true;
     }
 
-    const bendAmount = direction > 0 ? 6 : -6; // +/- 6% pitch bend for more noticeable effect
-    this.setPitch(this.originalPitchBeforeBend + bendAmount);
+    this.setPitch(this.originalPitchBeforeBend + (direction > 0 ? amount : -amount));
   }
 
   stopPitchBend() {

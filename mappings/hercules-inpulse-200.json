@@ -1,0 +1,197 @@
+{
+  "app": "dj23",
+  "kind": "midi-mapping",
+  "name": "Hercules DJControl Inpulse 200",
+  "matches": [
+    "inpulse 200"
+  ],
+  "untested": true,
+  "notes": "Translated from the Mixxx project mapping, which is where these numbers were read off real hardware. 37 controls; anything the controller has beyond them is driven by scripts there and cannot be read off the file, so use MIDI learn for those. The decks answer on channels 2 and 3, not 1 and 2. Untested against the hardware.",
+  "bindings": {
+    "deckA.cue": {
+      "type": "note",
+      "channel": 2,
+      "number": 6
+    },
+    "deckA.cue1": {
+      "type": "note",
+      "channel": 7,
+      "number": 0
+    },
+    "deckA.cue2": {
+      "type": "note",
+      "channel": 7,
+      "number": 1
+    },
+    "deckA.cue3": {
+      "type": "note",
+      "channel": 7,
+      "number": 2
+    },
+    "deckA.cue4": {
+      "type": "note",
+      "channel": 7,
+      "number": 3
+    },
+    "deckA.eq.gain": {
+      "type": "cc",
+      "channel": 2,
+      "number": 5
+    },
+    "deckA.eq.high": {
+      "type": "cc",
+      "channel": 2,
+      "number": 4
+    },
+    "deckA.eq.low": {
+      "type": "cc",
+      "channel": 2,
+      "number": 2
+    },
+    "deckA.jog": {
+      "type": "cc",
+      "channel": 2,
+      "number": 9
+    },
+    "deckA.loop4": {
+      "type": "note",
+      "channel": 2,
+      "number": 9
+    },
+    "deckA.loopDouble": {
+      "type": "note",
+      "channel": 5,
+      "number": 10
+    },
+    "deckA.loopExit": {
+      "type": "note",
+      "channel": 2,
+      "number": 10
+    },
+    "deckA.loopHalve": {
+      "type": "note",
+      "channel": 5,
+      "number": 9
+    },
+    "deckA.pitch": {
+      "type": "cc",
+      "channel": 2,
+      "number": 8
+    },
+    "deckA.playPause": {
+      "type": "note",
+      "channel": 2,
+      "number": 7
+    },
+    "deckA.preListen": {
+      "type": "note",
+      "channel": 2,
+      "number": 12
+    },
+    "deckA.sync": {
+      "type": "note",
+      "channel": 2,
+      "number": 5
+    },
+    "deckA.volume": {
+      "type": "cc",
+      "channel": 2,
+      "number": 0
+    },
+    "deckB.cue": {
+      "type": "note",
+      "channel": 3,
+      "number": 6
+    },
+    "deckB.cue1": {
+      "type": "note",
+      "channel": 8,
+      "number": 0
+    },
+    "deckB.cue2": {
+      "type": "note",
+      "channel": 8,
+      "number": 1
+    },
+    "deckB.cue3": {
+      "type": "note",
+      "channel": 8,
+      "number": 2
+    },
+    "deckB.cue4": {
+      "type": "note",
+      "channel": 8,
+      "number": 3
+    },
+    "deckB.eq.gain": {
+      "type": "cc",
+      "channel": 3,
+      "number": 5
+    },
+    "deckB.eq.high": {
+      "type": "cc",
+      "channel": 3,
+      "number": 4
+    },
+    "deckB.eq.low": {
+      "type": "cc",
+      "channel": 3,
+      "number": 2
+    },
+    "deckB.jog": {
+      "type": "cc",
+      "channel": 3,
+      "number": 9
+    },
+    "deckB.loop4": {
+      "type": "note",
+      "channel": 3,
+      "number": 9
+    },
+    "deckB.loopDouble": {
+      "type": "note",
+      "channel": 6,
+      "number": 10
+    },
+    "deckB.loopExit": {
+      "type": "note",
+      "channel": 3,
+      "number": 10
+    },
+    "deckB.loopHalve": {
+      "type": "note",
+      "channel": 6,
+      "number": 9
+    },
+    "deckB.pitch": {
+      "type": "cc",
+      "channel": 3,
+      "number": 8
+    },
+    "deckB.playPause": {
+      "type": "note",
+      "channel": 3,
+      "number": 7
+    },
+    "deckB.preListen": {
+      "type": "note",
+      "channel": 3,
+      "number": 12
+    },
+    "deckB.sync": {
+      "type": "note",
+      "channel": 3,
+      "number": 5
+    },
+    "deckB.volume": {
+      "type": "cc",
+      "channel": 3,
+      "number": 0
+    },
+    "mixer.crossfader": {
+      "type": "cc",
+      "channel": 1,
+      "number": 0
+    }
+  }
+}
