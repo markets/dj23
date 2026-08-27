@@ -308,6 +308,28 @@ class AudioEngine {
   }
 
   /**
+   * How many outputs a card has, asked without disturbing the one in use.
+   *
+   * A live context cannot be re-asked: the count belongs to the sink it was
+   * built against and never changes afterwards. So a throwaway context is
+   * opened against the card, asked, and closed — which is the only way to say
+   * anything true about a card before committing to it.
+   */
+  static async probeChannels(deviceId) {
+    let context;
+
+    try {
+      context = deviceId ? new AudioContext({ sinkId: deviceId }) : new AudioContext();
+      return context.destination.maxChannelCount;
+    } catch (error) {
+      console.warn('Could not ask that card how many outputs it has:', error);
+      return 0;
+    } finally {
+      await context?.close();
+    }
+  }
+
+  /**
    * Sound cards the browser will name.
    *
    * Output devices come back nameless and without ids until the page holds an

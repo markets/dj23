@@ -62,7 +62,14 @@ class Settings {
 
     // A card chosen last time is asked for again quietly: the browser still
     // knows the id, so re-listing would mean re-asking for the permission
-    if (this.values.outputDevice) this.useOutputDevice(this.values.outputDevice, { quiet: true });
+    if (this.values.outputDevice) {
+      this.useOutputDevice(this.values.outputDevice, { quiet: true });
+    } else {
+      AudioEngine.probeChannels('').then(channels => {
+        this.cardChannels = channels;
+        this.describeExternal();
+      });
+    }
   }
 
   /**
@@ -96,6 +103,10 @@ class Settings {
       return;
     }
 
+    // Asked directly rather than read off the live context, which is still
+    // stuck with the count of whatever it was built against
+    this.cardChannels = await AudioEngine.probeChannels(deviceId);
+
     this.set('outputDevice', deviceId);
   }
 
@@ -114,9 +125,14 @@ class Settings {
     if (!this.external) return;
 
     const engine = window.audioEngine;
-    const pairs = engine.outputPairs;
-    this.external.hidden = this.values.outputRouting !== 'split-4';
 
+    // What the chosen card can do, which is not always what the running context
+    // can reach: the two only agree once it has been rebuilt against the card
+    const channels = this.cardChannels ?? engine.outputChannels;
+    const pairs = Math.max(1, Math.floor(channels / 2));
+    const live = engine.outputPairs;
+
+    this.external.hidden = this.values.outputRouting !== 'split-4';
     document.getElementById('routingSplit4')?.classList.toggle('is-unavailable', pairs < 2);
 
     this.external.querySelectorAll('[data-pair]').forEach(select => {
@@ -131,11 +147,16 @@ class Settings {
     }
 
     const sharing = engine.channelMap.main === engine.channelMap.cue;
-    this.routingNote.textContent = pairs < 2
-      ? 'This card is giving one pair of outputs, so the cue has nowhere of its own to go.'
-      : sharing
-        ? 'The mix and the cue share a pair, so the headphones hear both.'
-        : `${pairs} pairs on this card.`;
+
+    if (pairs < 2) {
+      this.routingNote.textContent = 'This card has one pair of outputs, so the cue has nowhere of its own to go.';
+    } else if (live < pairs) {
+      this.routingNote.textContent = `${pairs} pairs on this card. Reload to reach them.`;
+    } else if (sharing) {
+      this.routingNote.textContent = 'The mix and the cue share a pair, so the headphones hear both.';
+    } else {
+      this.routingNote.textContent = `${pairs} pairs on this card.`;
+    }
   }
 
   // --- persistence ----------------------------------------------------------
