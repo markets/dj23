@@ -89,6 +89,8 @@
 
               <div class="settings-group" role="group" aria-label="Output routing">
                 <div class="settings-label">Output routing</div>
+
+                <div class="routing-kind">Internal audio</div>
                 <div class="settings-choices settings-choices-stacked">
                   <button class="settings-choice" role="menuitemradio" aria-checked="false" data-setting="outputRouting" data-value="main">
                     <span class="settings-choice-name">Main out</span>
@@ -98,18 +100,25 @@
                     <span class="settings-choice-name">Cue split</span>
                     <span class="settings-choice-note">Cue on the left channel, mix on the right — for pre-listening on one headphone.</span>
                   </button>
-                  <div class="output-device">
-                    <button type="button" class="settings-choice output-device-pick" id="outputDevicePick">
-                      <span class="settings-choice-name">Sound card</span>
-                      <span class="settings-choice-note" id="outputDeviceNote">Using the system output. Pick the card by name to reach all its outputs.</span>
-                    </button>
-                    <select id="outputDeviceSelect" class="output-device-select" hidden></select>
-                  </div>
+                </div>
 
+                <div class="routing-kind">External audio</div>
+                <div class="settings-choices settings-choices-stacked">
                   <button class="settings-choice" role="menuitemradio" aria-checked="false" data-setting="outputRouting" data-value="split-4" id="routingSplit4">
-                    <span class="settings-choice-name">Four outputs</span>
-                    <span class="settings-choice-note">Mix on outputs 1-2, cue on 3-4 — for a controller with its own sound card. Pick it as the system output first.</span>
+                    <span class="settings-choice-name">Sound card</span>
+                    <span class="settings-choice-note">Mix and cue on separate outputs of an external card.</span>
                   </button>
+
+                  <div class="routing-external" id="routingExternal">
+                    <select id="outputDeviceSelect" class="routing-select"></select>
+                    <div class="routing-pairs">
+                      <label for="channelMain">MAIN</label>
+                      <select id="channelMain" class="routing-select" data-pair="main"></select>
+                      <label for="channelCue">CUE</label>
+                      <select id="channelCue" class="routing-select" data-pair="cue"></select>
+                    </div>
+                    <p class="routing-note" id="routingNote"></p>
+                  </div>
                 </div>
               </div>
             </div>

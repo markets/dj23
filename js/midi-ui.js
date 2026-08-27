@@ -38,6 +38,11 @@ class MidiPanel {
 
   setupEventListeners() {
     this.summary?.addEventListener('click', () => this.open());
+
+    // Opening settings is enough of an intent to look: with the permission
+    // already given this is silent, and the summary stops needing a click of
+    // its own before it knows what is plugged in
+    document.getElementById('settingsBtn')?.addEventListener('click', () => this.warmUp());
     document.getElementById('midiClose')?.addEventListener('click', () => this.close());
 
     this.modal.addEventListener('click', (e) => {
@@ -52,6 +57,23 @@ class MidiPanel {
     });
 
     this.fileInput?.addEventListener('change', (e) => this.importFile(e.target.files[0]));
+  }
+
+  /** Connects only if the browser says the permission is already granted, so
+   *  no prompt can appear from merely opening a menu. */
+  async warmUp() {
+    if (this.midi.isConnected || !this.midi.isSupported) return;
+
+    try {
+      const permission = await navigator.permissions.query({ name: 'midi' });
+      if (permission.state !== 'granted') return;
+    } catch (error) {
+      return;   // browsers that cannot be asked are left to the modal
+    }
+
+    await this.midi.connect();
+    this.pickDevice();
+    this.renderSummary();
   }
 
   // --- open / close ---------------------------------------------------------
@@ -199,8 +221,7 @@ class MidiPanel {
       (this.midi.error ? `<p class="midi-notice">${this.midi.error}</p>` : '') +
       (this.tab === 'devices' ? this.renderDevices() : '') +
       (this.tab === 'presets' ? this.renderPresets() : '') +
-      (this.tab === 'mapping' ? this.renderMapping() : '') +
-      this.renderMonitor();
+      (this.tab === 'mapping' ? this.renderMapping() : '');
 
     this.notice = null;
     this.renderSummary();
@@ -238,8 +259,6 @@ class MidiPanel {
               data-midi-preset="${preset.id}"${this.deviceName ? '' : ' disabled'}>
         <span class="midi-preset-name">${preset.name}</span>
         ${preset.id === matched?.id ? '<span class="midi-preset-tag is-verified">DETECTED</span>' : ''}
-        ${preset.source ? `<span class="midi-preset-tag is-verified">FROM ${preset.source.toUpperCase()}</span>` : ''}
-        ${preset.untested ? '<span class="midi-preset-tag is-untested">UNTESTED</span>' : ''}
       </button>`).join('');
 
     return `
@@ -285,22 +304,6 @@ class MidiPanel {
     const channel = binding.channel === 1 ? '' : `Ch${binding.channel} · `;
 
     return `${channel}${kind} ${binding.number}`;
-  }
-
-  renderMonitor() {
-    const message = this.midi.lastMessage;
-    const detail = message
-      ? `${message.type === MidiPresets.CC ? 'CC' : 'Note'} ${message.number} · ${message.value}`
-      : 'nothing yet';
-
-    return `
-      <div class="midi-monitor">
-        <span class="midi-dot${message ? ' is-live' : ''}"></span>
-        <span>Last message</span>
-        <span class="midi-monitor-msg">${detail}</span>
-        <span class="midi-spacer"></span>
-        <span>${message?.deviceName || this.deviceName || ''}</span>
-      </div>`;
   }
 }
 

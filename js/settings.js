@@ -22,7 +22,8 @@ class Settings {
     pitchRange: Deck.DEFAULT_PITCH_RANGE,
     phraseLength: BeatWaveformRenderer.DEFAULT_PHRASE_BARS,
     outputRouting: AudioEngine.DEFAULT_ROUTING,
-    outputDevice: Settings.SYSTEM_OUTPUT
+    outputDevice: Settings.SYSTEM_OUTPUT,
+    channelMap: { ...AudioEngine.DEFAULT_CHANNEL_MAP }
   };
 
   /** Settings whose value is a number rather than a name. */
@@ -42,62 +43,99 @@ class Settings {
     this.apply();
   }
 
-  // --- output device --------------------------------------------------------
+  // --- external audio -------------------------------------------------------
 
   setupOutputDevice() {
-    this.devicePick = document.getElementById('outputDevicePick');
     this.deviceSelect = document.getElementById('outputDeviceSelect');
-    this.deviceNote = document.getElementById('outputDeviceNote');
-    if (!this.devicePick) return;
+    this.external = document.getElementById('routingExternal');
+    this.routingNote = document.getElementById('routingNote');
+    if (!this.deviceSelect) return;
 
-    this.devicePick.addEventListener('click', () => this.chooseOutputDevice());
+    // Opening the list is what costs a permission, so it waits for the click
+    this.deviceSelect.addEventListener('mousedown', () => this.revealCards(), { once: true });
     this.deviceSelect.addEventListener('change', () => this.useOutputDevice(this.deviceSelect.value));
 
-    // A card chosen last time is asked for again, quietly: the browser still
-    // knows the id, and re-listing would mean re-asking for a permission
+    this.external.addEventListener('change', (e) => {
+      const bus = e.target.dataset.pair;
+      if (bus) this.setPair(bus, Number(e.target.value));
+    });
+
+    // A card chosen last time is asked for again quietly: the browser still
+    // knows the id, so re-listing would mean re-asking for the permission
     if (this.values.outputDevice) this.useOutputDevice(this.values.outputDevice, { quiet: true });
   }
 
-  /** Reveals the sound cards, which costs an audio permission — so it happens
-   *  on a click, with the reason on screen, and never at startup. */
-  async chooseOutputDevice() {
-    this.deviceNote.textContent = 'Asking your browser for the list…';
-
+  /**
+   * Names the cards, which costs an audio permission.
+   *
+   * Output devices come back nameless until the page holds one, and the
+   * microphone is the only key the browser offers — so it is asked for, the
+   * stream is handed straight back, and nothing is ever listened to.
+   */
+  async revealCards() {
     let outputs;
     try {
       outputs = await AudioEngine.listOutputs();
     } catch (error) {
       console.warn('Could not list the sound cards:', error);
-      this.deviceNote.textContent = 'Your browser would not list them without audio access.';
+      this.routingNote.textContent = 'Your browser would not name the cards without audio access.';
       return;
     }
 
     this.deviceSelect.innerHTML = [
-      `<option value="">System output</option>`,
-      ...outputs.map(device =>
-        `<option value="${device.deviceId}">${device.label || 'Unnamed output'}</option>`)
+      '<option value="">System output</option>',
+      ...outputs.map(device => `<option value="${device.deviceId}">${device.label || 'Unnamed card'}</option>`)
     ].join('');
-
     this.deviceSelect.value = this.values.outputDevice;
-    this.deviceSelect.hidden = false;
-    this.deviceNote.textContent = `${outputs.length} found — pick the one your headphones are plugged into.`;
   }
 
   async useOutputDevice(deviceId, { quiet = false } = {}) {
     const applied = await window.audioEngine.setOutputDevice(deviceId);
     if (!applied && !quiet) {
-      this.deviceNote.textContent = 'That card would not take the audio.';
+      this.routingNote.textContent = 'That card would not take the audio.';
       return;
     }
 
     this.set('outputDevice', deviceId);
-    if (quiet) return;
+  }
 
-    // The audio moves to the card straight away, but its extra outputs stay out
-    // of reach until the context is rebuilt against it
-    this.deviceNote.textContent = window.audioEngine.needsReloadFor(deviceId)
-      ? 'Sound goes there now. Reload to reach its other outputs.'
-      : 'Using this card.';
+  setPair(bus, pair) {
+    this.values.channelMap = { ...this.values.channelMap, [bus]: pair };
+    this.write();
+    this.apply();
+  }
+
+  /**
+   * Buses move in stereo pairs, so the pickers offer pairs. It is also the only
+   * honest place to show how many outputs the browser found: a card giving one
+   * pair says so here rather than through a routing that quietly does nothing.
+   */
+  describeExternal() {
+    if (!this.external) return;
+
+    const engine = window.audioEngine;
+    const pairs = engine.outputPairs;
+    this.external.hidden = this.values.outputRouting !== 'split-4';
+
+    document.getElementById('routingSplit4')?.classList.toggle('is-unavailable', pairs < 2);
+
+    this.external.querySelectorAll('[data-pair]').forEach(select => {
+      const bus = select.dataset.pair;
+      select.innerHTML = Array.from({ length: pairs }, (_, index) =>
+        `<option value="${index}">${index * 2 + 1}/${index * 2 + 2}</option>`).join('');
+      select.value = String(Math.min(engine.channelMap[bus] ?? 0, pairs - 1));
+    });
+
+    if (this.deviceSelect.options.length === 0) {
+      this.deviceSelect.innerHTML = `<option value="${this.values.outputDevice}">${this.values.outputDevice ? 'Saved card' : 'System output'}</option>`;
+    }
+
+    const sharing = engine.channelMap.main === engine.channelMap.cue;
+    this.routingNote.textContent = pairs < 2
+      ? 'This card is giving one pair of outputs, so the cue has nowhere of its own to go.'
+      : sharing
+        ? 'The mix and the cue share a pair, so the headphones hear both.'
+        : `${pairs} pairs on this card.`;
   }
 
   // --- persistence ----------------------------------------------------------
@@ -188,26 +226,6 @@ class Settings {
     Object.values(window.beatWaveformRenderers || {}).forEach(renderer => renderer?.render());
   }
 
-  /**
-   * The four-output mode needs a card that has four, and how many a card offers
-   * is read when the audio context is built — so picking one mid-session moves
-   * the sound but not the channel count. The note says what was actually found
-   * rather than leaving a setting that silently does nothing.
-   */
-  describeFourOutputs() {
-    const option = document.getElementById('routingSplit4');
-    if (!option) return;
-
-    const channels = window.audioEngine.outputChannels;
-    const enough = channels >= 4;
-    const note = option.querySelector('.settings-choice-note');
-
-    option.classList.toggle('is-unavailable', !enough);
-    note.textContent = enough
-      ? 'Mix on outputs 1-2, cue on 3-4 — for a controller with its own sound card.'
-      : `This card is giving ${channels} channels. Pick it under Sound card above, then reload.`;
-  }
-
   markSelectedOptions() {
     document.querySelectorAll('[data-setting]').forEach(button => {
       const { setting, value } = button.dataset;
@@ -241,6 +259,9 @@ class Settings {
   }
 
   applyOutputRouting() {
+    // Handed over first so the routing wires against it: the saved settings are
+    // the one copy of the map, and the engine only ever applies it
+    window.audioEngine.useChannelMap(this.values.channelMap);
     const routing = window.audioEngine.setOutputRouting(this.values.outputRouting);
 
     // Every routing but the plain one carries a cue bus, whether it rides the
@@ -253,7 +274,7 @@ class Settings {
       el.hidden = !cueAvailable;
     });
 
-    this.describeFourOutputs();
+    this.describeExternal();
 
     if (!cueAvailable) {
       ['A', 'B'].forEach(deckId => {

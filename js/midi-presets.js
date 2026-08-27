@@ -78,7 +78,9 @@ class MidiPresets {
       clean[actionId] = {
         type: binding.type === MidiPresets.CC ? MidiPresets.CC : MidiPresets.NOTE,
         channel: Number(binding.channel) || 1,
-        number: binding.number
+        number: binding.number,
+        // Only wheels carry one, and only the mapping knows which way they count
+        ...(binding.encoding === 'offset' ? { encoding: 'offset' } : {})
       };
     }
 

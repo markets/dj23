@@ -254,13 +254,23 @@ class MidiController {
     const actionId = this.routes.get(deviceName)?.get(MidiController.key({ type, channel, number }));
     if (!actionId) return this.announce();
 
-    this.fire(actionId, value, isRelease);
+    this.fire(actionId, value, isRelease, this.mappingFor(deviceName)[actionId]);
     this.announce();
   }
 
-  /** Jog wheels count in 7-bit two's complement: 1-63 is one way round,
-   *  65-127 read as negative for the other. */
-  static toTurn(value) {
+  /**
+   * How far a wheel was turned, and which way.
+   *
+   * Makers disagree on the encoding. Most count in 7-bit two's complement,
+   * where 1-63 is one way round and 65-127 reads as negative for the other.
+   * Pioneer instead parks the wheel at 64 and counts either side of it, so
+   * putting its numbers through the usual decode would send a gentle nudge
+   * forward flying backwards. The mapping says which, because only the mapping
+   * can know.
+   */
+  static toTurn(value, encoding) {
+    if (encoding === 'offset') return value - 64;
+
     return value > 63 ? value - 128 : value;
   }
 
@@ -276,12 +286,12 @@ class MidiController {
     return value < 64 ? value / 128 : 0.5 + (value - 64) / 126;
   }
 
-  fire(actionId, value, isRelease) {
+  fire(actionId, value, isRelease, binding) {
     const action = MidiActions.byId(actionId);
     if (!action) return;
 
     if (action.kind === 'range') return action.run(MidiController.toAmount(value));
-    if (action.kind === 'relative') return action.run(MidiController.toTurn(value));
+    if (action.kind === 'relative') return action.run(MidiController.toTurn(value, binding?.encoding));
 
     // A hold needs both edges; everything else only cares about the press
     if (action.kind === 'hold') {

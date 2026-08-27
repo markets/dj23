@@ -10,6 +10,18 @@ class AudioEngine {
   static ROUTINGS = ['main', 'cue-split', 'split-4'];
   static DEFAULT_ROUTING = 'main';
 
+  /**
+   * Which stereo pair each bus lands on, counted from zero: pair 0 is outputs
+   * 1/2, pair 1 is 3/4, and so on.
+   *
+   * Outputs come in pairs on every card worth plugging a deck into, so the
+   * question is which pair rather than which four numbers. The usual wiring is
+   * mix on the first and cue on the second, but cards disagree, so it stays a
+   * setting.
+   */
+  static DEFAULT_CHANNEL_MAP = { main: 0, cue: 1 };
+  static BUSES = ['main', 'cue'];
+
   /** Stereo, and generous enough that a mix survives the one encode it gets. */
   static RECORDING_BITRATE = 192;
 
@@ -30,6 +42,7 @@ class AudioEngine {
     this.mp3Worker = null;
     this.recordedFrames = 0;
     this.outputRouting = AudioEngine.DEFAULT_ROUTING;
+    this.channelMap = { ...AudioEngine.DEFAULT_CHANNEL_MAP };
   }
 
   /**
@@ -47,9 +60,8 @@ class AudioEngine {
 
       this.channelMerger = this.audioContext.createChannelMerger(2);
 
-      // Four-output kit: the mix keeps 1/2 and the cue gets 3/4, which needs
-      // both buses broken back out into left and right first
-      this.splitMerger = this.audioContext.createChannelMerger(4);
+      // Sending each bus to a numbered output means breaking both back out
+      // into left and right first
       this.masterSplitter = this.audioContext.createChannelSplitter(2);
       this.cueSplitter = this.audioContext.createChannelSplitter(2);
 
@@ -141,34 +153,21 @@ class AudioEngine {
     this.cueGain.disconnect();
     this.masterGain.disconnect();
     this.channelMerger.disconnect();
-    this.splitMerger.disconnect();
     this.masterSplitter.disconnect();
     this.cueSplitter.disconnect();
+    this.splitMerger?.disconnect();
 
-    // Anything but the four-output mode wants the destination back in stereo
+    // Anything but the multi-output mode wants the destination back in stereo
     const destination = this.audioContext.destination;
-    destination.channelCount = this.outputRouting === 'split-4'
-      ? Math.min(4, destination.maxChannelCount)
-      : Math.min(2, destination.maxChannelCount);
 
     if (this.outputRouting === 'split-4') {
-      destination.channelCountMode = 'explicit';
-      destination.channelInterpretation = 'discrete';
-
-      this.masterGain.connect(this.masterSplitter);
-      this.masterSplitter.connect(this.splitMerger, 0, 0);   // MAIN L  -> out 1
-      this.masterSplitter.connect(this.splitMerger, 1, 1);   // MAIN R  -> out 2
-
-      this.cueGain.connect(this.cueSplitter);
-      this.cueSplitter.connect(this.splitMerger, 0, 2);      // CUE L   -> out 3
-      this.cueSplitter.connect(this.splitMerger, 1, 3);      // CUE R   -> out 4
-
-      this.splitMerger.connect(destination);
+      this.wireToChannels(destination);
 
       // The take is the mix, never the cue: what the room hears is what gets
       // recorded, whatever the headphones are doing
       this.captureTaps().forEach(tap => this.masterGain.connect(tap));
     } else if (this.outputRouting === 'cue-split') {
+      destination.channelCount = Math.min(2, destination.maxChannelCount);
       destination.channelInterpretation = 'speakers';
       this.cueGain.connect(this.channelMerger, 0, 0);    // CUE -> Left channel
       this.masterGain.connect(this.channelMerger, 0, 1); // MAIN -> Right channel
@@ -176,12 +175,83 @@ class AudioEngine {
       this.captureTaps().forEach(tap => this.channelMerger.connect(tap));
     } else {
       // Straight through, so the main mix keeps its stereo image
+      destination.channelCount = Math.min(2, destination.maxChannelCount);
       destination.channelInterpretation = 'speakers';
       this.masterGain.connect(this.audioContext.destination);
       this.captureTaps().forEach(tap => this.masterGain.connect(tap));
     }
 
     return this.outputRouting;
+  }
+
+  /**
+   * Feeds each bus to the outputs the channel map names.
+   *
+   * The merger is built to fit rather than kept around: how many inputs it
+   * needs depends on the highest output in use, and that changes with the card
+   * and with the map. Anything the card cannot reach is clamped, so a map left
+   * over from a four-output interface cannot silently point at nothing.
+   */
+  wireToChannels(destination) {
+    const available = Math.max(2, destination.maxChannelCount);
+    const pairs = Math.max(1, Math.floor(available / 2));
+    const pair = bus => Math.min(this.channelMap[bus] ?? 0, pairs - 1);
+    const wanted = Math.min((Math.max(pair('main'), pair('cue')) + 1) * 2, available);
+
+    // A card can advertise outputs it then refuses to open, and a throw here
+    // would leave the mixer with no output at all rather than a missing cue
+    try {
+      destination.channelCount = wanted;
+    } catch (error) {
+      console.warn(`This card would not take ${wanted} outputs, staying stereo:`, error);
+      destination.channelCount = Math.min(2, destination.maxChannelCount);
+    }
+
+    destination.channelCountMode = 'explicit';
+    destination.channelInterpretation = 'discrete';
+
+    // Read back rather than assumed: whatever the card settled on is what the
+    // map has to fit inside
+    const outputs = destination.channelCount;
+    const left = bus => Math.max(0, Math.min(pair(bus) * 2, outputs - 2));
+    const right = bus => Math.min(left(bus) + 1, outputs - 1);
+
+    this.splitMerger = this.audioContext.createChannelMerger(outputs);
+
+    this.masterGain.connect(this.masterSplitter);
+    this.masterSplitter.connect(this.splitMerger, 0, left('main'));
+    this.masterSplitter.connect(this.splitMerger, 1, right('main'));
+
+    this.cueGain.connect(this.cueSplitter);
+    this.cueSplitter.connect(this.splitMerger, 0, left('cue'));
+    this.cueSplitter.connect(this.splitMerger, 1, right('cue'));
+
+    this.splitMerger.connect(destination);
+  }
+
+  /** Stereo pairs the card offers, as the picker needs them. */
+  get outputPairs() {
+    return Math.max(1, Math.floor(this.outputChannels / 2));
+  }
+
+  /**
+   * Takes the map without rewiring, for callers about to set the routing anyway
+   * and who would otherwise wire the output stage twice.
+   *
+   * Only the buses this version knows survive, so a map saved by an older one
+   * is read for what still applies instead of being carried around forever.
+   */
+  useChannelMap(map) {
+    this.channelMap = {};
+
+    for (const bus of AudioEngine.BUSES) {
+      const pair = map?.[bus];
+      this.channelMap[bus] = Number.isInteger(pair) && pair >= 0
+        ? pair
+        : AudioEngine.DEFAULT_CHANNEL_MAP[bus];
+    }
+
+    return this.channelMap;
   }
 
   /** Everything listening in on the output stage. Rewiring goes through here so

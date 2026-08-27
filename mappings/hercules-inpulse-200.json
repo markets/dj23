@@ -50,6 +50,11 @@
       "channel": 2,
       "number": 2
     },
+    "deckA.jog": {
+      "type": "cc",
+      "channel": 2,
+      "number": 9
+    },
     "deckA.loop4": {
       "type": "note",
       "channel": 2,
@@ -134,6 +139,11 @@
       "type": "cc",
       "channel": 3,
       "number": 2
+    },
+    "deckB.jog": {
+      "type": "cc",
+      "channel": 3,
+      "number": 9
     },
     "deckB.loop4": {
       "type": "note",
